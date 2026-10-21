@@ -1,0 +1,2 @@
+# Sprint 2 (Gabriel): docker-compose base con sqlserver, moodle, ollama y los cinco servicios.
+services: {}

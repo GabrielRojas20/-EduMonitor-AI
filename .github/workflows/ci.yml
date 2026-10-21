@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  verificar-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar que no hay secretos versionados
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$'; then
+            echo "Hay un .env versionado"; exit 1
+          fi
+  # Sprint 2 (Gabriel): agregar jobs de pruebas y linters
+  # - analytics-service (xUnit), agent-service (pytest), web-ui (Vitest)

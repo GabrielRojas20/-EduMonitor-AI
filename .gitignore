@@ -1,0 +1,60 @@
+# Secretos (solo se versiona .env.example)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Sistema / IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.nupkg
+
+# Node / React
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Docker / datos locales
+docker-compose.override.yml
+moodle_data/
+moodledata/
+mssql_data/
+ollama_models/
+*.bak
+*.mdf
+*.ldf
+
+# Logs y temporales
+*.log
+logs/
+tmp/

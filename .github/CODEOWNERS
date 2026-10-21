@@ -1,0 +1,32 @@
+# Responsables por carpeta (revisión automática en los PR)
+# Gabriel: GabrielRojas20 | Juan: juANO2202 | Benjamín: 99benjaminb | Mikel: Mikel032005AGL
+
+*                               @GabrielRojas20
+/.github/                       @GabrielRojas20
+/docker-compose.yml             @GabrielRojas20
+/database/                      @GabrielRojas20
+/tests/                         @GabrielRojas20
+/infra/docker/                  @GabrielRojas20
+/services/analytics-service/    @GabrielRojas20
+
+/services/web-ui/               @99benjaminb
+/docs/wireframes/               @99benjaminb
+
+/services/api-gateway/          @Mikel032005AGL
+/services/auth-courses-service/ @Mikel032005AGL
+/services/moodle-sync-service/  @Mikel032005AGL
+/infra/moodle/                  @Mikel032005AGL
+/docs/moodle-access/            @Mikel032005AGL
+/docs/contracts/                @Mikel032005AGL @GabrielRojas20 @juANO2202
+
+/services/agent-service/        @juANO2202
+/mocks/                         @juANO2202
+/evaluation/                    @juANO2202
+/infra/ollama/                  @juANO2202
+/docs/requirements/             @juANO2202 @99benjaminb
+/docs/agent-design/             @juANO2202
+/docs/architecture/             @juANO2202
+/docs/benchmarks/               @juANO2202
+
+/docs/data-model/               @GabrielRojas20
+/docs/analytics-rules/          @GabrielRojas20
