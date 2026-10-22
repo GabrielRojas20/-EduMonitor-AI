@@ -1,0 +1,106 @@
+﻿{
+    "sitename":  "Moodle",
+    "username":  "docente1",
+    "firstname":  "Docente",
+    "lastname":  "Prueba",
+    "fullname":  "Docente Prueba",
+    "lang":  "en",
+    "userid":  3,
+    "siteurl":  "http://localhost:8080",
+    "userpictureurl":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f1",
+    "functions":  [
+                      {
+                          "name":  "core_completion_get_activities_completion_status",
+                          "version":  "2026042004"
+                      },
+                      {
+                          "name":  "core_course_get_contents",
+                          "version":  "2026042004"
+                      },
+                      {
+                          "name":  "core_enrol_get_enrolled_users",
+                          "version":  "2026042004"
+                      },
+                      {
+                          "name":  "core_enrol_get_users_courses",
+                          "version":  "2026042004"
+                      },
+                      {
+                          "name":  "core_webservice_get_site_info",
+                          "version":  "2026042004"
+                      },
+                      {
+                          "name":  "gradereport_user_get_grade_items",
+                          "version":  "2026042000"
+                      }
+                  ],
+    "downloadfiles":  0,
+    "uploadfiles":  0,
+    "release":  "5.2.4 (Build: 20261005)",
+    "version":  "2026042004",
+    "mobilecssurl":  "",
+    "advancedfeatures":  [
+                             {
+                                 "name":  "usecomments",
+                                 "value":  1
+                             },
+                             {
+                                 "name":  "usetags",
+                                 "value":  1
+                             },
+                             {
+                                 "name":  "enablenotes",
+                                 "value":  1
+                             },
+                             {
+                                 "name":  "messaging",
+                                 "value":  1
+                             },
+                             {
+                                 "name":  "enableblogs",
+                                 "value":  1
+                             },
+                             {
+                                 "name":  "enablecompletion",
+                                 "value":  1
+                             },
+                             {
+                                 "name":  "enablebadges",
+                                 "value":  1
+                             },
+                             {
+                                 "name":  "messagingallusers",
+                                 "value":  0
+                             },
+                             {
+                                 "name":  "enablecustomreports",
+                                 "value":  1
+                             },
+                             {
+                                 "name":  "enableglobalsearch",
+                                 "value":  0
+                             },
+                             {
+                                 "name":  "mnet_dispatcher_mode",
+                                 "value":  0
+                             },
+                             {
+                                 "name":  "enablecompetencies",
+                                 "value":  1
+                             }
+                         ],
+    "usercanmanageownfiles":  true,
+    "userquota":  104857600,
+    "usermaxuploadfilesize":  104857600,
+    "userhomepage":  1,
+    "userprivateaccesskey":  "REDACTED",
+    "siteid":  1,
+    "sitecalendartype":  "gregorian",
+    "usercalendartype":  "gregorian",
+    "userissiteadmin":  false,
+    "theme":  "boost",
+    "limitconcurrentlogins":  0,
+    "policyagreed":  0,
+    "usercanchangeconfig":  false,
+    "usercanviewconfig":  false
+}

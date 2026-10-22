@@ -1,0 +1,69 @@
+﻿{
+    "statuses":  [
+                     {
+                         "cmid":  2,
+                         "modname":  "assign",
+                         "instance":  1,
+                         "state":  1,
+                         "timecompleted":  1792642000,
+                         "tracking":  2,
+                         "overrideby":  null,
+                         "valueused":  false,
+                         "hascompletion":  true,
+                         "isautomatic":  true,
+                         "istrackeduser":  true,
+                         "uservisible":  true,
+                         "details":  [
+                                         {
+                                             "rulename":  "completionsubmit",
+                                             "rulevalue":  {
+                                                               "status":  1,
+                                                               "description":  "Make a submission"
+                                                           }
+                                         },
+                                         {
+                                             "rulename":  "completionusegrade",
+                                             "rulevalue":  {
+                                                               "status":  1,
+                                                               "description":  "Receive a grade"
+                                                           }
+                                         }
+                                     ],
+                         "isoverallcomplete":  true
+                     },
+                     {
+                         "cmid":  3,
+                         "modname":  "assign",
+                         "instance":  2,
+                         "state":  0,
+                         "timecompleted":  0,
+                         "tracking":  2,
+                         "overrideby":  null,
+                         "valueused":  false,
+                         "hascompletion":  true,
+                         "isautomatic":  true,
+                         "istrackeduser":  true,
+                         "uservisible":  true,
+                         "details":  [
+                                         {
+                                             "rulename":  "completionsubmit",
+                                             "rulevalue":  {
+                                                               "status":  0,
+                                                               "description":  "Make a submission"
+                                                           }
+                                         },
+                                         {
+                                             "rulename":  "completionusegrade",
+                                             "rulevalue":  {
+                                                               "status":  0,
+                                                               "description":  "Receive a grade"
+                                                           }
+                                         }
+                                     ],
+                         "isoverallcomplete":  false
+                     }
+                 ],
+    "warnings":  [
+
+                 ]
+}
