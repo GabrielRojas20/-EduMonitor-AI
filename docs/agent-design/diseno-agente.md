@@ -105,103 +105,24 @@ La herramienta recorre las páginas del gateway hasta un máximo de 500 registro
 
 ### 3.3 `obtener_progreso`
 
-Devuelve el progreso de cada estudiante: actividades entregadas, calificadas y pendientes, y la finalización de actividades si Moodle la expone.
+Devuelve el progreso de los estudiantes de un curso (actividades entregadas, calificadas y pendientes, y finalización de actividades si Moodle la expone).
 
-- **Gateway:** la ruta de progreso **no existe todavía** en el contrato borrador. Se propone `GET /api/v1/courses/{courseId}/progress`, a definir con Mikel (datos de Moodle, S1-06 sección 9) y Gabriel (cálculo). Hasta entonces, el mock devuelve datos de ejemplo.
-- **Entrada:**
-
-```json
-{
-  "type": "object",
-  "required": ["course_id"],
-  "properties": {
-    "course_id": { "type": "integer" },
-    "student_id": { "type": "integer" }
-  }
-}
-```
-
-- **Salida (`data`), propuesta:**
-
-```json
-{
-  "courseId": 2,
-  "students": [
-    { "studentId": 4, "activitiesTotal": 2, "graded": 1, "pendingGrading": 0, "notSubmitted": 1,
-      "completion": { "available": false } }
-  ]
-}
-```
-
-Cuando Moodle no expone la finalización, `completion.available` es `false` y el agente dice "dato no disponible", no "0 %".
+- **Gateway:** la ruta de progreso no existe en el contrato borrador (S1-07). **Por definir** con Mikel y Gabriel.
+- **Entrada y salida:** por definir cuando se publique el contrato. Regla ya fijada: si Moodle no expone la finalización, el agente dice "dato no disponible" y no "0 %" (S1-06).
 
 ### 3.4 `identificar_alertas`
 
-Devuelve las alertas activas de un curso, con la evidencia de cada una.
+Devuelve las alertas activas de un curso con la evidencia de cada una (regla, valor y fecha, requisito RF-12).
 
-- **Gateway:** ruta de `analytics-service` por el gateway (contrato de Gabriel, S1-10). Propuesta provisional: `GET /api/v1/courses/{courseId}/alerts`.
-- **Entrada:**
-
-```json
-{
-  "type": "object",
-  "required": ["course_id"],
-  "properties": {
-    "course_id": { "type": "integer" },
-    "student_id": { "type": "integer" },
-    "severity": { "type": "string", "enum": ["low", "medium", "high"] }
-  }
-}
-```
-
-- **Salida (`data`), propuesta (se ajusta al formato de S1-09/S1-10):**
-
-```json
-{
-  "courseId": 2,
-  "alerts": [
-    { "alertId": "a-001", "studentId": 5, "ruleId": "R-BAJO-PROMEDIO", "ruleName": "Promedio bajo",
-      "severity": "high",
-      "evidence": { "value": 4.2, "threshold": 5.0, "unit": "nota sobre 10", "activities": [1, 2],
-                    "computedAt": "2026-10-22T14:05:00Z" } }
-  ]
-}
-```
+- **Gateway:** ruta de `analytics-service` por el gateway, que define Gabriel en S1-10. **Por definir.**
+- **Entrada y salida:** por definir al revisar el contrato de analytics (S1-10).
 
 ### 3.5 `generar_resumen`
 
-Reúne los datos ya calculados para preparar el informe del curso. **No calcula nada nuevo**: llama a los endpoints de calificaciones, progreso y alertas y arma una estructura que el modelo redacta.
+Reúne datos ya calculados para preparar el informe del curso. **No calcula nada nuevo**: usa las salidas de las demás herramientas y de los indicadores de analytics, y el modelo solo redacta.
 
-- **Gateway:** combinación de las rutas anteriores y los indicadores de analytics (a definir en S1-10).
-- **Entrada:**
-
-```json
-{
-  "type": "object",
-  "required": ["course_id"],
-  "properties": {
-    "course_id": { "type": "integer" },
-    "period": {
-      "type": "object",
-      "properties": { "from": { "type": "string", "format": "date" }, "to": { "type": "string", "format": "date" } }
-    }
-  }
-}
-```
-
-- **Salida (`data`):**
-
-```json
-{
-  "course": { "id": 2, "fullName": "Curso de Prueba EduMonitor" },
-  "period": { "from": "2026-10-01", "to": "2026-10-22" },
-  "generatedAt": "2026-10-22T15:10:00Z",
-  "lastSyncAt": "2026-10-22T14:00:00Z",
-  "metrics": [ { "name": "promedio_curso", "value": 7.3, "unit": "nota sobre 10", "sourceTool": "obtener_calificaciones" } ],
-  "findings": [ { "type": "alert", "ref": "a-001", "studentId": 5 } ],
-  "unavailable": [ "completion" ]
-}
-```
+- **Gateway:** combinación de las rutas anteriores. **Por definir** según el contrato de analytics (S1-10).
+- **Entrada y salida:** por definir. El informe debe incluir período, métricas, hallazgos y fecha (RF-18); su contenido exacto depende de la pregunta 2 al Product Owner.
 
 ### 3.6 Resumen de herramientas
 
@@ -209,9 +130,9 @@ Reúne los datos ya calculados para preparar el informe del curso. **No calcula 
 |---|---|---|---|
 | `listar_cursos` | S3 | `GET /api/v1/courses` | En el contrato S1-07 |
 | `obtener_calificaciones` | S3 | `GET /api/v1/courses/{id}/grades` | En el contrato S1-07 |
-| `obtener_progreso` | S3 | `GET /api/v1/courses/{id}/progress` | **Por definir** |
-| `identificar_alertas` | S4 | `GET /api/v1/courses/{id}/alerts` | **Por definir** (S1-10) |
-| `generar_resumen` | S5 | combinación | **Por definir** (S1-10) |
+| `obtener_progreso` | S3 | Por definir | **Por definir** (Mikel y Gabriel) |
+| `identificar_alertas` | S4 | Por definir | **Por definir** (S1-10, Gabriel) |
+| `generar_resumen` | S5 | Por definir | **Por definir** (S1-10, Gabriel) |
 
 ## 4. Flujo de LangGraph
 
@@ -261,7 +182,7 @@ Comportamientos ante fallas:
 
 ## 5. Formato de las trazas
 
-Se guarda una traza por mensaje, en el esquema `agent`. Estructura (JSON):
+Se guarda una traza por mensaje, en el esquema `agent`. Estructura (JSON, los valores son ilustrativos):
 
 ```json
 {
@@ -292,7 +213,7 @@ Reglas:
 
 ## 6. Formato de las respuestas
 
-El agente siempre separa **hechos**, **inferencias** y **recomendaciones**. El `agent-service` devuelve este JSON y la interfaz lo muestra en tres bloques:
+El agente siempre separa **hechos**, **inferencias** y **recomendaciones**. El `agent-service` devuelve este JSON y la interfaz lo muestra en tres bloques. Los valores y la regla «Promedio bajo» del ejemplo son ilustrativos; las reglas reales las define Gabriel (S1-09):
 
 ```json
 {
@@ -344,7 +265,7 @@ Reglas del formato:
 
 | Con | Qué se necesita | Quién decide |
 |---|---|---|
-| Mikel | Ruta de progreso y finalización (`/progress`) y confirmar que el gateway reenvía `X-Request-Id` | Mikel |
+| Mikel | Ruta de progreso y finalización de actividades, y confirmar que el gateway reenvía `X-Request-Id` | Mikel |
 | Gabriel | Contrato de alertas y de indicadores (S1-10): formato de evidencia, rutas y paginación | Gabriel |
 | Benjamín | Cómo se muestran los tres bloques (hechos, inferencias, recomendaciones) y los datos no disponibles en el chat | Benjamín |
 | Product Owner | Memoria de la conversación (pregunta 4), nombres en trazas (pregunta 9) y evaluación del agente (pregunta 8) | Product Owner |
