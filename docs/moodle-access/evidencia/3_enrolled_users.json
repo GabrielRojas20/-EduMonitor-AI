@@ -1,0 +1,194 @@
+﻿[
+    {
+        "id":  3,
+        "username":  "docente1",
+        "firstname":  "Docente",
+        "lastname":  "Prueba",
+        "initials":  "DP",
+        "fullname":  "Docente Prueba",
+        "email":  "docente1@example.com",
+        "department":  "",
+        "firstaccess":  0,
+        "lastaccess":  0,
+        "lastcourseaccess":  0,
+        "description":  "",
+        "descriptionformat":  1,
+        "profileimageurlsmall":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f2",
+        "profileimageurl":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f1",
+        "roles":  [
+                      {
+                          "roleid":  3,
+                          "name":  "",
+                          "shortname":  "editingteacher",
+                          "sortorder":  0
+                      }
+                  ],
+        "preferences":  [
+                            {
+                                "name":  "last_time_enrolments_synced",
+                                "value":  "1792558034"
+                            },
+                            {
+                                "name":  "_lastloaded",
+                                "value":  1792558424
+                            }
+                        ],
+        "enrolledcourses":  [
+                                {
+                                    "id":  2,
+                                    "fullname":  "Curso de Prueba EduMonitor",
+                                    "shortname":  "PRUEBA01"
+                                }
+                            ]
+    },
+    {
+        "id":  4,
+        "firstname":  "Estudiante",
+        "lastname":  "Uno",
+        "initials":  "EU",
+        "fullname":  "Estudiante Uno",
+        "email":  "estudiante1@example.com",
+        "firstaccess":  0,
+        "lastaccess":  0,
+        "lastcourseaccess":  0,
+        "description":  "",
+        "descriptionformat":  1,
+        "profileimageurlsmall":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f2",
+        "profileimageurl":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f1",
+        "roles":  [
+                      {
+                          "roleid":  5,
+                          "name":  "",
+                          "shortname":  "student",
+                          "sortorder":  0
+                      }
+                  ],
+        "enrolledcourses":  [
+                                {
+                                    "id":  2,
+                                    "fullname":  "Curso de Prueba EduMonitor",
+                                    "shortname":  "PRUEBA01"
+                                }
+                            ]
+    },
+    {
+        "id":  5,
+        "firstname":  "Estudiante",
+        "lastname":  "Dos",
+        "initials":  "ED",
+        "fullname":  "Estudiante Dos",
+        "email":  "estudiante2@example.com",
+        "firstaccess":  0,
+        "lastaccess":  0,
+        "lastcourseaccess":  0,
+        "description":  "",
+        "descriptionformat":  1,
+        "profileimageurlsmall":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f2",
+        "profileimageurl":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f1",
+        "roles":  [
+                      {
+                          "roleid":  5,
+                          "name":  "",
+                          "shortname":  "student",
+                          "sortorder":  0
+                      }
+                  ],
+        "enrolledcourses":  [
+                                {
+                                    "id":  2,
+                                    "fullname":  "Curso de Prueba EduMonitor",
+                                    "shortname":  "PRUEBA01"
+                                }
+                            ]
+    },
+    {
+        "id":  6,
+        "firstname":  "Estudiante",
+        "lastname":  "Tres",
+        "initials":  "ET",
+        "fullname":  "Estudiante Tres",
+        "email":  "estudiante3@example.com",
+        "firstaccess":  0,
+        "lastaccess":  0,
+        "lastcourseaccess":  0,
+        "description":  "",
+        "descriptionformat":  1,
+        "profileimageurlsmall":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f2",
+        "profileimageurl":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f1",
+        "roles":  [
+                      {
+                          "roleid":  5,
+                          "name":  "",
+                          "shortname":  "student",
+                          "sortorder":  0
+                      }
+                  ],
+        "enrolledcourses":  [
+                                {
+                                    "id":  2,
+                                    "fullname":  "Curso de Prueba EduMonitor",
+                                    "shortname":  "PRUEBA01"
+                                }
+                            ]
+    },
+    {
+        "id":  7,
+        "firstname":  "Estudiante",
+        "lastname":  "Cuatro",
+        "initials":  "EC",
+        "fullname":  "Estudiante Cuatro",
+        "email":  "estudiante4@example.com",
+        "firstaccess":  0,
+        "lastaccess":  0,
+        "lastcourseaccess":  0,
+        "description":  "",
+        "descriptionformat":  1,
+        "profileimageurlsmall":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f2",
+        "profileimageurl":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f1",
+        "roles":  [
+                      {
+                          "roleid":  5,
+                          "name":  "",
+                          "shortname":  "student",
+                          "sortorder":  0
+                      }
+                  ],
+        "enrolledcourses":  [
+                                {
+                                    "id":  2,
+                                    "fullname":  "Curso de Prueba EduMonitor",
+                                    "shortname":  "PRUEBA01"
+                                }
+                            ]
+    },
+    {
+        "id":  8,
+        "firstname":  "Estudiante",
+        "lastname":  "Cinco",
+        "initials":  "EC",
+        "fullname":  "Estudiante Cinco",
+        "email":  "estudiante5@example.com",
+        "firstaccess":  0,
+        "lastaccess":  0,
+        "lastcourseaccess":  0,
+        "description":  "",
+        "descriptionformat":  1,
+        "profileimageurlsmall":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f2",
+        "profileimageurl":  "http://localhost:8080/theme/image.php/boost/core/1792552924/u/f1",
+        "roles":  [
+                      {
+                          "roleid":  5,
+                          "name":  "",
+                          "shortname":  "student",
+                          "sortorder":  0
+                      }
+                  ],
+        "enrolledcourses":  [
+                                {
+                                    "id":  2,
+                                    "fullname":  "Curso de Prueba EduMonitor",
+                                    "shortname":  "PRUEBA01"
+                                }
+                            ]
+    }
+]

@@ -1,0 +1,33 @@
+﻿{
+    "id":  2,
+    "shortname":  "PRUEBA01",
+    "fullname":  "Curso de Prueba EduMonitor",
+    "displayname":  "Curso de Prueba EduMonitor",
+    "enrolledusercount":  6,
+    "idnumber":  "",
+    "visible":  1,
+    "summary":  "",
+    "summaryformat":  1,
+    "format":  "topics",
+    "courseimage":  "http://localhost:8080/pluginfile.php/16/course/generated/course.svg",
+    "showgrades":  true,
+    "lang":  "",
+    "enablecompletion":  true,
+    "completionhascriteria":  false,
+    "completionusertracked":  false,
+    "category":  1,
+    "progress":  null,
+    "completed":  false,
+    "startdate":  1792623600,
+    "enddate":  1824159600,
+    "marker":  0,
+    "lastaccess":  null,
+    "isfavourite":  false,
+    "hidden":  false,
+    "overviewfiles":  [
+
+                      ],
+    "showactivitydates":  true,
+    "showcompletionconditions":  true,
+    "timemodified":  1792553658
+}
