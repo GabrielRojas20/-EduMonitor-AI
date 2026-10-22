@@ -3,7 +3,7 @@
 **Estado:** borrador para revisión de Mikel, Gabriel y Benjamín
 **Responsable:** Juan
 **Servicio:** `agent-service` (Python 3.11, FastAPI, LangGraph, Pydantic) con Ollama
-**Basado en:** `api-gateway.v1.yaml` y `moodle-sync.v1.yaml` (S1-07, borrador), decisiones de S1-06 y pruebas de modelos de S1-12
+**Basado en:** `api-gateway.v1.yaml` y `moodle-sync.v1.yaml` (S1-07), el borrador de `analytics.v1.yaml` y de las reglas iniciales (S1-10, rama `docs/S1-10-analytics`), decisiones de S1-06 y pruebas de modelos de S1-12
 
 ## 1. Principios
 
@@ -105,34 +105,130 @@ La herramienta recorre las páginas del gateway hasta un máximo de 500 registro
 
 ### 3.3 `obtener_progreso`
 
-Devuelve el progreso de los estudiantes de un curso (actividades entregadas, calificadas y pendientes, y finalización de actividades si Moodle la expone).
+Devuelve los indicadores de progreso de un curso o de un estudiante: promedio, tasa de entrega, tasa de calificación, tasa de finalización, pendientes de calificar y conteos. Los calcula `analytics-service` (borrador S1-10); el agente no calcula nada.
 
-- **Gateway:** la ruta de progreso no existe en el contrato borrador (S1-07). **Por definir** con Mikel y Gabriel.
-- **Entrada y salida:** por definir cuando se publique el contrato. Regla ya fijada: si Moodle no expone la finalización, el agente dice "dato no disponible" y no "0 %" (S1-06).
+- **Gateway:** `GET /api/v1/courses/{courseId}/analytics` (curso) o `GET /api/v1/courses/{courseId}/analytics/students/{studentId}` (estudiante). Parámetro opcional `snapshotId`; si se omite se usa la última sincronización exitosa.
+- **Entrada:**
+
+```json
+{
+  "type": "object",
+  "required": ["course_id"],
+  "properties": {
+    "course_id": { "type": "integer", "description": "Id del curso en Moodle" },
+    "student_id": { "type": "integer", "description": "Si se indica, devuelve los indicadores de ese estudiante" },
+    "snapshot_id": { "type": "string", "description": "Opcional. Por defecto, la última sincronización exitosa" }
+  }
+}
+```
+
+- **Salida (`data`):** el cuerpo `CourseAnalytics` o `StudentAnalytics` del contrato, sin cambios:
+
+```json
+{
+  "courseId": 2,
+  "snapshot": { "snapshotId": "s-001", "syncId": "y-001", "calculatedAt": "2026-10-22T14:05:00Z", "dataQuality": "partial" },
+  "averageScore":       { "value": 4.0, "unit": "score_0_10", "status": "available", "numerator": null, "denominator": null },
+  "submissionRate":     { "value": 50.0, "unit": "percent", "status": "available", "numerator": 2, "denominator": 4 },
+  "gradingRate":        { "value": 100.0, "unit": "percent", "status": "available", "numerator": 2, "denominator": 2 },
+  "completionRate":     { "value": null, "unit": "percent", "status": "unavailable", "code": "DATA_NOT_AVAILABLE",
+                          "detail": "Moodle no configuró el seguimiento de finalización." },
+  "pendingGradingRate": { "value": 25.0, "unit": "percent", "status": "available", "numerator": 1, "denominator": 4 },
+  "counts": { "graded": 2, "pendingGrading": 1, "notSubmitted": 1, "draft": 0 }
+}
+```
+
+Los valores son ilustrativos; la forma es la del contrato.
 
 ### 3.4 `identificar_alertas`
 
-Devuelve las alertas activas de un curso con la evidencia de cada una (regla, valor y fecha, requisito RF-12).
+Devuelve las alertas del curso con la evidencia de cada una (regla, valor observado, umbral y explicación; RF-12).
 
-- **Gateway:** ruta de `analytics-service` por el gateway, que define Gabriel en S1-10. **Por definir.**
-- **Entrada y salida:** por definir al revisar el contrato de analytics (S1-10).
+- **Gateway:** `GET /api/v1/courses/{courseId}/analytics/alerts`, con `studentId`, `severity`, `page` y `pageSize` opcionales.
+- **Entrada:**
+
+```json
+{
+  "type": "object",
+  "required": ["course_id"],
+  "properties": {
+    "course_id": { "type": "integer" },
+    "student_id": { "type": "integer" },
+    "severity": { "type": "string", "enum": ["info", "warning", "critical"] },
+    "snapshot_id": { "type": "string" }
+  }
+}
+```
+
+- **Salida (`data`):** las alertas del contrato (`PageOfAlerts`), recorridas por la herramienta hasta el límite de la sección 3.6:
+
+```json
+{
+  "courseId": 2,
+  "items": [
+    { "alertId": "al-001", "ruleCode": "LOW_AVERAGE", "courseId": 2, "studentId": 5,
+      "severity": "warning", "status": "active", "detectedAt": "2026-10-22T14:05:00Z", "resolvedAt": null,
+      "evidence": [ { "metric": "averageScore10", "observedValue": 4.0, "threshold": 6.0,
+                      "numerator": null, "denominator": null, "sourceIds": ["grade-1", "grade-2"],
+                      "explanation": "Promedio de 2 notas calificadas por debajo del umbral de 6.0" } ] }
+  ],
+  "total": 1,
+  "truncated": false
+}
+```
+
+Los valores son ilustrativos; la forma es la del contrato.
+
+El código de regla (`LOW_AVERAGE`, `LOW_SUBMISSION`, `PENDING_GRADING`, `LOW_COMPLETION`, `NO_DATA`) se traduce a un nombre legible con una tabla fija del `agent-service`, tomada de las reglas de S1-10. El agente cita siempre la evidencia de la alerta y no la reinterpreta.
 
 ### 3.5 `generar_resumen`
 
-Reúne datos ya calculados para preparar el informe del curso. **No calcula nada nuevo**: usa las salidas de las demás herramientas y de los indicadores de analytics, y el modelo solo redacta.
+Obtiene los datos calculados para el informe del curso. No calcula nada: `analytics-service` entrega métricas y hallazgos, y el modelo solo los redacta.
 
-- **Gateway:** combinación de las rutas anteriores. **Por definir** según el contrato de analytics (S1-10).
-- **Entrada y salida:** por definir. El informe debe incluir período, métricas, hallazgos y fecha (RF-18); su contenido exacto depende de la pregunta 2 al Product Owner.
+- **Gateway:** `GET /api/v1/courses/{courseId}/analytics/report`.
+- **Entrada:**
 
-### 3.6 Resumen de herramientas
+```json
+{
+  "type": "object",
+  "required": ["course_id"],
+  "properties": {
+    "course_id": { "type": "integer" },
+    "snapshot_id": { "type": "string" }
+  }
+}
+```
 
-| Herramienta | Sprint | Ruta del gateway | Estado de la ruta |
+- **Salida (`data`):** `CourseReportData` del contrato: `snapshot`, `periodStart` y `periodEnd` (pueden ser nulos), `metrics` (mapa de `Metric`), `findings` (lista de textos) y `activeAlertCount`. Para el informe completo el agente combina esta salida con `identificar_alertas` si el docente pide el detalle de las alertas.
+- **Pendiente:** el contenido y el formato exacto del informe dependen de la pregunta 2 al Product Owner (secciones, período y formato). Por ahora el informe se redacta con los campos que entrega el contrato y con la fecha del snapshot.
+
+### 3.6 Datos no disponibles, paginación y límites
+
+**Datos no disponibles.** Los indicadores usan `Metric` con `status` (`available`, `partial` o `unavailable`), `value` nulo y `code: DATA_NOT_AVAILABLE` cuando falta el dato; `snapshot.dataQuality` resume la calidad (`complete`, `partial` o `unavailable`). Reglas del agente:
+
+- Un `value` nulo nunca se presenta como 0 ni como 0 %. Se dice "dato no disponible" y se cita el `detail`.
+- Si `dataQuality` es `partial`, el agente avisa que el resultado es parcial.
+- Una alerta `NO_DATA` se explica como falta de datos, no como un problema del estudiante.
+- Una nota `pending_grading` o `not_submitted` (con `score` nulo) se redacta como "pendiente de calificar" o "sin entrega", nunca como 0.
+- Los borradores se tratan como no entregados según el borrador de S1-10 (`counts.draft`); esto sigue pendiente de confirmar con el Product Owner (pregunta 15 de los requisitos).
+
+**Paginación y límites.** El gateway pagina notas, estudiantes y alertas con `page` (desde 1) y `pageSize` (1 a 200, por defecto 50). Los indicadores de curso y de estudiante y los datos del informe no se paginan. Límites del agente:
+
+- Máximo de 10 páginas o 500 registros por herramienta. Si hay más, la salida lleva `truncated: true` y el agente lo menciona.
+- Máximo de 5 llamadas a herramientas por mensaje.
+- Los indicadores y las alertas usan la última sincronización exitosa. El agente muestra siempre la fecha del cálculo (`snapshot.calculatedAt`) y la de la última sincronización.
+
+### 3.7 Resumen de herramientas
+
+| Herramienta | Sprint | Ruta del gateway | Origen del contrato |
 |---|---|---|---|
-| `listar_cursos` | S3 | `GET /api/v1/courses` | En el contrato S1-07 |
-| `obtener_calificaciones` | S3 | `GET /api/v1/courses/{id}/grades` | En el contrato S1-07 |
-| `obtener_progreso` | S3 | Por definir | **Por definir** (Mikel y Gabriel) |
-| `identificar_alertas` | S4 | Por definir | **Por definir** (S1-10, Gabriel) |
-| `generar_resumen` | S5 | Por definir | **Por definir** (S1-10, Gabriel) |
+| `listar_cursos` | S3 | `GET /api/v1/courses` | S1-07 (unido a `develop`) |
+| `obtener_calificaciones` | S3 | `GET /api/v1/courses/{courseId}/grades` | S1-07 (unido a `develop`) |
+| `obtener_progreso` | S3 | `GET /api/v1/courses/{courseId}/analytics` y `.../analytics/students/{studentId}` | S1-10 (borrador) |
+| `identificar_alertas` | S4 | `GET /api/v1/courses/{courseId}/analytics/alerts` | S1-10 (borrador) |
+| `generar_resumen` | S5 | `GET /api/v1/courses/{courseId}/analytics/report` | S1-10 (borrador) |
+
+Las rutas de analytics están definidas en el contrato de `analytics-service` (S1-10). El contrato del gateway (S1-07) solo menciona que salen por él; hay que confirmar con Mikel que las expone con esas mismas rutas.
 
 ## 4. Flujo de LangGraph
 
@@ -213,18 +309,18 @@ Reglas:
 
 ## 6. Formato de las respuestas
 
-El agente siempre separa **hechos**, **inferencias** y **recomendaciones**. El `agent-service` devuelve este JSON y la interfaz lo muestra en tres bloques. Los valores y la regla «Promedio bajo» del ejemplo son ilustrativos; las reglas reales las define Gabriel (S1-09):
+El agente siempre separa **hechos**, **inferencias** y **recomendaciones**. El `agent-service` devuelve este JSON y la interfaz lo muestra en tres bloques. Los valores del ejemplo son ilustrativos; la regla `LOW_AVERAGE` y su umbral inicial de 6,0 vienen del borrador de reglas de S1-10 y pueden cambiar:
 
 ```json
 {
   "traceId": "9f1c…",
   "answer": {
     "facts": [
-      { "text": "El estudiante 5 tiene un promedio de 4,2 sobre 10 en las actividades calificadas.",
-        "sources": [ { "tool": "obtener_calificaciones", "stepN": 1 } ] }
+      { "text": "El estudiante 5 tiene un promedio de 4,0 sobre 10 en las actividades calificadas.",
+        "sources": [ { "tool": "obtener_progreso", "stepN": 1 } ] }
     ],
     "inferences": [
-      { "text": "El promedio está por debajo del umbral de 5,0 de la regla «Promedio bajo».",
+      { "text": "El promedio está por debajo del umbral de 6,0 de la regla «Promedio bajo» (`LOW_AVERAGE`).",
         "basedOn": [ 0 ] }
     ],
     "recommendations": [
@@ -265,9 +361,9 @@ Reglas del formato:
 
 | Con | Qué se necesita | Quién decide |
 |---|---|---|
-| Mikel | Ruta de progreso y finalización de actividades, y confirmar que el gateway reenvía `X-Request-Id` | Mikel |
-| Gabriel | Contrato de alertas y de indicadores (S1-10): formato de evidencia, rutas y paginación | Gabriel |
-| Benjamín | Cómo se muestran los tres bloques (hechos, inferencias, recomendaciones) y los datos no disponibles en el chat | Benjamín |
-| Product Owner | Memoria de la conversación (pregunta 4), nombres en trazas (pregunta 9) y evaluación del agente (pregunta 8) | Product Owner |
+| Mikel | Confirmar que el gateway expone las rutas de analytics (`/analytics`, `/analytics/students/{id}`, `/analytics/alerts` y `/analytics/report`) con esas mismas rutas, y que reenvía `X-Request-Id` | Mikel |
+| Gabriel | Aprobar el contrato de analytics (S1-10). Dudas para su revisión: (1) las alertas no se pueden filtrar por `status` (`active` o `resolved`), así que el agente recibiría también las resueltas; (2) `findings` del informe es una lista de textos, ¿tendrá una estructura con referencia a la alerta o a la métrica?; (3) el contrato de analytics usa el puerto 5003 y no aparece en los de S1-07 | Gabriel |
+| Benjamín | Cómo se muestran en el chat los tres bloques (hechos, inferencias, recomendaciones) y los datos no disponibles | Benjamín |
+| Product Owner | Memoria de la conversación (pregunta 4), nombres en trazas (pregunta 9), evaluación del agente (pregunta 8), formato del informe (pregunta 2) y tratamiento del borrador (pregunta 15 de los requisitos) | Product Owner |
 
 Para el Sprint 2, el servidor mock del gateway se genera a partir de los contratos definitivos y sirve para probar estas herramientas antes de que existan los servicios reales.
