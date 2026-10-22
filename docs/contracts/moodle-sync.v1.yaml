@@ -1,0 +1,383 @@
+openapi: 3.0.3
+info:
+  title: EduMonitor AI - moodle-sync-service
+  version: 1.0.0-borrador
+  description: |-
+    BORRADOR (S1-07). Servicio interno. Lee Moodle con su cliente de servicios web, guarda lo sincronizado en el esquema sync y lo entrega normalizado.
+
+    Reglas de normalización (S1-06):
+    - Cada estudiante se identifica por su id de Moodle.
+    - Estado de cada nota: se cruza gradereport_user_get_grade_items (nota) con mod_assign_get_submissions (estado de entrega). Nota 0 = graded con score 0. Entregó y sin calificar = pending_grading. Matriculado que no aparece en las entregas = not_submitted.
+    - Nunca se guarda ni se devuelve el texto de las entregas de los estudiantes.
+    - Si Moodle no entrega un dato (por ejemplo, finalización de actividades vacía), se responde como dato no disponible y no como 0.
+
+    Autorización: recibe el JWT reenviado por el gateway, que ya comprobó el acceso al curso.
+servers:
+- url: http://localhost:5002
+  description: Local (alinear puerto con docker-compose)
+security:
+- bearerAuth: []
+paths:
+  /courses/{courseId}/sync:
+    post:
+      operationId: startSync
+      tags:
+      - sync
+      summary: Iniciar la sincronización del curso (asíncrona)
+      parameters: &id001
+      - &id005
+        $ref: '#/components/parameters/courseId'
+      - &id006
+        $ref: '#/components/parameters/requestId'
+      responses:
+        '202':
+          description: Sincronización iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncAccepted'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        '401': &id002
+          $ref: '#/components/responses/Unauthorized'
+        '403': &id003
+          $ref: '#/components/responses/Forbidden'
+        '404': &id004
+          $ref: '#/components/responses/NotFound'
+    get:
+      operationId: getSyncStatus
+      tags:
+      - sync
+      summary: Estado de la última sincronización
+      parameters: *id001
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncStatus'
+        '401': *id002
+        '403': *id003
+        '404': *id004
+  /courses/{courseId}/students:
+    get:
+      operationId: listStudents
+      tags:
+      - data
+      summary: Estudiantes sincronizados
+      parameters:
+      - *id005
+      - *id006
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfStudents'
+        '401': *id002
+        '403': *id003
+        '404': *id004
+  /courses/{courseId}/students/{studentId}:
+    get:
+      operationId: getStudent
+      tags:
+      - data
+      summary: Estudiante con sus calificaciones
+      parameters:
+      - *id005
+      - *id006
+      - $ref: '#/components/parameters/studentId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+        '401': *id002
+        '403': *id003
+        '404': *id004
+  /courses/{courseId}/grades:
+    get:
+      operationId: listGrades
+      tags:
+      - data
+      summary: Calificaciones con su estado
+      parameters:
+      - *id005
+      - *id006
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      - name: studentId
+        in: query
+        schema:
+          type: integer
+      - name: activityId
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfGrades'
+        '401': *id002
+        '403': *id003
+        '404': *id004
+components:
+  schemas:
+    Problem:
+      type: object
+      required:
+      - title
+      - status
+      - code
+      description: Formato de error común (RFC 7807). `code` es estable y apto para programas; `detail` es para personas.
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+          enum:
+          - INVALID_CREDENTIALS
+          - TOKEN_INVALID
+          - TOKEN_EXPIRED
+          - COURSE_NOT_AUTHORIZED
+          - COURSE_NOT_FOUND
+          - STUDENT_NOT_FOUND
+          - SYNC_IN_PROGRESS
+          - MOODLE_UNAVAILABLE
+          - DATA_NOT_AVAILABLE
+          - VALIDATION_ERROR
+        traceId:
+          type: string
+          description: Igual al encabezado X-Request-Id, para seguir la petición entre servicios.
+    Student:
+      type: object
+      required:
+      - id
+      - fullName
+      description: El estudiante se identifica por su id de Moodle. El username no llega al rol docente.
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+    GradeStatus:
+      type: string
+      enum:
+      - graded
+      - pending_grading
+      - not_submitted
+      description: graded = calificado (una nota 0 es graded con score 0). pending_grading = entregó y falta calificar (score
+        null). not_submitted = no entregó (score null). Un score null nunca debe contarse como 0.
+    GradeEntry:
+      type: object
+      required:
+      - studentId
+      - activityId
+      - activityName
+      - status
+      - maxScore
+      properties:
+        studentId:
+          type: integer
+        activityId:
+          type: integer
+        activityName:
+          type: string
+        status:
+          $ref: '#/components/schemas/GradeStatus'
+        score:
+          type: number
+          nullable: true
+        maxScore:
+          type: number
+          example: 10
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        gradedAt:
+          type: string
+          format: date-time
+          nullable: true
+    StudentDetail:
+      type: object
+      required:
+      - student
+      - grades
+      properties:
+        student:
+          $ref: '#/components/schemas/Student'
+        grades:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradeEntry'
+    SyncStatus:
+      type: object
+      required:
+      - state
+      properties:
+        state:
+          type: string
+          enum:
+          - never
+          - running
+          - succeeded
+          - failed
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastSuccessAt:
+          type: string
+          format: date-time
+          nullable: true
+        errorCode:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+    SyncAccepted:
+      type: object
+      required:
+      - syncId
+      - state
+      properties:
+        syncId:
+          type: string
+        state:
+          type: string
+          enum:
+          - running
+    PageOfStudents:
+      type: object
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Student'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+    PageOfGrades:
+      type: object
+      required:
+      - items
+      - page
+      - pageSize
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradeEntry'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+  parameters:
+    courseId:
+      name: courseId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Id del curso en Moodle.
+    studentId:
+      name: studentId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Id del estudiante en Moodle.
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    pageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    requestId:
+      name: X-Request-Id
+      in: header
+      schema:
+        type: string
+      description: Opcional. Si no llega, el gateway lo genera y lo reenvía a todos los servicios.
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido o vencido (TOKEN_INVALID, TOKEN_EXPIRED, INVALID_CREDENTIALS).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: El usuario no tiene acceso a ese curso (COURSE_NOT_AUTHORIZED).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Curso o estudiante inexistente (COURSE_NOT_FOUND, STUDENT_NOT_FOUND).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Ya hay una sincronización en curso (SYNC_IN_PROGRESS).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unavailable:
+      description: Moodle o un servicio interno no responde (MOODLE_UNAVAILABLE).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
