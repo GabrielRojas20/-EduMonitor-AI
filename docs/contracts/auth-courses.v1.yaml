@@ -1,0 +1,257 @@
+openapi: 3.0.3
+info:
+  title: EduMonitor AI - auth-courses-service
+  version: 1.0.0-borrador
+  description: |-
+    BORRADOR (S1-07). Servicio interno (no se expone directo a la interfaz ni al agente; todo pasa por el gateway).
+
+    Responsabilidades: iniciar sesión, emitir el JWT y decir a qué cursos tiene acceso cada docente.
+
+    JWT (propuesta para desarrollo): firma HS256 con secreto en variable de entorno (.env, nunca en el repositorio); vigencia 60 minutos; claims: sub (id de usuario), role (teacher|admin), iss, iat, exp. En el Sprint 4 se revisa el endurecimiento (rotación de claves, CORS).
+
+    El gateway llama a GET /internal/courses/{courseId}/access antes de enrutar cualquier ruta /courses/{courseId}/...
+servers:
+- url: http://localhost:5001
+  description: Local (alinear puerto con docker-compose)
+security:
+- bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      operationId: login
+      tags:
+      - auth
+      security: []
+      summary: Validar credenciales y emitir JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /users/me:
+    get:
+      operationId: getMe
+      tags:
+      - users
+      summary: Usuario del token
+      parameters:
+      - $ref: '#/components/parameters/requestId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401': &id001
+          $ref: '#/components/responses/Unauthorized'
+  /courses:
+    get:
+      operationId: listMyCourses
+      tags:
+      - courses
+      summary: Cursos del usuario del token
+      parameters:
+      - $ref: '#/components/parameters/requestId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Course'
+        '401': *id001
+  /courses/{courseId}:
+    get:
+      operationId: getCourse
+      tags:
+      - courses
+      summary: Detalle de un curso autorizado
+      parameters: &id002
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+        '401': *id001
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /internal/courses/{courseId}/access:
+    get:
+      operationId: checkCourseAccess
+      tags:
+      - internal
+      summary: Comprobar si el usuario del token puede acceder al curso
+      parameters: *id002
+      responses:
+        '204':
+          description: Acceso permitido.
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  schemas:
+    Problem:
+      type: object
+      required:
+      - title
+      - status
+      - code
+      description: Formato de error común (RFC 7807). `code` es estable y apto para programas; `detail` es para personas.
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+          enum:
+          - INVALID_CREDENTIALS
+          - TOKEN_INVALID
+          - TOKEN_EXPIRED
+          - COURSE_NOT_AUTHORIZED
+          - COURSE_NOT_FOUND
+          - STUDENT_NOT_FOUND
+          - SYNC_IN_PROGRESS
+          - MOODLE_UNAVAILABLE
+          - DATA_NOT_AVAILABLE
+          - VALIDATION_ERROR
+        traceId:
+          type: string
+          description: Igual al encabezado X-Request-Id, para seguir la petición entre servicios.
+    Course:
+      type: object
+      required:
+      - id
+      - shortName
+      - fullName
+      properties:
+        id:
+          type: integer
+          description: Id del curso en Moodle.
+        shortName:
+          type: string
+          example: PRUEBA01
+        fullName:
+          type: string
+        studentCount:
+          type: integer
+        lastSyncAt:
+          type: string
+          format: date-time
+          nullable: true
+    User:
+      type: object
+      required:
+      - id
+      - name
+      - role
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+          - teacher
+          - admin
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    LoginResponse:
+      type: object
+      required:
+      - accessToken
+      - tokenType
+      - expiresIn
+      - user
+      properties:
+        accessToken:
+          type: string
+          description: JWT.
+        tokenType:
+          type: string
+          enum:
+          - Bearer
+        expiresIn:
+          type: integer
+          description: Segundos de vigencia.
+          example: 3600
+        user:
+          $ref: '#/components/schemas/User'
+  parameters:
+    courseId:
+      name: courseId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Id del curso en Moodle.
+    requestId:
+      name: X-Request-Id
+      in: header
+      schema:
+        type: string
+      description: Opcional. Si no llega, el gateway lo genera y lo reenvía a todos los servicios.
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido o vencido (TOKEN_INVALID, TOKEN_EXPIRED, INVALID_CREDENTIALS).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: El usuario no tiene acceso a ese curso (COURSE_NOT_AUTHORIZED).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Curso o estudiante inexistente (COURSE_NOT_FOUND, STUDENT_NOT_FOUND).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
