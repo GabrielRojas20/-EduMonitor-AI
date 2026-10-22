@@ -1,0 +1,323 @@
+{
+  "info": {
+    "name": "EduMonitor - Pruebas Moodle (S1-06)",
+    "description": "Las mismas 8 llamadas que se ejecutaron con PowerShell en S1-06. Pegar el token solo en Current value de la variable token; nunca en Initial value ni en el repositorio.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. core_webservice_get_site_info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/webservice/rest/server.php?wstoken={{token}}&wsfunction=core_webservice_get_site_info&moodlewsrestformat=json",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "webservice",
+            "rest",
+            "server.php"
+          ],
+          "query": [
+            {
+              "key": "wstoken",
+              "value": "{{token}}"
+            },
+            {
+              "key": "wsfunction",
+              "value": "core_webservice_get_site_info"
+            },
+            {
+              "key": "moodlewsrestformat",
+              "value": "json"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. core_enrol_get_users_courses",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/webservice/rest/server.php?wstoken={{token}}&wsfunction=core_enrol_get_users_courses&moodlewsrestformat=json&userid={{userId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "webservice",
+            "rest",
+            "server.php"
+          ],
+          "query": [
+            {
+              "key": "wstoken",
+              "value": "{{token}}"
+            },
+            {
+              "key": "wsfunction",
+              "value": "core_enrol_get_users_courses"
+            },
+            {
+              "key": "moodlewsrestformat",
+              "value": "json"
+            },
+            {
+              "key": "userid",
+              "value": "{{userId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. core_enrol_get_enrolled_users",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/webservice/rest/server.php?wstoken={{token}}&wsfunction=core_enrol_get_enrolled_users&moodlewsrestformat=json&courseid={{courseId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "webservice",
+            "rest",
+            "server.php"
+          ],
+          "query": [
+            {
+              "key": "wstoken",
+              "value": "{{token}}"
+            },
+            {
+              "key": "wsfunction",
+              "value": "core_enrol_get_enrolled_users"
+            },
+            {
+              "key": "moodlewsrestformat",
+              "value": "json"
+            },
+            {
+              "key": "courseid",
+              "value": "{{courseId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. gradereport_user_get_grade_items",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/webservice/rest/server.php?wstoken={{token}}&wsfunction=gradereport_user_get_grade_items&moodlewsrestformat=json&courseid={{courseId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "webservice",
+            "rest",
+            "server.php"
+          ],
+          "query": [
+            {
+              "key": "wstoken",
+              "value": "{{token}}"
+            },
+            {
+              "key": "wsfunction",
+              "value": "gradereport_user_get_grade_items"
+            },
+            {
+              "key": "moodlewsrestformat",
+              "value": "json"
+            },
+            {
+              "key": "courseid",
+              "value": "{{courseId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. core_course_get_contents",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/webservice/rest/server.php?wstoken={{token}}&wsfunction=core_course_get_contents&moodlewsrestformat=json&courseid={{courseId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "webservice",
+            "rest",
+            "server.php"
+          ],
+          "query": [
+            {
+              "key": "wstoken",
+              "value": "{{token}}"
+            },
+            {
+              "key": "wsfunction",
+              "value": "core_course_get_contents"
+            },
+            {
+              "key": "moodlewsrestformat",
+              "value": "json"
+            },
+            {
+              "key": "courseid",
+              "value": "{{courseId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. core_completion_get_activities_completion_status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/webservice/rest/server.php?wstoken={{token}}&wsfunction=core_completion_get_activities_completion_status&moodlewsrestformat=json&courseid={{courseId}}&userid={{studentId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "webservice",
+            "rest",
+            "server.php"
+          ],
+          "query": [
+            {
+              "key": "wstoken",
+              "value": "{{token}}"
+            },
+            {
+              "key": "wsfunction",
+              "value": "core_completion_get_activities_completion_status"
+            },
+            {
+              "key": "moodlewsrestformat",
+              "value": "json"
+            },
+            {
+              "key": "courseid",
+              "value": "{{courseId}}"
+            },
+            {
+              "key": "userid",
+              "value": "{{studentId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. mod_assign_get_assignments",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/webservice/rest/server.php?wstoken={{token}}&wsfunction=mod_assign_get_assignments&moodlewsrestformat=json&courseids[0]={{courseId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "webservice",
+            "rest",
+            "server.php"
+          ],
+          "query": [
+            {
+              "key": "wstoken",
+              "value": "{{token}}"
+            },
+            {
+              "key": "wsfunction",
+              "value": "mod_assign_get_assignments"
+            },
+            {
+              "key": "moodlewsrestformat",
+              "value": "json"
+            },
+            {
+              "key": "courseids[0]",
+              "value": "{{courseId}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "8. mod_assign_get_submissions",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/webservice/rest/server.php?wstoken={{token}}&wsfunction=mod_assign_get_submissions&moodlewsrestformat=json&assignmentids[0]={{assignmentId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "webservice",
+            "rest",
+            "server.php"
+          ],
+          "query": [
+            {
+              "key": "wstoken",
+              "value": "{{token}}"
+            },
+            {
+              "key": "wsfunction",
+              "value": "mod_assign_get_submissions"
+            },
+            {
+              "key": "moodlewsrestformat",
+              "value": "json"
+            },
+            {
+              "key": "assignmentids[0]",
+              "value": "{{assignmentId}}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "courseId",
+      "value": "2"
+    },
+    {
+      "key": "userId",
+      "value": "3"
+    },
+    {
+      "key": "studentId",
+      "value": "4"
+    },
+    {
+      "key": "assignmentId",
+      "value": "1"
+    }
+  ]
+}

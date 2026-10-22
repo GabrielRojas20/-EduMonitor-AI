@@ -1,0 +1,144 @@
+﻿[
+    {
+        "id":  1,
+        "name":  "General",
+        "visible":  1,
+        "summary":  "",
+        "summaryformat":  1,
+        "section":  0,
+        "hiddenbynumsections":  0,
+        "uservisible":  true,
+        "component":  null,
+        "itemid":  null,
+        "modules":  [
+                        {
+                            "id":  1,
+                            "url":  "http://localhost:8080/mod/forum/view.php?id=1",
+                            "name":  "Announcements",
+                            "instance":  1,
+                            "contextid":  17,
+                            "visible":  1,
+                            "uservisible":  true,
+                            "visibleoncoursepage":  1,
+                            "modicon":  "http://localhost:8080/theme/image.php/boost/forum/1792552924/monologo?filtericon=1",
+                            "modname":  "forum",
+                            "purpose":  "collaboration",
+                            "branded":  false,
+                            "modplural":  "Forums",
+                            "availability":  null,
+                            "indent":  0,
+                            "onclick":  "",
+                            "afterlink":  null,
+                            "activitybadge":  [
+
+                                              ],
+                            "customdata":  "{\"trackingtype\":\"1\"}",
+                            "noviewlink":  false,
+                            "candisplay":  true,
+                            "completion":  0,
+                            "downloadcontent":  1,
+                            "dates":  [
+
+                                      ],
+                            "groupmode":  0
+                        },
+                        {
+                            "id":  2,
+                            "url":  "http://localhost:8080/mod/assign/view.php?id=2",
+                            "name":  "Tarea 1",
+                            "instance":  1,
+                            "contextid":  24,
+                            "visible":  1,
+                            "uservisible":  true,
+                            "visibleoncoursepage":  1,
+                            "modicon":  "http://localhost:8080/theme/image.php/boost/assign/1792552924/monologo?filtericon=1",
+                            "modname":  "assign",
+                            "purpose":  "assessment",
+                            "branded":  false,
+                            "modplural":  "Assignments",
+                            "availability":  null,
+                            "indent":  0,
+                            "onclick":  "",
+                            "afterlink":  null,
+                            "customdata":  "{\"duedate\":1793142000,\"allowsubmissionsfromdate\":\"1792537200\"}",
+                            "noviewlink":  false,
+                            "candisplay":  true,
+                            "completion":  0,
+                            "downloadcontent":  1,
+                            "dates":  [
+                                          {
+                                              "label":  "Opened:",
+                                              "timestamp":  1792537200,
+                                              "dataid":  "allowsubmissionsfromdate"
+                                          },
+                                          {
+                                              "label":  "Due:",
+                                              "timestamp":  1793142000,
+                                              "dataid":  "duedate"
+                                          }
+                                      ],
+                            "groupmode":  0
+                        }
+                    ]
+    },
+    {
+        "id":  2,
+        "name":  "New section",
+        "visible":  1,
+        "summary":  "",
+        "summaryformat":  1,
+        "section":  1,
+        "hiddenbynumsections":  0,
+        "uservisible":  true,
+        "component":  null,
+        "itemid":  null,
+        "modules":  [
+
+                    ]
+    },
+    {
+        "id":  3,
+        "name":  "New section",
+        "visible":  1,
+        "summary":  "",
+        "summaryformat":  1,
+        "section":  2,
+        "hiddenbynumsections":  0,
+        "uservisible":  true,
+        "component":  null,
+        "itemid":  null,
+        "modules":  [
+
+                    ]
+    },
+    {
+        "id":  4,
+        "name":  "New section",
+        "visible":  1,
+        "summary":  "",
+        "summaryformat":  1,
+        "section":  3,
+        "hiddenbynumsections":  0,
+        "uservisible":  true,
+        "component":  null,
+        "itemid":  null,
+        "modules":  [
+
+                    ]
+    },
+    {
+        "id":  5,
+        "name":  "New section",
+        "visible":  1,
+        "summary":  "",
+        "summaryformat":  1,
+        "section":  4,
+        "hiddenbynumsections":  0,
+        "uservisible":  true,
+        "component":  null,
+        "itemid":  null,
+        "modules":  [
+
+                    ]
+    }
+]

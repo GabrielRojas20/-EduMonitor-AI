@@ -1,0 +1,160 @@
+﻿{
+    "assignments":  [
+                        {
+                            "assignmentid":  1,
+                            "submissions":  [
+                                                {
+                                                    "id":  2,
+                                                    "userid":  4,
+                                                    "attemptnumber":  0,
+                                                    "timecreated":  1792554505,
+                                                    "timemodified":  1792554518,
+                                                    "timestarted":  null,
+                                                    "status":  "submitted",
+                                                    "groupid":  0,
+                                                    "plugins":  [
+                                                                    {
+                                                                        "type":  "onlinetext",
+                                                                        "name":  "Online text",
+                                                                        "fileareas":  [
+                                                                                          {
+                                                                                              "area":  "submissions_onlinetext",
+                                                                                              "files":  [
+
+                                                                                                        ]
+                                                                                          }
+                                                                                      ],
+                                                                        "editorfields":  [
+                                                                                             {
+                                                                                                 "name":  "onlinetext",
+                                                                                                 "description":  "Online text submissions",
+                                                                                                 "text":  "\u003cp\u003eadasdad\u003c/p\u003e",
+                                                                                                 "format":  1
+                                                                                             }
+                                                                                         ]
+                                                                    },
+                                                                    {
+                                                                        "type":  "comments",
+                                                                        "name":  "Submission comments"
+                                                                    }
+                                                                ],
+                                                    "gradingstatus":  "graded"
+                                                },
+                                                {
+                                                    "id":  3,
+                                                    "userid":  5,
+                                                    "attemptnumber":  0,
+                                                    "timecreated":  1792554531,
+                                                    "timemodified":  1792554567,
+                                                    "timestarted":  null,
+                                                    "status":  "submitted",
+                                                    "groupid":  0,
+                                                    "plugins":  [
+                                                                    {
+                                                                        "type":  "onlinetext",
+                                                                        "name":  "Online text",
+                                                                        "fileareas":  [
+                                                                                          {
+                                                                                              "area":  "submissions_onlinetext",
+                                                                                              "files":  [
+
+                                                                                                        ]
+                                                                                          }
+                                                                                      ],
+                                                                        "editorfields":  [
+                                                                                             {
+                                                                                                 "name":  "onlinetext",
+                                                                                                 "description":  "Online text submissions",
+                                                                                                 "text":  "\u003cp\u003easdasdasdasd\u003c/p\u003e",
+                                                                                                 "format":  1
+                                                                                             }
+                                                                                         ]
+                                                                    },
+                                                                    {
+                                                                        "type":  "comments",
+                                                                        "name":  "Submission comments"
+                                                                    }
+                                                                ],
+                                                    "gradingstatus":  "graded"
+                                                },
+                                                {
+                                                    "id":  4,
+                                                    "userid":  6,
+                                                    "attemptnumber":  0,
+                                                    "timecreated":  1792554616,
+                                                    "timemodified":  1792554618,
+                                                    "timestarted":  null,
+                                                    "status":  "submitted",
+                                                    "groupid":  0,
+                                                    "plugins":  [
+                                                                    {
+                                                                        "type":  "onlinetext",
+                                                                        "name":  "Online text",
+                                                                        "fileareas":  [
+                                                                                          {
+                                                                                              "area":  "submissions_onlinetext",
+                                                                                              "files":  [
+
+                                                                                                        ]
+                                                                                          }
+                                                                                      ],
+                                                                        "editorfields":  [
+                                                                                             {
+                                                                                                 "name":  "onlinetext",
+                                                                                                 "description":  "Online text submissions",
+                                                                                                 "text":  "\u003cp\u003easdasd\u003c/p\u003e",
+                                                                                                 "format":  1
+                                                                                             }
+                                                                                         ]
+                                                                    },
+                                                                    {
+                                                                        "type":  "comments",
+                                                                        "name":  "Submission comments"
+                                                                    }
+                                                                ],
+                                                    "gradingstatus":  "notgraded"
+                                                },
+                                                {
+                                                    "id":  1,
+                                                    "userid":  8,
+                                                    "attemptnumber":  0,
+                                                    "timecreated":  1792554328,
+                                                    "timemodified":  1792554637,
+                                                    "timestarted":  null,
+                                                    "status":  "submitted",
+                                                    "groupid":  0,
+                                                    "plugins":  [
+                                                                    {
+                                                                        "type":  "onlinetext",
+                                                                        "name":  "Online text",
+                                                                        "fileareas":  [
+                                                                                          {
+                                                                                              "area":  "submissions_onlinetext",
+                                                                                              "files":  [
+
+                                                                                                        ]
+                                                                                          }
+                                                                                      ],
+                                                                        "editorfields":  [
+                                                                                             {
+                                                                                                 "name":  "onlinetext",
+                                                                                                 "description":  "Online text submissions",
+                                                                                                 "text":  "\u003cp\u003edfgafsdasd\u003c/p\u003e",
+                                                                                                 "format":  1
+                                                                                             }
+                                                                                         ]
+                                                                    },
+                                                                    {
+                                                                        "type":  "comments",
+                                                                        "name":  "Submission comments"
+                                                                    }
+                                                                ],
+                                                    "gradingstatus":  "graded"
+                                                }
+                                            ]
+                        }
+                    ],
+    "warnings":  [
+
+                 ]
+}
