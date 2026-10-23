@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
   title: EduMonitor AI - auth-courses-service
-  version: 1.0.0-borrador
+  version: 1.0.0
   description: |-
-    BORRADOR (S1-07). Servicio interno (no se expone directo a la interfaz ni al agente; todo pasa por el gateway).
+    S1-07, versión 1. Servicio interno (no se expone directo a la interfaz ni al agente; todo pasa por el gateway).
 
     Responsabilidades: iniciar sesión, emitir el JWT y decir a qué cursos tiene acceso cada docente.
 
@@ -119,6 +119,9 @@ components:
       - status
       - code
       description: Formato de error común (RFC 7807). `code` es estable y apto para programas; `detail` es para personas.
+        DATA_NOT_AVAILABLE se usa solo cuando no se puede obtener el recurso o la fuente de datos completa; para un dato suelto
+        que Moodle no entrega se usa un valor explícito dentro de la respuesta (por ejemplo completionState = not_available),
+        nunca null ni 0.
       properties:
         type:
           type: string
