@@ -2,4 +2,8 @@
 
 **Responsable:** Gabriel
 
-Diagrama entidad-relación con esquemas auth, sync, analytics y agent.
+Modelo de datos.
+
+| Archivo | Contenido |
+|---|---|
+| [`diagrama-er.md`](diagrama-er.md) | Diagrama entidad-relación con los esquemas `auth`, `sync`, `analytics` y `agent` |

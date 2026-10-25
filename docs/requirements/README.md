@@ -2,4 +2,8 @@
 
 **Responsable:** Juan (interfaz: Benjamín)
 
-Documento de requisitos con criterios verificables y matriz de cumplimiento. Tarea S1-07.
+Requisitos del sistema con criterios verificables, matriz de cumplimiento y preguntas abiertas para el Product Owner (tarea S1-03).
+
+| Archivo | Contenido |
+|---|---|
+| [`requisitos.md`](requisitos.md) | Alcance, requisitos funcionales y no funcionales, requisitos de interfaz (a cargo de Benjamín), matriz de cumplimiento y preguntas abiertas |
