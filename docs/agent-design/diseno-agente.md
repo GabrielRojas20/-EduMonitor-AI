@@ -3,7 +3,7 @@
 **Estado:** borrador para revisión de Mikel, Gabriel y Benjamín
 **Responsable:** Juan
 **Servicio:** `agent-service` (Python 3.11, FastAPI, LangGraph, Pydantic) con Ollama
-**Basado en:** `api-gateway.v1.yaml` y `moodle-sync.v1.yaml` (S1-07), el borrador de `analytics.v1.yaml` y de las reglas iniciales (S1-10, rama `docs/S1-10-analytics`), decisiones de S1-06 y pruebas de modelos de S1-12
+**Basado en:** los contratos v1 unidos a `develop`: `api-gateway.v1.yaml` y `moodle-sync.v1.yaml` (versión 1.0.0, PRs #2 y #7) y `analytics.v1.yaml` con las reglas iniciales (PR #6), más las decisiones de S1-06 y las pruebas de modelos de S1-12 (PR #3)
 
 ## 1. Principios
 
@@ -105,9 +105,17 @@ Devuelve las calificaciones de un curso, opcionalmente de un estudiante o de una
 
 ### 3.3 `obtener_progreso`
 
-Devuelve los indicadores de progreso de un curso o de un estudiante: promedio, tasa de entrega, tasa de calificación, tasa de finalización, pendientes de calificar y conteos. Los calcula `analytics-service` (borrador S1-10); el agente no calcula nada.
+Devuelve el progreso de un curso o de un estudiante: indicadores (promedio, tasas de entrega, calificación y finalización, pendientes y conteos) y, para un estudiante, el progreso por actividad. Los indicadores los calcula `analytics-service`; el agente no calcula nada.
 
-- **Gateway:** `GET /api/v1/courses/{courseId}/analytics` (curso) o `GET /api/v1/courses/{courseId}/analytics/students/{studentId}` (estudiante). Parámetro opcional `snapshotId`; si se omite se usa la última sincronización exitosa.
+**Decisión: no se agrega una ruta `/progress`.** La herramienta combina rutas que ya existen en los contratos v1:
+
+| Consulta | Rutas del gateway |
+|---|---|
+| Curso (sin `student_id`) | `GET /api/v1/courses/{courseId}/analytics` |
+| Estudiante (con `student_id`) | `GET /api/v1/courses/{courseId}/analytics/students/{studentId}` para los indicadores, y `GET /api/v1/courses/{courseId}/students/{studentId}` para `activities` (`completionState` por actividad, agregado en el PR #7) |
+
+De la ficha del estudiante (`StudentDetail`) la herramienta solo toma `activities`; las calificaciones las obtiene `obtener_calificaciones`. Todas las rutas aceptan `snapshotId` cuando es de analytics; si se omite se usa la última sincronización exitosa. Si más adelante se necesita una vista de progreso con una sola llamada, se propone una ruta nueva como cambio de contrato versionado.
+
 - **Entrada:**
 
 ```json
@@ -138,7 +146,16 @@ Devuelve los indicadores de progreso de un curso o de un estudiante: promedio, t
 }
 ```
 
-Los valores son ilustrativos; la forma es la del contrato.
+Con `student_id`, la salida añade `activities`, tal como las devuelve `StudentDetail`:
+
+```json
+"activities": [
+  { "activityId": 1, "activityType": "assign", "completionState": "complete" },
+  { "activityId": 2, "activityType": "assign", "completionState": "not_available" }
+]
+```
+
+Los valores son ilustrativos; la forma es la del contrato. `completionState` puede ser `complete`, `incomplete`, `passed`, `failed` o `not_available`.
 
 ### 3.4 `identificar_alertas`
 
@@ -179,7 +196,7 @@ Devuelve las alertas del curso con la evidencia de cada una (regla, valor observ
 
 Los valores son ilustrativos; la forma es la del contrato.
 
-El código de regla (`LOW_AVERAGE`, `LOW_SUBMISSION`, `PENDING_GRADING`, `LOW_COMPLETION`, `NO_DATA`) se traduce a un nombre legible con una tabla fija del `agent-service`, tomada de las reglas de S1-10. El agente cita siempre la evidencia de la alerta y no la reinterpreta.
+El código de regla (`LOW_AVERAGE`, `LOW_SUBMISSION`, `PENDING_GRADING`, `LOW_COMPLETION`, `NO_DATA`) se traduce a un nombre legible con una tabla fija del `agent-service`, tomada de las reglas iniciales de analytics (`docs/analytics-rules/reglas-iniciales.md`). El agente cita siempre la evidencia de la alerta y no la reinterpreta.
 
 ### 3.5 `generar_resumen`
 
@@ -223,13 +240,13 @@ Obtiene los datos calculados para el informe del curso. No calcula nada: `analyt
 
 | Herramienta | Sprint | Ruta del gateway | Origen del contrato |
 |---|---|---|---|
-| `listar_cursos` | S3 | `GET /api/v1/courses` | S1-07 (unido a `develop`) |
-| `obtener_calificaciones` | S3 | `GET /api/v1/courses/{courseId}/grades` | S1-07 (unido a `develop`) |
-| `obtener_progreso` | S3 | `GET /api/v1/courses/{courseId}/analytics` y `.../analytics/students/{studentId}` | S1-10 (borrador) |
-| `identificar_alertas` | S4 | `GET /api/v1/courses/{courseId}/analytics/alerts` | S1-10 (borrador) |
-| `generar_resumen` | S5 | `GET /api/v1/courses/{courseId}/analytics/report` | S1-10 (borrador) |
+| `listar_cursos` | S3 | `GET /api/v1/courses` | `api-gateway.v1` 1.0.0 |
+| `obtener_calificaciones` | S3 | `GET /api/v1/courses/{courseId}/grades` | `api-gateway.v1` 1.0.0 |
+| `obtener_progreso` | S3 | `GET /api/v1/courses/{courseId}/analytics`; con estudiante, también `.../analytics/students/{studentId}` y `GET /api/v1/courses/{courseId}/students/{studentId}` | `analytics.v1` (PR #6) y `api-gateway.v1` 1.0.0 (PR #7) |
+| `identificar_alertas` | S4 | `GET /api/v1/courses/{courseId}/analytics/alerts` | `analytics.v1` (PR #6) |
+| `generar_resumen` | S5 | `GET /api/v1/courses/{courseId}/analytics/report` | `analytics.v1` (PR #6) |
 
-Las rutas de analytics están definidas en el contrato de `analytics-service` (S1-10). El contrato del gateway (S1-07) solo menciona que salen por él; hay que confirmar con Mikel que las expone con esas mismas rutas.
+Las rutas de analytics están definidas en el contrato de `analytics-service`. El contrato del gateway (1.0.0) solo menciona que salen por él y no las lista; hay que confirmar con Mikel que las expone con esas mismas rutas.
 
 ## 4. Flujo de LangGraph
 
@@ -310,7 +327,7 @@ Reglas:
 
 ## 6. Formato de las respuestas
 
-El agente siempre separa **hechos**, **inferencias** y **recomendaciones**. El `agent-service` devuelve este JSON y la interfaz lo muestra en tres bloques. Los valores del ejemplo son ilustrativos; la regla `LOW_AVERAGE` y su umbral inicial de 6,0 vienen del borrador de reglas de S1-10 y pueden cambiar:
+El agente siempre separa **hechos**, **inferencias** y **recomendaciones**. El `agent-service` devuelve este JSON y la interfaz lo muestra en tres bloques. Los valores del ejemplo son ilustrativos; la regla `LOW_AVERAGE` y su umbral inicial de 6,0 vienen de las reglas iniciales de analytics y pueden cambiar con la configuración o con la decisión del Product Owner:
 
 ```json
 {
@@ -363,7 +380,7 @@ Reglas del formato:
 | Con | Qué se necesita | Quién decide |
 |---|---|---|
 | Mikel | Confirmar que el gateway expone las rutas de analytics (`/analytics`, `/analytics/students/{id}`, `/analytics/alerts` y `/analytics/report`) con esas mismas rutas, y que reenvía `X-Request-Id` | Mikel |
-| Gabriel | Aprobar el contrato de analytics (S1-10). Dudas para su revisión: (1) las alertas no se pueden filtrar por `status` (`active` o `resolved`), así que el agente recibiría también las resueltas; (2) `findings` del informe es una lista de textos, ¿tendrá una estructura con referencia a la alerta o a la métrica?; (3) el contrato de analytics usa el puerto 5003 y no aparece en los de S1-07 | Gabriel |
+| Gabriel | Dudas sobre `analytics.v1`: (1) las alertas no se pueden filtrar por `status` (`active` o `resolved`), así que el agente recibiría también las resueltas; (2) `findings` del informe es una lista de textos, sin referencia a la alerta o métrica de origen; (3) el archivo aún declara la versión `1.0.0-borrador` y el puerto 5003, que no aparece en los otros contratos | Gabriel |
 | Benjamín | Cómo se muestran en el chat los tres bloques (hechos, inferencias, recomendaciones) y los datos no disponibles | Benjamín |
 | Product Owner | Memoria de la conversación (pregunta 4), nombres en trazas (pregunta 9), evaluación del agente (pregunta 8), formato del informe (pregunta 2) y tratamiento del borrador (pregunta 15 de los requisitos) | Product Owner |
 
