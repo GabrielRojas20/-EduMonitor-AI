@@ -1,15 +1,17 @@
 openapi: 3.0.3
 info:
   title: EduMonitor AI - moodle-sync-service
-  version: 1.0.0-borrador
+  version: 1.0.0
   description: |-
-    BORRADOR (S1-07). Servicio interno. Lee Moodle con su cliente de servicios web, guarda lo sincronizado en el esquema sync y lo entrega normalizado.
+    S1-07, versión 1. Servicio interno. Lee Moodle con su cliente de servicios web, guarda lo sincronizado en el esquema sync y lo entrega normalizado.
 
     Reglas de normalización (S1-06):
     - Cada estudiante se identifica por su id de Moodle.
     - Estado de cada nota: se cruza gradereport_user_get_grade_items (nota) con mod_assign_get_submissions (estado de entrega). Nota 0 = graded con score 0. Entregó y sin calificar = pending_grading. Matriculado que no aparece en las entregas = not_submitted.
     - Nunca se guarda ni se devuelve el texto de las entregas de los estudiantes.
-    - Si Moodle no entrega un dato (por ejemplo, finalización de actividades vacía), se responde como dato no disponible y no como 0.
+    - Entrega en borrador (status draft en Moodle): submissionStatus draft y status not_submitted.
+    - Si Moodle no entrega un dato, se responde con un valor explícito y no con 0: completionState not_available para una actividad sin finalización configurada o sin información. Estados de Moodle 0, 1, 2 y 3 se mapean a incomplete, complete, passed y failed.
+    - core_completion_get_activities_completion_status acepta un solo userid por llamada. El campo timecompleted no se expone porque no es fiable como fecha real.
 
     Autorización: recibe el JWT reenviado por el gateway, que ya comprobó el acceso al curso.
 servers:
@@ -141,6 +143,9 @@ components:
       - status
       - code
       description: Formato de error común (RFC 7807). `code` es estable y apto para programas; `detail` es para personas.
+        DATA_NOT_AVAILABLE se usa solo cuando no se puede obtener el recurso o la fuente de datos completa; para un dato suelto
+        que Moodle no entrega se usa un valor explícito dentro de la respuesta (por ejemplo completionState = not_available),
+        nunca null ni 0.
       properties:
         type:
           type: string
@@ -186,8 +191,42 @@ components:
       - graded
       - pending_grading
       - not_submitted
-      description: graded = calificado (una nota 0 es graded con score 0). pending_grading = entregó y falta calificar (score
-        null). not_submitted = no entregó (score null). Un score null nunca debe contarse como 0.
+      description: 'graded = calificado (una nota 0 es graded con score 0). pending_grading = entregó (submissionStatus submitted)
+        y falta calificar (score null). not_submitted = nada entregado para calificar: submissionStatus none o draft (score
+        null). Un score null nunca debe contarse como 0. Si el docente calificó una entrega en borrador, status es graded.'
+    SubmissionStatus:
+      type: string
+      enum:
+      - none
+      - draft
+      - submitted
+      description: Estado de la entrega en Moodle. none = el estudiante no aparece en las entregas de la tarea. draft = borrador
+        sin enviar (status draft en Moodle). submitted = enviada. Permite a analytics decidir cómo tratar un borrador sin
+        cambiar el contrato.
+    CompletionState:
+      type: string
+      enum:
+      - complete
+      - incomplete
+      - passed
+      - failed
+      - not_available
+      description: Progreso de una actividad. Moodle 0 = incomplete, 1 = complete, 2 = passed, 3 = failed. not_available =
+        Moodle no entrega información o la actividad no tiene finalización configurada; nunca se convierte en null ni en 0.
+    ActivityProgress:
+      type: object
+      required:
+      - activityId
+      - completionState
+      properties:
+        activityId:
+          type: integer
+          description: Mismo identificador que GradeEntry.activityId (cmid).
+        activityType:
+          type: string
+          example: assign
+        completionState:
+          $ref: '#/components/schemas/CompletionState'
     GradeEntry:
       type: object
       required:
@@ -195,16 +234,21 @@ components:
       - activityId
       - activityName
       - status
+      - submissionStatus
       - maxScore
       properties:
         studentId:
           type: integer
         activityId:
           type: integer
+          description: Id de la actividad en el curso de Moodle (cmid). moodle-sync lo relaciona con el id de la tarea (assignmentid)
+            usando mod_assign_get_assignments.
         activityName:
           type: string
         status:
           $ref: '#/components/schemas/GradeStatus'
+        submissionStatus:
+          $ref: '#/components/schemas/SubmissionStatus'
         score:
           type: number
           nullable: true
@@ -224,6 +268,7 @@ components:
       required:
       - student
       - grades
+      - activities
       properties:
         student:
           $ref: '#/components/schemas/Student'
@@ -231,6 +276,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GradeEntry'
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityProgress'
+          description: Progreso por actividad. Una actividad sin finalización configurada aparece con completionState not_available.
     SyncStatus:
       type: object
       required:
@@ -371,7 +421,8 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     Unavailable:
-      description: Moodle o un servicio interno no responde (MOODLE_UNAVAILABLE).
+      description: Moodle o un servicio interno no responde (MOODLE_UNAVAILABLE), o no se puede obtener el recurso o la fuente
+        de datos completa (DATA_NOT_AVAILABLE), por ejemplo porque el curso aún no se sincronizó.
       content:
         application/problem+json:
           schema:

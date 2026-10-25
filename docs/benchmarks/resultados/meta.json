@@ -1,0 +1,12 @@
+{
+  "ollama": "ollama version is 0.40.8",
+  "inicio": "2026-10-22 14:44:55",
+  "modelos": [
+    "qwen3:1.7b",
+    "qwen2.5:3b",
+    "llama3.2:3b"
+  ],
+  "repeticiones": 3,
+  "temperatura": 0.3,
+  "tokens_rendimiento": 200
+}
