@@ -19,7 +19,7 @@
 | Elemento | Valor propuesto |
 |---|---|
 | Entrada | `POST /chat` del `agent-service` con encabezado `Authorization: Bearer <JWT>` y el mensaje del docente |
-| Modelo | `qwen2.5:3b` (provisional); alternativa `qwen3:1.7b` (ver `docs/benchmarks/ollama-pruebas-modelos.md`) |
+| Modelo | `qwen3:1.7b` (decisión provisional de S1-12); alternativa `qwen2.5:3b` (ver `docs/benchmarks/ollama-pruebas-modelos.md`) |
 | Memoria de conversación | Sin memoria en v1: cada mensaje es independiente (pregunta abierta 4 del Product Owner) |
 | Máximo de llamadas a herramientas por mensaje | 5 |
 | Tiempo máximo por herramienta | 10 s |
@@ -91,9 +91,9 @@ Devuelve las calificaciones de un curso, opcionalmente de un estudiante o de una
 {
   "courseId": 2,
   "items": [
-    { "studentId": 4, "activityId": 1, "activityName": "Tarea 1", "status": "graded",
+    { "studentId": 4, "activityId": 1, "activityName": "Tarea 1", "status": "graded", "submissionStatus": "submitted",
       "score": 8.5, "maxScore": 10, "submittedAt": "2026-10-10T12:00:00Z", "gradedAt": "2026-10-12T09:00:00Z" },
-    { "studentId": 5, "activityId": 1, "activityName": "Tarea 1", "status": "not_submitted",
+    { "studentId": 5, "activityId": 1, "activityName": "Tarea 1", "status": "not_submitted", "submissionStatus": "none",
       "score": null, "maxScore": 10, "submittedAt": null, "gradedAt": null }
   ],
   "total": 2,
@@ -101,7 +101,7 @@ Devuelve las calificaciones de un curso, opcionalmente de un estudiante o de una
 }
 ```
 
-La herramienta recorre las páginas del gateway hasta un máximo de 500 registros. Si hay más, devuelve `truncated: true` y el agente lo menciona.
+`submissionStatus` (`none`, `draft` o `submitted`) distingue a quien no entregó de quien dejó un borrador sin enviar. La herramienta recorre las páginas del gateway hasta un máximo de 500 registros. Si hay más, devuelve `truncated: true` y el agente lo menciona.
 
 ### 3.3 `obtener_progreso`
 
@@ -210,7 +210,8 @@ Obtiene los datos calculados para el informe del curso. No calcula nada: `analyt
 - Si `dataQuality` es `partial`, el agente avisa que el resultado es parcial.
 - Una alerta `NO_DATA` se explica como falta de datos, no como un problema del estudiante.
 - Una nota `pending_grading` o `not_submitted` (con `score` nulo) se redacta como "pendiente de calificar" o "sin entrega", nunca como 0.
-- Los borradores se tratan como no entregados según el borrador de S1-10 (`counts.draft`); esto sigue pendiente de confirmar con el Product Owner (pregunta 15 de los requisitos).
+- Una actividad con `completionState: not_available` (Moodle no tiene finalización configurada o no entrega información) se dice "finalización no disponible", nunca como incompleta ni como 0 %. En el gateway, `DATA_NOT_AVAILABLE` se reserva para cuando no se puede obtener el recurso completo (por ejemplo, un curso aún no sincronizado).
+- Un borrador llega como `submissionStatus: draft` con `status: not_submitted`, y los indicadores de analytics lo cuentan como no entregado (`counts.draft`). El agente lo redacta como "borrador sin enviar" y no como "sin entrega" a secas. La regla sigue pendiente de confirmar con el Product Owner (pregunta 15 de los requisitos).
 
 **Paginación y límites.** El gateway pagina notas, estudiantes y alertas con `page` (desde 1) y `pageSize` (1 a 200, por defecto 50). Los indicadores de curso y de estudiante y los datos del informe no se paginan. Límites del agente:
 
@@ -287,7 +288,7 @@ Se guarda una traza por mensaje, en el esquema `agent`. Estructura (JSON, los va
   "startedAt": "2026-10-22T15:04:05Z",
   "finishedAt": "2026-10-22T15:04:21Z",
   "teacherId": 3,
-  "model": "qwen2.5:3b",
+  "model": "qwen3:1.7b",
   "message": { "text": "¿Quién está en riesgo en el curso 2?", "redacted": false },
   "intent": "consulta_datos",
   "steps": [
