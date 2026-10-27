@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000">
+<rect width="1440" height="1000" fill="#ffffff"/>
+<rect x="24" y="22" width="1392" height="955" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="24" y="22" width="1392" height="58" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<circle cx="54" cy="51" r="14" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="83" y="58" font-family="Arial,DejaVu Sans,sans-serif" font-size="21" font-weight="700" fill="#222222" text-anchor="start">EduMonitor AI</text>
+<text x="1120" y="57" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="400" fill="#222222" text-anchor="start">Docente</text>
+<circle cx="1350" cy="51" r="14" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<line x1="24" y1="93" x2="1416" y2="93" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="24" y="93" width="178" height="883" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<circle cx="56" cy="126" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="132" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Cursos</text>
+<rect x="35" y="170" width="157" height="46" rx="0" fill="#e7e7e7" stroke="#c7c7c7" stroke-width="1.3"/>
+<circle cx="56" cy="193" r="10" fill="#dddddd" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="199" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Dashboard</text>
+<circle cx="56" cy="260" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="266" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Ficha individual</text>
+<circle cx="56" cy="327" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="333" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Alertas</text>
+<circle cx="56" cy="394" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="400" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Chat IA</text>
+<text x="40" y="929" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="start">Prototipo</text>
+<text x="40" y="953" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#777777" text-anchor="start">No funcional</text>
+<text x="237" y="128" font-family="Arial,DejaVu Sans,sans-serif" font-size="27" font-weight="700" fill="#222222" text-anchor="start">Dashboard del curso</text>
+<text x="1381" y="126" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="end">RI-03</text>
+<text x="237" y="164" font-family="Arial,DejaVu Sans,sans-serif" font-size="17" font-weight="700" fill="#222222" text-anchor="start">Curso: Matemáticas I   (seleccionar)</text>
+<text x="1050" y="164" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="start">Corte: última sincronización</text>
+<rect x="237" y="180" width="1144" height="51" rx="0" fill="#f4f4f4" stroke="#222222" stroke-width="1.3"/>
+<text x="252" y="209" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="400" fill="#222222" text-anchor="start">AVISO: datos parciales o no disponibles. Interpretar indicadores según disponibilidad.</text>
+<rect x="237" y="248" width="181" height="103" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="249" y="277" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="start">Estudiantes</text>
+<text x="249" y="321" font-family="Arial,DejaVu Sans,sans-serif" font-size="26" font-weight="700" fill="#222222" text-anchor="start">32</text>
+<rect x="430" y="248" width="181" height="103" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="442" y="277" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="start">Promedio</text>
+<text x="442" y="321" font-family="Arial,DejaVu Sans,sans-serif" font-size="26" font-weight="700" fill="#222222" text-anchor="start">7,8 / 10</text>
+<rect x="623" y="248" width="181" height="103" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="635" y="277" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="start">Tasa de entrega</text>
+<text x="635" y="321" font-family="Arial,DejaVu Sans,sans-serif" font-size="26" font-weight="700" fill="#222222" text-anchor="start">82 %</text>
+<rect x="816" y="248" width="181" height="103" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="828" y="277" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="start">Tasa de calificación</text>
+<text x="828" y="321" font-family="Arial,DejaVu Sans,sans-serif" font-size="26" font-weight="700" fill="#222222" text-anchor="start">68 %</text>
+<rect x="1009" y="248" width="181" height="103" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1021" y="277" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="start">Finalización</text>
+<text x="1021" y="321" font-family="Arial,DejaVu Sans,sans-serif" font-size="26" font-weight="700" fill="#222222" text-anchor="start">75 %</text>
+<rect x="1202" y="248" width="181" height="103" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1214" y="277" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="start">Pendientes de calificar</text>
+<text x="1214" y="321" font-family="Arial,DejaVu Sans,sans-serif" font-size="26" font-weight="700" fill="#222222" text-anchor="start">24</text>
+<rect x="237" y="369" width="532" height="213" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="237" y="369" width="532" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="249" y="393" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Distribución de calificaciones (escala 0-10)</text>
+<rect x="270" y="500" width="28" height="24" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="284" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">0</text>
+<rect x="312" y="499" width="28" height="25" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="326" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">1</text>
+<rect x="354" y="492" width="28" height="32" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="368" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">2</text>
+<rect x="396" y="478" width="28" height="46" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="410" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">3</text>
+<rect x="438" y="473" width="28" height="51" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="452" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">4</text>
+<rect x="480" y="451" width="28" height="73" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="494" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">5</text>
+<rect x="522" y="461" width="28" height="63" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="536" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">6</text>
+<rect x="564" y="441" width="28" height="83" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="578" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">7</text>
+<rect x="606" y="455" width="28" height="69" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="620" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">8</text>
+<rect x="648" y="469" width="28" height="55" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="662" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">9</text>
+<rect x="690" y="487" width="28" height="37" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="704" y="548" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#222222" text-anchor="middle">10</text>
+<text x="501" y="568" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">Calificación (0-10)</text>
+<rect x="785" y="369" width="319" height="213" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="785" y="369" width="319" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="797" y="393" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Entregas y calificación</text>
+<text x="799" y="427" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Entregadas</text>
+<rect x="799" y="436" width="277" height="14" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="799" y="436" width="189" height="14" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="799" y="475" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Sin entrega</text>
+<rect x="799" y="484" width="277" height="14" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="799" y="484" width="72" height="14" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<text x="799" y="523" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Por calificar</text>
+<rect x="799" y="532" width="277" height="14" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="799" y="532" width="120" height="14" rx="0" fill="#e7e7e7" stroke="#777777" stroke-width="1.3"/>
+<rect x="1118" y="369" width="263" height="213" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="1118" y="369" width="263" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="1130" y="393" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Alertas por severidad</text>
+<circle cx="1143" cy="430" r="9" fill="#e7e7e7" stroke="#222222" stroke-width="1.3"/>
+<text x="1160" y="435" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">critical</text>
+<text x="1354" y="435" font-family="Arial,DejaVu Sans,sans-serif" font-size="18" font-weight="700" fill="#222222" text-anchor="end">3</text>
+<circle cx="1143" cy="481" r="9" fill="#e7e7e7" stroke="#222222" stroke-width="1.3"/>
+<text x="1160" y="486" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">warning</text>
+<text x="1354" y="486" font-family="Arial,DejaVu Sans,sans-serif" font-size="18" font-weight="700" fill="#222222" text-anchor="end">5</text>
+<circle cx="1143" cy="532" r="9" fill="#e7e7e7" stroke="#222222" stroke-width="1.3"/>
+<text x="1160" y="537" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">info</text>
+<text x="1354" y="537" font-family="Arial,DejaVu Sans,sans-serif" font-size="18" font-weight="700" fill="#222222" text-anchor="end">8</text>
+<rect x="237" y="604" width="1144" height="211" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="237" y="604" width="1144" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="249" y="628" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Estudiantes del curso - listado paginado</text>
+<rect x="1077" y="614" width="284" height="29" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="1092" y="633.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#777777" text-anchor="start">Buscar estudiante...</text>
+<text x="250" y="676" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="start">Estudiante</text>
+<text x="680" y="676" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="start">Promedio (0-10)</text>
+<text x="865" y="676" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="start">Entregas</text>
+<text x="1055" y="676" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="start">Pend. de calificar</text>
+<text x="1223" y="676" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="start">Acción</text>
+<line x1="251" y1="689" x2="1362" y2="689" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="250" y="713" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Ana Pérez</text>
+<text x="730" y="713" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">8,5</text>
+<text x="865" y="713" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">10/12</text>
+<text x="1100" y="713" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">2</text>
+<rect x="1242" y="693" width="115" height="25" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1299.5" y="710.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Ver ficha</text>
+<text x="250" y="744" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Carlos Medina</text>
+<text x="730" y="744" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">7,2</text>
+<text x="865" y="744" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">9/12</text>
+<text x="1100" y="744" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">4</text>
+<rect x="1242" y="724" width="115" height="25" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1299.5" y="741.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Ver ficha</text>
+<text x="250" y="775" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">María González</text>
+<text x="730" y="775" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">9,1</text>
+<text x="865" y="775" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">12/12</text>
+<text x="1100" y="775" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">0</text>
+<rect x="1242" y="755" width="115" height="25" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1299.5" y="772.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Ver ficha</text>
+<text x="1040" y="804" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="start">Página 1 de 8</text>
+<rect x="1176" y="788" width="95" height="24" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1223.5" y="805.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Anterior</text>
+<rect x="1279" y="788" width="87" height="24" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1322.5" y="805.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Siguiente</text>
+<rect x="237" y="831" width="1144" height="134" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="237" y="831" width="1144" height="34" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="250" y="854" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">Estados de interfaz (RI-08) - vistas esquemáticas</text>
+<rect x="248.0" y="875" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="257.0" y="896" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Cargando</text>
+<text x="257.0" y="922" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Indicadores en espera</text>
+<rect x="530.75" y="875" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="539.75" y="896" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Error</text>
+<text x="539.75" y="922" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Reintentar consulta</text>
+<rect x="693.5" y="908" width="100" height="28" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="743.5" y="927.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Reintentar</text>
+<rect x="813.5" y="875" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="822.5" y="896" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Vacío</text>
+<text x="822.5" y="922" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Sin estudiantes</text>
+<rect x="1096.25" y="875" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="1105.25" y="896" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Parcial</text>
+<text x="1105.25" y="922" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Datos incompletos</text>
+</svg>

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000">
+<rect width="1440" height="1000" fill="#ffffff"/>
+<rect x="24" y="22" width="1392" height="955" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="24" y="22" width="1392" height="58" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<circle cx="54" cy="51" r="14" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="83" y="58" font-family="Arial,DejaVu Sans,sans-serif" font-size="21" font-weight="700" fill="#222222" text-anchor="start">EduMonitor AI</text>
+<text x="1120" y="57" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="400" fill="#222222" text-anchor="start">Docente</text>
+<circle cx="1350" cy="51" r="14" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<line x1="24" y1="93" x2="1416" y2="93" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="24" y="93" width="178" height="883" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="35" y="103" width="157" height="46" rx="0" fill="#e7e7e7" stroke="#c7c7c7" stroke-width="1.3"/>
+<circle cx="56" cy="126" r="10" fill="#dddddd" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="132" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Cursos</text>
+<circle cx="56" cy="193" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="199" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Dashboard</text>
+<circle cx="56" cy="260" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="266" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Ficha individual</text>
+<circle cx="56" cy="327" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="333" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Alertas</text>
+<circle cx="56" cy="394" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="400" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Chat IA</text>
+<text x="40" y="929" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="start">Prototipo</text>
+<text x="40" y="953" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#777777" text-anchor="start">No funcional</text>
+<text x="237" y="128" font-family="Arial,DejaVu Sans,sans-serif" font-size="27" font-weight="700" fill="#222222" text-anchor="start">Inicio de sesión</text>
+<text x="1381" y="126" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="end">RI-01</text>
+<text x="238" y="154" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="start">Acceso del docente a la aplicación; no incluye recuperación de contraseña (fuera del MVP).</text>
+<rect x="306" y="197" width="629" height="593" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="306" y="197" width="629" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="318" y="221" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Autenticación</text>
+<circle cx="620" cy="285" r="38" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="620" y="338" font-family="Arial,DejaVu Sans,sans-serif" font-size="26" font-weight="700" fill="#222222" text-anchor="middle">Iniciar sesión</text>
+<text x="350" y="393" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">Correo institucional *</text>
+<rect x="350" y="407" width="539" height="39" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="365" y="431.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#777777" text-anchor="start">correo@institucion.edu</text>
+<text x="350" y="480" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">Contraseña *</text>
+<rect x="350" y="495" width="539" height="39" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="365" y="519.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#777777" text-anchor="start">•••••••••••</text>
+<rect x="350" y="549" width="16" height="16" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="377" y="563" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Mostrar contraseña</text>
+<rect x="350" y="598" width="539" height="49" rx="0" fill="#e7e7e7" stroke="#222222" stroke-width="1.3"/>
+<text x="619.5" y="627.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Iniciar sesión</text>
+<text x="350" y="689" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">Validación</text>
+<line x1="350" y1="710" x2="835" y2="710" stroke="#c7c7c7" stroke-width="3"/>
+<line x1="350" y1="731" x2="692" y2="731" stroke="#c7c7c7" stroke-width="3"/>
+<text x="350" y="768" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="start">Los campos obligatorios se validan antes de enviar el formulario.</text>
+<rect x="958" y="197" width="422" height="593" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="958" y="197" width="422" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="970" y="221" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Variantes del formulario</text>
+<rect x="980" y="253" width="373" height="127" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="995" y="279" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">1. Validando credenciales...</text>
+<circle cx="1003" cy="320" r="12" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<line x1="1030" y1="317" x2="1297" y2="317" stroke="#c7c7c7" stroke-width="3"/>
+<line x1="1030" y1="336" x2="1222" y2="336" stroke="#c7c7c7" stroke-width="3"/>
+<rect x="980" y="395" width="373" height="155" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="995" y="422" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">2. Credenciales incorrectas</text>
+<line x1="995" y1="457" x2="1310" y2="457" stroke="#c7c7c7" stroke-width="3"/>
+<line x1="995" y1="478" x2="1216" y2="478" stroke="#c7c7c7" stroke-width="3"/>
+<rect x="995" y="499" width="160" height="33" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1075.0" y="520.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Volver a intentar</text>
+<rect x="980" y="567" width="373" height="140" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="995" y="594" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">3. Error de conexión</text>
+<line x1="995" y1="624" x2="1300" y2="624" stroke="#c7c7c7" stroke-width="3"/>
+<rect x="995" y="646" width="160" height="33" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1075.0" y="667.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Reintentar</text>
+<rect x="306" y="817" width="1074" height="130" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="326" y="849" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">Navegación después de autenticar</text>
+<line x1="326" y1="881" x2="1080" y2="881" stroke="#c7c7c7" stroke-width="3"/>
+<text x="326" y="918" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Inicio correcto → Cursos autorizados</text>
+</svg>
