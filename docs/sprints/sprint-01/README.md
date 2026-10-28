@@ -57,7 +57,7 @@ Estados: **Hecha** (en `develop` mediante PR revisada), **En revisión** (PR abi
 
 **Juan**
 - Sus cinco tareas individuales (S1-03, S1-11, S1-12, S1-14 y la parte de S1-16) están hechas.
-- Definir el cuerpo de `POST /chat` y el formato de errores en `docs/agent-design/` (pendiente de la sección 5.2 de los requisitos).
+- `POST /chat`, su formato de errores y la resolución de nombres de estudiantes están definidos en `docs/agent-design/diseno-agente.md` (secciones 2.1 y 3.8). Falta que Benjamín actualice RI-06 si hace falta.
 
 **Todos**
 - S1-01: confirmar el acuerdo de equipo.
