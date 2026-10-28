@@ -26,6 +26,23 @@
 | Tiempo máximo por mensaje | 60 s (meta del plan, sección 8.1) |
 | Temperatura | 0 para la selección de herramientas |
 
+### 2.1 `POST /chat`
+
+| Elemento | Definición |
+|---|---|
+| Encabezado | `Authorization: Bearer <JWT>` del docente (el mismo del login). Sin él, o si está vencido, no se llama al modelo ni a las herramientas. |
+| Cuerpo de la petición | `message`: texto del docente, obligatorio y no vacío. `courseId`: entero, opcional; es el curso de referencia que el docente elige en el chat. |
+| Respuesta 200 | El JSON de la sección 6 (`answer` y `meta`). `meta.courseId` repite el curso consultado. |
+| Errores HTTP | `400 VALIDATION_ERROR` (mensaje vacío o `courseId` inválido) y `401 TOKEN_INVALID` o `401 TOKEN_EXPIRED`. Formato del gateway (RFC 7807): `title`, `status`, `code`, `detail` y `traceId`. |
+
+Ejemplo de petición:
+
+```json
+{ "message": "¿Cómo va Ana en la Tarea 1?", "courseId": 2 }
+```
+
+Los fallos de una herramienta o del modelo **no son errores HTTP**: la respuesta es 200, con `meta.status` en `partial` o `error` y el motivo en `answer.unavailable`. Una consulta fuera de alcance responde 200 con `meta.status = refused`. Si el docente no indica `courseId` y la pregunta lo necesita, el agente usa `listar_cursos` y, si hay más de un curso, pregunta cuál.
+
 ## 3. Contrato de las herramientas
 
 Cada herramienta tiene un esquema de entrada y otro de salida, validados con Pydantic. Si la entrada del modelo no valida, la herramienta no se ejecuta y el agente recibe un error `VALIDATION_ERROR`.
@@ -80,6 +97,7 @@ Devuelve las calificaciones de un curso, opcionalmente de un estudiante o de una
   "properties": {
     "course_id": { "type": "integer", "description": "Id del curso en Moodle" },
     "student_id": { "type": "integer", "description": "Id del estudiante en Moodle" },
+    "student_name": { "type": "string", "description": "Nombre del estudiante; alternativa a student_id (ver 3.8)" },
     "activity_id": { "type": "integer", "description": "Id de la actividad" }
   }
 }
@@ -91,9 +109,9 @@ Devuelve las calificaciones de un curso, opcionalmente de un estudiante o de una
 {
   "courseId": 2,
   "items": [
-    { "studentId": 4, "activityId": 1, "activityName": "Tarea 1", "status": "graded", "submissionStatus": "submitted",
+    { "studentId": 4, "studentName": "Ana Ramírez", "activityId": 1, "activityName": "Tarea 1", "status": "graded", "submissionStatus": "submitted",
       "score": 8.5, "maxScore": 10, "submittedAt": "2026-10-10T12:00:00Z", "gradedAt": "2026-10-12T09:00:00Z" },
-    { "studentId": 5, "activityId": 1, "activityName": "Tarea 1", "status": "not_submitted", "submissionStatus": "none",
+    { "studentId": 5, "studentName": "Luis Mora", "activityId": 1, "activityName": "Tarea 1", "status": "not_submitted", "submissionStatus": "none",
       "score": null, "maxScore": 10, "submittedAt": null, "gradedAt": null }
   ],
   "total": 2,
@@ -125,6 +143,7 @@ De la ficha del estudiante (`StudentDetail`) la herramienta solo toma `activitie
   "properties": {
     "course_id": { "type": "integer", "description": "Id del curso en Moodle" },
     "student_id": { "type": "integer", "description": "Si se indica, devuelve los indicadores de ese estudiante" },
+    "student_name": { "type": "string", "description": "Nombre del estudiante; alternativa a student_id (ver 3.8)" },
     "snapshot_id": { "type": "string", "description": "Opcional. Por defecto, la última sincronización exitosa" }
   }
 }
@@ -146,7 +165,7 @@ De la ficha del estudiante (`StudentDetail`) la herramienta solo toma `activitie
 }
 ```
 
-Con `student_id`, la salida añade `activities`, tal como las devuelve `StudentDetail`:
+Con `student_id` o `student_name`, la salida añade `studentId`, `studentName` y `activities`, tal como las devuelve `StudentDetail`:
 
 ```json
 "activities": [
@@ -161,7 +180,7 @@ Los valores son ilustrativos; la forma es la del contrato. `completionState` pue
 
 Devuelve las alertas del curso con la evidencia de cada una (regla, valor observado, umbral y explicación; RF-12).
 
-- **Gateway:** `GET /api/v1/courses/{courseId}/analytics/alerts`, con `studentId`, `severity`, `page` y `pageSize` opcionales.
+- **Gateway:** `GET /api/v1/courses/{courseId}/analytics/alerts`, con `studentId`, `severity`, `status` (`active` o `resolved`, por defecto `active`), `page` y `pageSize` opcionales.
 - **Entrada:**
 
 ```json
@@ -171,7 +190,9 @@ Devuelve las alertas del curso con la evidencia de cada una (regla, valor observ
   "properties": {
     "course_id": { "type": "integer" },
     "student_id": { "type": "integer" },
+    "student_name": { "type": "string" },
     "severity": { "type": "string", "enum": ["info", "warning", "critical"] },
+    "status": { "type": "string", "enum": ["active", "resolved"], "default": "active" },
     "snapshot_id": { "type": "string" }
   }
 }
@@ -183,7 +204,7 @@ Devuelve las alertas del curso con la evidencia de cada una (regla, valor observ
 {
   "courseId": 2,
   "items": [
-    { "alertId": "al-001", "ruleCode": "LOW_AVERAGE", "courseId": 2, "studentId": 5,
+    { "alertId": "al-001", "ruleCode": "LOW_AVERAGE", "courseId": 2, "studentId": 5, "studentName": "Luis Mora",
       "severity": "warning", "status": "active", "detectedAt": "2026-10-22T14:05:00Z", "resolvedAt": null,
       "evidence": [ { "metric": "averageScore10", "observedValue": 4.0, "threshold": 6.0,
                       "numerator": null, "denominator": null, "sourceIds": ["grade-1", "grade-2"],
@@ -216,7 +237,7 @@ Obtiene los datos calculados para el informe del curso. No calcula nada: `analyt
 }
 ```
 
-- **Salida (`data`):** `CourseReportData` del contrato: `snapshot`, `periodStart` y `periodEnd` (pueden ser nulos), `metrics` (mapa de `Metric`), `findings` (lista de textos) y `activeAlertCount`. Para el informe completo el agente combina esta salida con `identificar_alertas` si el docente pide el detalle de las alertas.
+- **Salida (`data`):** `CourseReportData` del contrato: `snapshot`, `periodStart` y `periodEnd` (pueden ser nulos), `metrics` (mapa de `Metric`), `findings` (lista de `ReportFinding`: cada uno con `text` y, si existen, `alertId`, `ruleCode`, `studentId` y `metric`, para poder citar su origen) y `activeAlertCount`. Para el informe completo el agente combina esta salida con `identificar_alertas` si el docente pide el detalle de las alertas.
 - **Pendiente:** el contenido y el formato exacto del informe dependen de la pregunta 2 al Product Owner (secciones, período y formato). Por ahora el informe se redacta con los campos que entrega el contrato y con la fecha del snapshot.
 
 ### 3.6 Datos no disponibles, paginación y límites
@@ -228,7 +249,7 @@ Obtiene los datos calculados para el informe del curso. No calcula nada: `analyt
 - Una alerta `NO_DATA` se explica como falta de datos, no como un problema del estudiante.
 - Una nota `pending_grading` o `not_submitted` (con `score` nulo) se redacta como "pendiente de calificar" o "sin entrega", nunca como 0.
 - Una actividad con `completionState: not_available` (Moodle no tiene finalización configurada o no entrega información) se dice "finalización no disponible", nunca como incompleta ni como 0 %. En el gateway, `DATA_NOT_AVAILABLE` se reserva para cuando no se puede obtener el recurso completo (por ejemplo, un curso aún no sincronizado).
-- Un borrador llega como `submissionStatus: draft` con `status: not_submitted`, y los indicadores de analytics lo cuentan como no entregado (`counts.draft`). El agente lo redacta como "borrador sin enviar" y no como "sin entrega" a secas. La regla sigue pendiente de confirmar con el Product Owner (pregunta 15 de los requisitos).
+- Un borrador llega como `submissionStatus: draft` con `status: not_submitted`, y los indicadores de analytics lo cuentan como no entregado (`draftCount`, un subconjunto de `notSubmittedCount`). El agente lo redacta como "borrador sin enviar" y no como "sin entrega" a secas. La regla sigue pendiente de confirmar con el Product Owner (pregunta 15 de los requisitos).
 
 **Paginación y límites.** El gateway pagina notas, estudiantes y alertas con `page` (desde 1) y `pageSize` (1 a 200, por defecto 50). Los indicadores de curso y de estudiante y los datos del informe no se paginan. Límites del agente:
 
@@ -247,6 +268,15 @@ Obtiene los datos calculados para el informe del curso. No calcula nada: `analyt
 | `generar_resumen` | S5 | `GET /api/v1/courses/{courseId}/analytics/report` | `analytics.v1` (PR #6) |
 
 Las rutas de analytics están definidas en el contrato de `analytics-service`. El contrato del gateway (1.0.0) solo menciona que salen por él y no las lista; hay que confirmar con Mikel que las expone con esas mismas rutas.
+
+### 3.8 Estudiantes: nombres e identificadores
+
+Las notas, los indicadores y las alertas del gateway traen solo el `studentId`; el nombre (`fullName`) viene de `GET /api/v1/courses/{courseId}/students`. Para que el docente pueda preguntar y leer por nombre, **sin agregar herramientas ni cambiar contratos**:
+
+- **Entrada:** las herramientas que aceptan `student_id` aceptan también `student_name`, y solo se usa una de las dos. Con `student_name`, la herramienta busca en la lista de estudiantes del curso (sin distinguir mayúsculas ni tildes). Una coincidencia: continúa. Ninguna: error `STUDENT_NOT_FOUND`. Varias: error `VALIDATION_ERROR` con `candidates` (id y nombre de cada una) para que el agente pregunte cuál es.
+- **Salida:** cada fila que trae un `studentId` incluye `studentName`. Si no se pudo obtener, `studentName` es `null` y el agente escribe «estudiante» seguido del id.
+- **Origen:** la lista de estudiantes se pide por el gateway, con el JWT del docente y los mismos límites de paginación de la sección 3.6.
+- **Privacidad:** al modelo solo llega el nombre, nunca el correo (`email`). Las trazas guardan solo identificadores, sin nombres, hasta que el Product Owner responda la pregunta 9.
 
 ## 4. Flujo de LangGraph
 
