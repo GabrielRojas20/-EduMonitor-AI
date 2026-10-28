@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000">
+<rect width="1440" height="1000" fill="#ffffff"/>
+<rect x="24" y="22" width="1392" height="955" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="24" y="22" width="1392" height="58" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<circle cx="54" cy="51" r="14" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="83" y="58" font-family="Arial,DejaVu Sans,sans-serif" font-size="21" font-weight="700" fill="#222222" text-anchor="start">EduMonitor AI</text>
+<text x="1120" y="57" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="400" fill="#222222" text-anchor="start">Docente</text>
+<circle cx="1350" cy="51" r="14" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<line x1="24" y1="93" x2="1416" y2="93" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="24" y="93" width="178" height="883" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<circle cx="56" cy="126" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="132" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Cursos</text>
+<circle cx="56" cy="193" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="199" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Dashboard</text>
+<rect x="35" y="237" width="157" height="46" rx="0" fill="#e7e7e7" stroke="#c7c7c7" stroke-width="1.3"/>
+<circle cx="56" cy="260" r="10" fill="#dddddd" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="266" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Ficha individual</text>
+<circle cx="56" cy="327" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="333" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Alertas</text>
+<circle cx="56" cy="394" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="75" y="400" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Chat IA</text>
+<text x="40" y="929" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="start">Prototipo</text>
+<text x="40" y="953" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#777777" text-anchor="start">No funcional</text>
+<text x="237" y="128" font-family="Arial,DejaVu Sans,sans-serif" font-size="27" font-weight="700" fill="#222222" text-anchor="start">Ficha individual del estudiante</text>
+<text x="1381" y="126" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="end">RI-04</text>
+<text x="238" y="166" font-family="Arial,DejaVu Sans,sans-serif" font-size="21" font-weight="700" fill="#222222" text-anchor="start">Ana Pérez</text>
+<text x="740" y="166" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="400" fill="#222222" text-anchor="start">Curso: Matemáticas I</text>
+<rect x="1210" y="141" width="170" height="39" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1295.0" y="165.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Volver a curso</text>
+<rect x="237" y="183" width="1144" height="57" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="257" y="217" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Identificador del estudiante: EST-001   |   Datos académicos sincronizados por curso</text>
+<rect x="237" y="254" width="275" height="98" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="251" y="284" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="start">Promedio</text>
+<text x="251" y="326" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" font-weight="700" fill="#222222" text-anchor="start">8,5 / 10</text>
+<rect x="527" y="254" width="275" height="98" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="541" y="284" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="start">Entregadas</text>
+<text x="541" y="326" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" font-weight="700" fill="#222222" text-anchor="start">10 / 12</text>
+<rect x="817" y="254" width="275" height="98" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="831" y="284" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="start">Por calificar</text>
+<text x="831" y="326" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" font-weight="700" fill="#222222" text-anchor="start">2</text>
+<rect x="1107" y="254" width="275" height="98" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1121" y="284" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="start">Alertas del curso</text>
+<text x="1121" y="326" font-family="Arial,DejaVu Sans,sans-serif" font-size="25" font-weight="700" fill="#222222" text-anchor="start">1</text>
+<rect x="237" y="369" width="1144" height="336" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="237" y="369" width="1144" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="249" y="393" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Actividades - calificación, entrega y finalización</text>
+<text x="250" y="426" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Actividad</text>
+<text x="665" y="426" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Nota (0-10)</text>
+<text x="828" y="426" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Estado de entrega</text>
+<text x="1070" y="426" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Finalización</text>
+<line x1="249" y1="438" x2="1369" y2="438" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="250" y="476" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Cuestionario 1</text>
+<text x="690" y="476" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">8,5</text>
+<text x="828" y="476" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Entregada</text>
+<text x="1070" y="476" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Finalizada</text>
+<line x1="249" y1="492" x2="1369" y2="492" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="250" y="530" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Tarea 2</text>
+<text x="690" y="530" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">—</text>
+<text x="828" y="530" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Pendiente de calificar</text>
+<text x="1070" y="530" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Finalizada</text>
+<line x1="249" y1="546" x2="1369" y2="546" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="250" y="584" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Práctica 3</text>
+<text x="690" y="584" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">—</text>
+<text x="828" y="584" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Sin entrega</text>
+<text x="1070" y="584" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">No finalizada</text>
+<line x1="249" y1="600" x2="1369" y2="600" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="250" y="638" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Proyecto 1</text>
+<text x="690" y="638" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">—</text>
+<text x="828" y="638" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Borrador sin enviar</text>
+<text x="1070" y="638" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">No finalizada</text>
+<line x1="249" y1="654" x2="1369" y2="654" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="237" y="725" width="709" height="89" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="237" y="725" width="709" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="249" y="749" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Evidencia relacionada con alertas</text>
+<text x="250" y="782" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Regla aplicada → actividad / dato de origen → ver detalle</text>
+<rect x="965" y="725" width="416" height="89" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="965" y="725" width="416" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="977" y="749" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Acciones</text>
+<rect x="982" y="771" width="171" height="31" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1067.5" y="791.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Ver alertas</text>
+<rect x="1164" y="771" width="199" height="31" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1263.5" y="791.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Consultar al agente</text>
+<rect x="237" y="833" width="1144" height="134" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="237" y="833" width="1144" height="34" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="250" y="856" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">Estados de interfaz (RI-08) - vistas esquemáticas</text>
+<rect x="248.0" y="877" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="257.0" y="898" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Cargando</text>
+<text x="257.0" y="924" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Ficha en espera</text>
+<rect x="530.75" y="877" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="539.75" y="898" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Error</text>
+<text x="539.75" y="924" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Reintentar carga</text>
+<rect x="693.5" y="910" width="100" height="28" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="743.5" y="929.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Reintentar</text>
+<rect x="813.5" y="877" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="822.5" y="898" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Vacío</text>
+<text x="822.5" y="924" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Sin actividades</text>
+<rect x="1096.25" y="877" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="1105.25" y="898" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Parcial</text>
+<text x="1105.25" y="924" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Notas sin calificar</text>
+</svg>
