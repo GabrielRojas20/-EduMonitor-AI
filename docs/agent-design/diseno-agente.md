@@ -180,7 +180,7 @@ Los valores son ilustrativos; la forma es la del contrato. `completionState` pue
 
 Devuelve las alertas del curso con la evidencia de cada una (regla, valor observado, umbral y explicación; RF-12).
 
-- **Gateway:** `GET /api/v1/courses/{courseId}/analytics/alerts`, con `studentId`, `severity`, `page` y `pageSize` opcionales.
+- **Gateway:** `GET /api/v1/courses/{courseId}/analytics/alerts`, con `studentId`, `severity`, `status` (`active` o `resolved`, por defecto `active`), `page` y `pageSize` opcionales.
 - **Entrada:**
 
 ```json
@@ -192,6 +192,7 @@ Devuelve las alertas del curso con la evidencia de cada una (regla, valor observ
     "student_id": { "type": "integer" },
     "student_name": { "type": "string" },
     "severity": { "type": "string", "enum": ["info", "warning", "critical"] },
+    "status": { "type": "string", "enum": ["active", "resolved"], "default": "active" },
     "snapshot_id": { "type": "string" }
   }
 }
@@ -236,7 +237,7 @@ Obtiene los datos calculados para el informe del curso. No calcula nada: `analyt
 }
 ```
 
-- **Salida (`data`):** `CourseReportData` del contrato: `snapshot`, `periodStart` y `periodEnd` (pueden ser nulos), `metrics` (mapa de `Metric`), `findings` (lista de textos) y `activeAlertCount`. Para el informe completo el agente combina esta salida con `identificar_alertas` si el docente pide el detalle de las alertas.
+- **Salida (`data`):** `CourseReportData` del contrato: `snapshot`, `periodStart` y `periodEnd` (pueden ser nulos), `metrics` (mapa de `Metric`), `findings` (lista de `ReportFinding`: cada uno con `text` y, si existen, `alertId`, `ruleCode`, `studentId` y `metric`, para poder citar su origen) y `activeAlertCount`. Para el informe completo el agente combina esta salida con `identificar_alertas` si el docente pide el detalle de las alertas.
 - **Pendiente:** el contenido y el formato exacto del informe dependen de la pregunta 2 al Product Owner (secciones, período y formato). Por ahora el informe se redacta con los campos que entrega el contrato y con la fecha del snapshot.
 
 ### 3.6 Datos no disponibles, paginación y límites
@@ -248,7 +249,7 @@ Obtiene los datos calculados para el informe del curso. No calcula nada: `analyt
 - Una alerta `NO_DATA` se explica como falta de datos, no como un problema del estudiante.
 - Una nota `pending_grading` o `not_submitted` (con `score` nulo) se redacta como "pendiente de calificar" o "sin entrega", nunca como 0.
 - Una actividad con `completionState: not_available` (Moodle no tiene finalización configurada o no entrega información) se dice "finalización no disponible", nunca como incompleta ni como 0 %. En el gateway, `DATA_NOT_AVAILABLE` se reserva para cuando no se puede obtener el recurso completo (por ejemplo, un curso aún no sincronizado).
-- Un borrador llega como `submissionStatus: draft` con `status: not_submitted`, y los indicadores de analytics lo cuentan como no entregado (`counts.draft`). El agente lo redacta como "borrador sin enviar" y no como "sin entrega" a secas. La regla sigue pendiente de confirmar con el Product Owner (pregunta 15 de los requisitos).
+- Un borrador llega como `submissionStatus: draft` con `status: not_submitted`, y los indicadores de analytics lo cuentan como no entregado (`draftCount`, un subconjunto de `notSubmittedCount`). El agente lo redacta como "borrador sin enviar" y no como "sin entrega" a secas. La regla sigue pendiente de confirmar con el Product Owner (pregunta 15 de los requisitos).
 
 **Paginación y límites.** El gateway pagina notas, estudiantes y alertas con `page` (desde 1) y `pageSize` (1 a 200, por defecto 50). Los indicadores de curso y de estudiante y los datos del informe no se paginan. Límites del agente:
 
