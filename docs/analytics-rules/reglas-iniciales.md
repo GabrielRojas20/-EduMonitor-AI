@@ -86,7 +86,7 @@ completionRate = 100 * completedObserved / completionObservations
 ### 3.5 Pendientes de calificar
 
 ```text
-pendingGradingRate = 100 * pending_grading / (graded + pending_grading + not_submitted)
+pendingGradingRate = 100 * pending_grading / (gradedCount + pendingGradingCount + notSubmittedCount)
 ```
 
 Se muestra además el conteo absoluto. Un pendiente no se inventa como nota cero.
@@ -101,7 +101,7 @@ Indicadores mínimos de la ficha:
 - `submissionRate`.
 - `gradingRate`.
 - `completionRate`.
-- `gradedCount`, `pendingGradingCount`, `notSubmittedCount`.
+- `gradedCount`, `pendingGradingCount`, `notSubmittedCount`, `draftCount` (donde `draftCount` es un subconjunto de `notSubmittedCount`).
 - `dataQuality` y `calculatedAt`.
 
 No se calcula “promedio” con un valor imputado para una ausencia. Si no hay notas calificadas, se devuelve `averageScore10 = NULL`.

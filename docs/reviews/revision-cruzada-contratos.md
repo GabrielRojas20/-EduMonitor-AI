@@ -9,7 +9,7 @@
 | `api-gateway.v1.yaml` | Mikel | 1.0.0 | Aprobado con observaciones |
 | `auth-courses.v1.yaml` | Mikel | 1.0.0 | Aprobado con observaciones |
 | `moodle-sync.v1.yaml` | Mikel | 1.0.0 | Aprobado con observaciones |
-| `analytics.v1.yaml` | Gabriel | 1.0.0-borrador | Aprobado con observaciones |
+| `analytics.v1.yaml` | Gabriel | 1.0.0 | Observaciones O-12 a O-20 resueltas en esta PR |
 
 Ninguna observación bloquea el diseño del agente. Las marcadas como **Alta** conviene resolverlas antes de congelar los contratos y de generar el mock del gateway (Sprint 2, día 1).
 
@@ -70,15 +70,15 @@ Severidad: **Alta** afecta a la integración; **Media** puede causar errores o a
 
 | ID | Sev. | Observación | Propuesta | Responsable |
 |---|---|---|---|---|
-| O-12 | Media | `Counts` incluye `draft` como "borradores tratados como no entregados", y el gateway ya devuelve un borrador con `status: not_submitted`. No queda claro si `notSubmitted` incluye los borradores (y `draft` es un subconjunto) o si son disjuntos. Cambia la suma de los conteos y el denominador de `submissionRate`. | Aclarar en el contrato la relación entre `notSubmitted` y `draft` con un ejemplo numérico. | Gabriel |
-| O-13 | Media | `GET /analytics/alerts` no permite filtrar por `status` (`active`/`resolved`). El agente y la interfaz recibirían también las alertas resueltas. | Agregar el parámetro `status` con valor por defecto `active`. | Gabriel |
-| O-14 | Media | Analytics declara `bearerAuth` y respuestas `401` y `403`, pero no dice si valida el JWT o si, como `moodle-sync`, confía en el gateway. | Indicar el modelo de autorización igual que en `moodle-sync`. | Gabriel |
-| O-15 | Media | `CourseReportData.findings` es una lista de textos libres, sin referencia a la alerta o métrica que los origina. El agente no podría citar la fuente de un hallazgo (RF-12, RF-16). | Estructurar cada hallazgo (por ejemplo `ruleCode`, `studentId`, `metric`, `text`) o referenciar `alertId`. | Gabriel |
-| O-16 | Baja | Los nombres de las reglas iniciales no coinciden con el contrato: las reglas usan `averageScore10`, `gradedCount`, `pendingGradingCount`; el contrato usa `averageScore` y `counts.graded`, `counts.pendingGrading`. `AlertEvidence.metric` es texto libre, sin enumeración. | Unificar los nombres y listar los valores posibles de `AlertEvidence.metric`. | Gabriel |
-| O-17 | Baja | `VALIDATION_ERROR` existe como código, pero ninguna ruta declara `400` para `page`, `pageSize`, `severity` o `snapshotId` inválidos. | Añadir la respuesta `400`. | Gabriel |
-| O-18 | Baja | Existe el parámetro `snapshotId`, pero no hay ruta para listar los snapshots disponibles. | Aceptar que en el MVP solo se usa el último, o añadir la ruta. | Gabriel |
-| O-19 | Baja | `ruleCode` es una enumeración cerrada. RF-11 pide reglas configurables: cambiar umbrales no afecta al contrato, pero una regla nueva sí. | Dejarlo documentado como compatibilidad: añadir un valor se considera cambio compatible para los consumidores. | Gabriel |
-| O-20 | Baja | El archivo aún declara `1.0.0-borrador` y el puerto 5003 no aparece en los otros contratos. Los contratos se congelan el D4. | Declarar `1.0.0` cuando se resuelvan las observaciones. | Gabriel |
+| O-12 | Media | `Counts` incluía `draft` sin aclarar su relación con `notSubmitted`. | Resuelto: `notSubmittedCount` incluye borradores y `draftCount` es un subconjunto informativo que no se suma de nuevo. El contrato y `decisiones-s1-10.md` incluyen un ejemplo numérico. | Gabriel |
+| O-13 | Media | La ruta de alertas no permitía filtrar por estado. | Resuelto: se agregó `status` con `active` y `resolved`, por defecto `active`. | Gabriel |
+| O-14 | Media | Faltaba explicar el modelo de autorización de analytics. | Resuelto: recibe el JWT reenviado por el gateway, que valida el acceso al curso; analytics rechaza tokens ausentes o inválidos y los servicios internos quedan en red privada. | Gabriel |
+| O-15 | Media | `CourseReportData.findings` era una lista de textos libres. | Resuelto: cada hallazgo usa `ReportFinding` con `alertId`, `ruleCode`, `studentId`, `metric` y `text`. | Gabriel |
+| O-16 | Baja | Los nombres de métricas y conteos no coincidían y `AlertEvidence.metric` era texto libre. | Resuelto: se usan `averageScore10`, `gradedCount`, `pendingGradingCount`, `notSubmittedCount`, `draftCount` y una enumeración de métricas permitidas. | Gabriel |
+| O-17 | Baja | Las rutas no declaraban `400` para parámetros inválidos. | Resuelto: las rutas declaran `400 BadRequest` con `VALIDATION_ERROR`. | Gabriel |
+| O-18 | Baja | Existía `snapshotId`, pero no un catálogo de snapshots. | Resuelto: si se omite se usa la última sincronización exitosa; el MVP no expone catálogo de snapshots. | Gabriel |
+| O-19 | Baja | La configuración de umbrales y la evolución de `ruleCode` necesitaban una regla de compatibilidad. | Resuelto: los umbrales no cambian el contrato; nuevos códigos se agregan de forma compatible y quitar o renombrar requiere nueva versión. | Gabriel |
+| O-20 | Baja | El contrato aún estaba en borrador y faltaba alinear la configuración de puerto. | Resuelto: versión `1.0.0`; analytics usa `5003` y `.env.example` queda alineado. | Gabriel |
 
 ## 5. Impacto en el agente
 

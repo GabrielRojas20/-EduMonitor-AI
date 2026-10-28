@@ -22,7 +22,7 @@ Estados: **Hecha** (en `develop` mediante PR revisada), **En revisión** (PR abi
 | ID | Responsable | Tarea | Límite | Estado | Dónde está |
 |---|---|---|---|---|---|
 | S1-01 | Todos | Acordar alcance, roles y reglas de trabajo | D1 | Falta confirmación del equipo | Borrador en [`acuerdo-de-equipo.md`](acuerdo-de-equipo.md) |
-| S1-02 | Gabriel | Repositorio, carpetas por servicio, ramas protegidas y plantilla de PR | D1 | Hecha. Ramas protegidas: por confirmar en GitHub | [`.github/`](../../../.github/), [`CONTRIBUTING.md`](../../../CONTRIBUTING.md) |
+| S1-02 | Gabriel | Repositorio, carpetas por servicio, ramas protegidas y plantilla de PR | D1 | Hecha. Ramas protegidas verificadas | [evidencia de ramas](../../repository/branch-protection.md), [`.github/`](../../../.github/), [`CONTRIBUTING.md`](../../../CONTRIBUTING.md) |
 | S1-03 | Juan y Benjamín | Documento de requisitos y matriz de cumplimiento | D3 | Hecha. Falta la aceptación del Product Owner | [`requisitos.md`](../../requirements/requisitos.md) |
 | S1-04 | Benjamín | Tablero con las épicas de los seis sprints y las tareas del Sprint 1 | D2 | Por confirmar: el repositorio no enlaza el tablero | _Pendiente de enlace_ |
 | S1-05 | Mikel | Moodle en Docker, curso de prueba, usuarios, rol y token | D2 | Parcial: hay evidencia de que funciona, pero falta cómo levantarlo | [`infra/moodle/`](../../../infra/moodle/) |
@@ -30,7 +30,7 @@ Estados: **Hecha** (en `develop` mediante PR revisada), **En revisión** (PR abi
 | S1-07 | Mikel | Contratos OpenAPI del gateway, `auth-courses` y `moodle-sync` | D3 / D4 | Hecha. Observaciones abiertas | [`docs/contracts/`](../../contracts/) |
 | S1-08 | Gabriel | Diagrama entidad-relación | D3 | Hecha | [`diagrama-er.md`](../../data-model/diagrama-er.md) |
 | S1-09 | Gabriel | Fórmulas de indicadores y reglas de alerta iniciales | D4 | Hecha | [`reglas-iniciales.md`](../../analytics-rules/reglas-iniciales.md) |
-| S1-10 | Gabriel | Contrato OpenAPI de `analytics-service` | D4 | Hecha. Observaciones abiertas | [`analytics.v1.yaml`](../../contracts/analytics.v1.yaml) |
+| S1-10 | Gabriel | Contrato OpenAPI de `analytics-service` | D4 | PR de cierre preparada; pendiente de revisión | [`analytics.v1.yaml`](../../contracts/analytics.v1.yaml), [`decisiones-s1-10.md`](../../analytics-rules/decisiones-s1-10.md) |
 | S1-11 | Juan | Contrato de las herramientas del agente y flujo de LangGraph | D4 | Hecha | [`diseno-agente.md`](../../agent-design/diseno-agente.md) |
 | S1-12 | Juan | Ollama: modelos, tiempos, memoria y modelo elegido | D2 | Hecha | [`ollama-pruebas-modelos.md`](../../benchmarks/ollama-pruebas-modelos.md) |
 | S1-13 | Benjamín | Wireframes de baja fidelidad de las seis pantallas | D4 | En revisión (PR #19) | [`docs/wireframes/`](../../wireframes/) |
@@ -50,8 +50,8 @@ Estados: **Hecha** (en `develop` mediante PR revisada), **En revisión** (PR abi
 - S1-07: responder a las observaciones O-01 a O-11 de la revisión cruzada. La más importante es O-01: el gateway no lista las rutas de analytics.
 
 **Gabriel**
-- S1-02: confirmar en GitHub que `main` y `develop` tienen las ramas protegidas (PR obligatoria, una aprobación y CI en verde).
-- S1-10: responder a las observaciones O-12 a O-20, y declarar la versión `1.0.0` de `analytics.v1.yaml` cuando se resuelvan.
+- S1-02: verificación registrada en [`docs/repository/branch-protection.md`](../../repository/branch-protection.md); falta la revisión de otra persona y la aceptación del Product Owner.
+- S1-10: respuestas O-12 a O-20 registradas en [`decisiones-s1-10.md`](../../analytics-rules/decisiones-s1-10.md); contrato actualizado a `1.0.0`; falta revisión de los consumidores.
 - Corregir `.env.example` (`ANALYTICS_URL` apunta al puerto 5002, que es de `moodle-sync`; `OLLAMA_MODEL` sigue vacío) y la contradicción entre `.gitattributes` (`*.sql` con CRLF) y `.editorconfig` (LF).
 - Al cerrar el sprint: PR de `develop` a `main` (hoy `main` solo tiene la estructura inicial).
 
