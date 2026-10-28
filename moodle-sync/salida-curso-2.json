@@ -1,0 +1,224 @@
+{
+  "id": 2,
+  "shortName": "PRUEBA01",
+  "fullName": "Curso de Prueba EduMonitor",
+  "studentCount": 5,
+  "lastSyncAt": "2026-10-28T17:14:05.7704624+00:00",
+  "students": [
+    {
+      "student": {
+        "id": 4,
+        "fullName": "Estudiante Uno",
+        "email": "estudiante1@example.com"
+      },
+      "grades": [
+        {
+          "studentId": 4,
+          "activityId": 2,
+          "activityName": "Tarea 1",
+          "status": "graded",
+          "submissionStatus": "submitted",
+          "score": 8,
+          "maxScore": 10,
+          "submittedAt": "2026-10-21T03:48:38+00:00",
+          "gradedAt": "2026-10-21T03:48:56+00:00"
+        },
+        {
+          "studentId": 4,
+          "activityId": 3,
+          "activityName": "Tarea 2",
+          "status": "not_submitted",
+          "submissionStatus": "draft",
+          "score": null,
+          "maxScore": 100,
+          "submittedAt": null,
+          "gradedAt": null
+        }
+      ],
+      "activities": [
+        {
+          "activityId": 2,
+          "activityType": "assign",
+          "completionState": "complete"
+        },
+        {
+          "activityId": 3,
+          "activityType": "assign",
+          "completionState": "incomplete"
+        }
+      ]
+    },
+    {
+      "student": {
+        "id": 5,
+        "fullName": "Estudiante Dos",
+        "email": "estudiante2@example.com"
+      },
+      "grades": [
+        {
+          "studentId": 5,
+          "activityId": 2,
+          "activityName": "Tarea 1",
+          "status": "graded",
+          "submissionStatus": "submitted",
+          "score": 0,
+          "maxScore": 10,
+          "submittedAt": "2026-10-21T03:49:27+00:00",
+          "gradedAt": "2026-10-21T03:49:38+00:00"
+        },
+        {
+          "studentId": 5,
+          "activityId": 3,
+          "activityName": "Tarea 2",
+          "status": "graded",
+          "submissionStatus": "submitted",
+          "score": 90,
+          "maxScore": 100,
+          "submittedAt": "2026-10-22T04:10:34+00:00",
+          "gradedAt": "2026-10-22T04:10:46+00:00"
+        }
+      ],
+      "activities": [
+        {
+          "activityId": 2,
+          "activityType": "assign",
+          "completionState": "complete"
+        },
+        {
+          "activityId": 3,
+          "activityType": "assign",
+          "completionState": "complete"
+        }
+      ]
+    },
+    {
+      "student": {
+        "id": 6,
+        "fullName": "Estudiante Tres",
+        "email": "estudiante3@example.com"
+      },
+      "grades": [
+        {
+          "studentId": 6,
+          "activityId": 2,
+          "activityName": "Tarea 1",
+          "status": "pending_grading",
+          "submissionStatus": "submitted",
+          "score": null,
+          "maxScore": 10,
+          "submittedAt": "2026-10-21T03:50:18+00:00",
+          "gradedAt": null
+        },
+        {
+          "studentId": 6,
+          "activityId": 3,
+          "activityName": "Tarea 2",
+          "status": "not_submitted",
+          "submissionStatus": "none",
+          "score": null,
+          "maxScore": 100,
+          "submittedAt": null,
+          "gradedAt": null
+        }
+      ],
+      "activities": [
+        {
+          "activityId": 2,
+          "activityType": "assign",
+          "completionState": "incomplete"
+        },
+        {
+          "activityId": 3,
+          "activityType": "assign",
+          "completionState": "incomplete"
+        }
+      ]
+    },
+    {
+      "student": {
+        "id": 7,
+        "fullName": "Estudiante Cuatro",
+        "email": "estudiante4@example.com"
+      },
+      "grades": [
+        {
+          "studentId": 7,
+          "activityId": 2,
+          "activityName": "Tarea 1",
+          "status": "pending_grading",
+          "submissionStatus": "submitted",
+          "score": null,
+          "maxScore": 10,
+          "submittedAt": "2026-10-28T17:10:54+00:00",
+          "gradedAt": null
+        },
+        {
+          "studentId": 7,
+          "activityId": 3,
+          "activityName": "Tarea 2",
+          "status": "not_submitted",
+          "submissionStatus": "none",
+          "score": null,
+          "maxScore": 100,
+          "submittedAt": null,
+          "gradedAt": null
+        }
+      ],
+      "activities": [
+        {
+          "activityId": 2,
+          "activityType": "assign",
+          "completionState": "incomplete"
+        },
+        {
+          "activityId": 3,
+          "activityType": "assign",
+          "completionState": "incomplete"
+        }
+      ]
+    },
+    {
+      "student": {
+        "id": 8,
+        "fullName": "Estudiante Cinco",
+        "email": "estudiante5@example.com"
+      },
+      "grades": [
+        {
+          "studentId": 8,
+          "activityId": 2,
+          "activityName": "Tarea 1",
+          "status": "graded",
+          "submissionStatus": "submitted",
+          "score": 5,
+          "maxScore": 10,
+          "submittedAt": "2026-10-21T03:50:37+00:00",
+          "gradedAt": "2026-10-21T03:50:51+00:00"
+        },
+        {
+          "studentId": 8,
+          "activityId": 3,
+          "activityName": "Tarea 2",
+          "status": "not_submitted",
+          "submissionStatus": "none",
+          "score": null,
+          "maxScore": 100,
+          "submittedAt": null,
+          "gradedAt": null
+        }
+      ],
+      "activities": [
+        {
+          "activityId": 2,
+          "activityType": "assign",
+          "completionState": "complete"
+        },
+        {
+          "activityId": 3,
+          "activityType": "assign",
+          "completionState": "incomplete"
+        }
+      ]
+    }
+  ]
+}

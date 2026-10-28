@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
   title: EduMonitor AI - api-gateway
-  version: 1.0.0-borrador
+  version: 1.0.0
   description: |-
-    BORRADOR (S1-07). Único punto de entrada para la interfaz web y para el agente.
+    Único punto de entrada para la interfaz web y para el agente.
 
     CÓMO VIAJA EL TOKEN DEL DOCENTE HASTA EL AGENTE
     1. El docente inicia sesión con POST /api/v1/auth/login y recibe un JWT (accessToken).
@@ -14,19 +14,19 @@ info:
     6. El JWT no se guarda ni se escribe en las trazas del agente.
     7. Si el JWT vence durante una conversación, el gateway responde 401 TOKEN_EXPIRED y el agente avisa al docente para que inicie sesión de nuevo.
 
-    NOTA: las rutas de indicadores y alertas (analytics-service) también salen por este gateway; su contrato lo define Gabriel (S1-10).
+    Rutas de indicadores y alertas (analytics-service) integradas en el gateway (S1-07 / Obs 0-01).
     Todas las listas pueden devolver datos faltantes: un score null NO es 0 (ver GradeStatus).
 servers:
-- url: http://localhost:5000
-  description: Local (alinear puerto con docker-compose)
+  - url: http://localhost:5000
+    description: Local (alinear puerto con docker-compose)
 security:
-- bearerAuth: []
+  - bearerAuth: []
 paths:
   /api/v1/auth/login:
     post:
       operationId: login
       tags:
-      - auth
+        - auth
       security: []
       summary: Iniciar sesión
       requestBody:
@@ -44,14 +44,15 @@ paths:
                 $ref: '#/components/schemas/LoginResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
+
   /api/v1/me:
     get:
       operationId: getMe
       tags:
-      - auth
+        - auth
       summary: Usuario del token
       parameters:
-      - $ref: '#/components/parameters/requestId'
+        - $ref: '#/components/parameters/requestId'
       responses:
         '200':
           description: OK
@@ -61,14 +62,15 @@ paths:
                 $ref: '#/components/schemas/User'
         '401': &id001
           $ref: '#/components/responses/Unauthorized'
+
   /api/v1/courses:
     get:
       operationId: listCourses
       tags:
-      - courses
+        - courses
       summary: Cursos a los que el docente tiene acceso
       parameters:
-      - $ref: '#/components/parameters/requestId'
+        - $ref: '#/components/parameters/requestId'
       responses:
         '200':
           description: OK
@@ -79,17 +81,18 @@ paths:
                 items:
                   $ref: '#/components/schemas/Course'
         '401': *id001
+
   /api/v1/courses/{courseId}:
     get:
       operationId: getCourse
       tags:
-      - courses
+        - courses
       summary: Detalle de un curso
       parameters: &id006
-      - &id002
-        $ref: '#/components/parameters/courseId'
-      - &id003
-        $ref: '#/components/parameters/requestId'
+        - &id002
+          $ref: '#/components/parameters/courseId'
+        - &id003
+          $ref: '#/components/parameters/requestId'
       responses:
         '200':
           description: OK
@@ -102,17 +105,18 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404': &id005
           $ref: '#/components/responses/NotFound'
+
   /api/v1/courses/{courseId}/students:
     get:
       operationId: listStudents
       tags:
-      - courses
+        - courses
       summary: Estudiantes matriculados (rol Student)
       parameters:
-      - *id002
-      - *id003
-      - $ref: '#/components/parameters/page'
-      - $ref: '#/components/parameters/pageSize'
+        - *id002
+        - *id003
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
       responses:
         '200':
           description: OK
@@ -123,16 +127,17 @@ paths:
         '401': *id001
         '403': *id004
         '404': *id005
+
   /api/v1/courses/{courseId}/students/{studentId}:
     get:
       operationId: getStudent
       tags:
-      - courses
+        - courses
       summary: Ficha del estudiante con sus calificaciones
       parameters:
-      - *id002
-      - *id003
-      - $ref: '#/components/parameters/studentId'
+        - *id002
+        - *id003
+        - $ref: '#/components/parameters/studentId'
       responses:
         '200':
           description: OK
@@ -143,26 +148,27 @@ paths:
         '401': *id001
         '403': *id004
         '404': *id005
+
   /api/v1/courses/{courseId}/grades:
     get:
       operationId: listGrades
       tags:
-      - courses
+        - courses
       summary: Calificaciones por estudiante y actividad, con su estado
       description: Un registro por estudiante y actividad. Los estudiantes sin entrega aparecen con status not_submitted.
       parameters:
-      - *id002
-      - *id003
-      - $ref: '#/components/parameters/page'
-      - $ref: '#/components/parameters/pageSize'
-      - name: studentId
-        in: query
-        schema:
-          type: integer
-      - name: activityId
-        in: query
-        schema:
-          type: integer
+        - *id002
+        - *id003
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+        - name: activityId
+          in: query
+          schema:
+            type: integer
       responses:
         '200':
           description: OK
@@ -173,11 +179,12 @@ paths:
         '401': *id001
         '403': *id004
         '404': *id005
+
   /api/v1/courses/{courseId}/sync:
     post:
       operationId: startSync
       tags:
-      - sync
+        - sync
       summary: Sincronizar el curso con Moodle (manual)
       parameters: *id006
       responses:
@@ -197,7 +204,7 @@ paths:
     get:
       operationId: getSyncStatus
       tags:
-      - sync
+        - sync
       summary: Estado y fecha de la última sincronización
       parameters: *id006
       responses:
@@ -210,14 +217,77 @@ paths:
         '401': *id001
         '403': *id004
         '404': *id005
+
+  # --- RUTAS DE ANALYTICS (Resuelve Observación 0-01) ---
+  /api/v1/courses/{courseId}/analytics/summary:
+    get:
+      operationId: getCourseAnalyticsSummary
+      tags:
+        - analytics
+      summary: Obtiene el resumen global de indicadores analíticos del curso
+      parameters: *id006
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseAnalyticsSummary'
+        '401': *id001
+        '403': *id004
+        '404': *id005
+
+  /api/v1/courses/{courseId}/analytics/alerts:
+    get:
+      operationId: listStudentRiskAlerts
+      tags:
+        - analytics
+      summary: Obtiene el listado de estudiantes en riesgo académico y sus alertas
+      parameters:
+        - *id002
+        - *id003
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfRiskAlerts'
+        '401': *id001
+        '403': *id004
+        '404': *id005
+
+  /api/v1/courses/{courseId}/students/{studentId}/analytics:
+    get:
+      operationId: getStudentAnalytics
+      tags:
+        - analytics
+      summary: Obtiene el detalle analítico individual de un estudiante
+      parameters:
+        - *id002
+        - *id003
+        - $ref: '#/components/parameters/studentId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentAnalytics'
+        '401': *id001
+        '403': *id004
+        '404': *id005
+
 components:
   schemas:
     Problem:
       type: object
       required:
-      - title
-      - status
-      - code
+        - title
+        - status
+        - code
       description: Formato de error común (RFC 7807). `code` es estable y apto para programas; `detail` es para personas.
       properties:
         type:
@@ -231,25 +301,26 @@ components:
         code:
           type: string
           enum:
-          - INVALID_CREDENTIALS
-          - TOKEN_INVALID
-          - TOKEN_EXPIRED
-          - COURSE_NOT_AUTHORIZED
-          - COURSE_NOT_FOUND
-          - STUDENT_NOT_FOUND
-          - SYNC_IN_PROGRESS
-          - MOODLE_UNAVAILABLE
-          - DATA_NOT_AVAILABLE
-          - VALIDATION_ERROR
+            - INVALID_CREDENTIALS
+            - TOKEN_INVALID
+            - TOKEN_EXPIRED
+            - COURSE_NOT_AUTHORIZED
+            - COURSE_NOT_FOUND
+            - STUDENT_NOT_FOUND
+            - SYNC_IN_PROGRESS
+            - MOODLE_UNAVAILABLE
+            - DATA_NOT_AVAILABLE
+            - VALIDATION_ERROR
         traceId:
           type: string
           description: Igual al encabezado X-Request-Id, para seguir la petición entre servicios.
+
     Course:
       type: object
       required:
-      - id
-      - shortName
-      - fullName
+        - id
+        - shortName
+        - fullName
       properties:
         id:
           type: integer
@@ -265,11 +336,12 @@ components:
           type: string
           format: date-time
           nullable: true
+
     Student:
       type: object
       required:
-      - id
-      - fullName
+        - id
+        - fullName
       description: El estudiante se identifica por su id de Moodle. El username no llega al rol docente.
       properties:
         id:
@@ -279,22 +351,23 @@ components:
         email:
           type: string
           format: email
+
     GradeStatus:
       type: string
       enum:
-      - graded
-      - pending_grading
-      - not_submitted
-      description: graded = calificado (una nota 0 es graded con score 0). pending_grading = entregó y falta calificar (score
-        null). not_submitted = no entregó (score null). Un score null nunca debe contarse como 0.
+        - graded
+        - pending_grading
+        - not_submitted
+      description: graded = calificado (una nota 0 es graded con score 0). pending_grading = entregó y falta calificar (score null). not_submitted = no entregó (score null). Un score null nunca debe contarse como 0.
+
     GradeEntry:
       type: object
       required:
-      - studentId
-      - activityId
-      - activityName
-      - status
-      - maxScore
+        - studentId
+        - activityId
+        - activityName
+        - status
+        - maxScore
       properties:
         studentId:
           type: integer
@@ -318,11 +391,12 @@ components:
           type: string
           format: date-time
           nullable: true
+
     StudentDetail:
       type: object
       required:
-      - student
-      - grades
+        - student
+        - grades
       properties:
         student:
           $ref: '#/components/schemas/Student'
@@ -330,18 +404,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GradeEntry'
+
     SyncStatus:
       type: object
       required:
-      - state
+        - state
       properties:
         state:
           type: string
           enum:
-          - never
-          - running
-          - succeeded
-          - failed
+            - never
+            - running
+            - succeeded
+            - failed
         startedAt:
           type: string
           format: date-time
@@ -357,178 +432,4 @@ components:
         errorCode:
           type: string
           nullable: true
-        message:
-          type: string
-          nullable: true
-    SyncAccepted:
-      type: object
-      required:
-      - syncId
-      - state
-      properties:
-        syncId:
-          type: string
-        state:
-          type: string
-          enum:
-          - running
-    User:
-      type: object
-      required:
-      - id
-      - name
-      - role
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        role:
-          type: string
-          enum:
-          - teacher
-          - admin
-    LoginRequest:
-      type: object
-      required:
-      - email
-      - password
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-    LoginResponse:
-      type: object
-      required:
-      - accessToken
-      - tokenType
-      - expiresIn
-      - user
-      properties:
-        accessToken:
-          type: string
-          description: JWT.
-        tokenType:
-          type: string
-          enum:
-          - Bearer
-        expiresIn:
-          type: integer
-          description: Segundos de vigencia.
-          example: 3600
-        user:
-          $ref: '#/components/schemas/User'
-    PageOfStudents:
-      type: object
-      required:
-      - items
-      - page
-      - pageSize
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Student'
-        page:
-          type: integer
-        pageSize:
-          type: integer
-        total:
-          type: integer
-    PageOfGrades:
-      type: object
-      required:
-      - items
-      - page
-      - pageSize
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/GradeEntry'
-        page:
-          type: integer
-        pageSize:
-          type: integer
-        total:
-          type: integer
-  parameters:
-    courseId:
-      name: courseId
-      in: path
-      required: true
-      schema:
-        type: integer
-      description: Id del curso en Moodle.
-    studentId:
-      name: studentId
-      in: path
-      required: true
-      schema:
-        type: integer
-      description: Id del estudiante en Moodle.
-    page:
-      name: page
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        default: 1
-    pageSize:
-      name: pageSize
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 200
-        default: 50
-    requestId:
-      name: X-Request-Id
-      in: header
-      schema:
-        type: string
-      description: Opcional. Si no llega, el gateway lo genera y lo reenvía a todos los servicios.
-  responses:
-    Unauthorized:
-      description: Token ausente, inválido o vencido (TOKEN_INVALID, TOKEN_EXPIRED, INVALID_CREDENTIALS).
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    Forbidden:
-      description: El usuario no tiene acceso a ese curso (COURSE_NOT_AUTHORIZED).
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    NotFound:
-      description: Curso o estudiante inexistente (COURSE_NOT_FOUND, STUDENT_NOT_FOUND).
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    Conflict:
-      description: Ya hay una sincronización en curso (SYNC_IN_PROGRESS).
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-    Unavailable:
-      description: Moodle o un servicio interno no responde (MOODLE_UNAVAILABLE).
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+        message
