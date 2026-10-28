@@ -3,7 +3,7 @@
 **Tarea:** S1-13
 **Sprint:** 1
 **Responsable:** Benjamín (@99benjaminb)
-**Estado:** propuesta corregida, pendiente de nueva revisión
+**Estado:** propuesta corregida, pendiente de revisión final
 
 ## 1. Objetivo y alcance
 
@@ -50,7 +50,7 @@ Muestra calificaciones por actividad, **estado de entrega** y **estado de finali
 
 ![Alertas](05-alertas.png)
 
-Permite filtrar y consultar alertas por curso, regla y **severidad** (`info`, `warning`, `critical`), con panel de evidencia y trazabilidad de la información usada. No se dibuja un editor de reglas: **«Configurar reglas» está pendiente y no cuenta con pantalla ni endpoint en el MVP**.
+Permite consultar alertas por curso y filtrar por **severidad** (`info`, `warning`, `critical`), con panel de evidencia y trazabilidad de la información usada. El listado incorpora un **estado visible por alerta (Activo o Resuelto)**, independiente de la severidad. **No se ofrece filtro por regla**, porque no existe el parámetro `ruleCode` en el contrato de consulta de alertas del MVP. La regla puede mostrarse como información de cada alerta, pero no se presenta como filtro. No se dibuja un editor de reglas: **«Configurar reglas» está pendiente y no cuenta con pantalla ni endpoint en el MVP**.
 
 ### 2.6 Chat con el agente (RI-06)
 
@@ -73,7 +73,7 @@ La respuesta se estructura en **Hechos**, **Inferencias** y **Recomendaciones**,
 - Chat: foros, registros de acceso, contenido de curso como fuentes; preguntas sugeridas basadas en participación; historial persistente de consultas.
 - Login: recuperación de contraseña («¿Olvidaste tu contraseña?»).
 - Cursos: botón de sincronización global.
-- Alertas: control funcional «Configurar reglas» (pendiente de diseño y contrato).
+- Alertas: filtro por regla (`ruleCode`) y control funcional «Configurar reglas» (pendiente de diseño y contrato).
 
 ## 5. Estados de interfaz — RI-08
 
@@ -89,6 +89,7 @@ Las imágenes `.png` son los entregables de visualización en GitHub. Los archiv
 - [x] Se corrigió la correspondencia funcional señalada en la revisión de PR #19.
 - [x] Se completó la documentación y la trazabilidad RI-01 a RI-06 y RI-08.
 - [x] Se prepararon archivos PNG optimizados y fuentes SVG editables.
+- [x] Se retiró el filtro de regla y se incorporó el estado de alerta en RI-05.
 - [ ] Revisión de las correcciones por el equipo.
 - [ ] Aceptación del Product Owner cuando corresponda.
 - [ ] Integración en `develop` después de las aprobaciones.

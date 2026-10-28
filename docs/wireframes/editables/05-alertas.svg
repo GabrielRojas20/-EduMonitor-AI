@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000">
-<rect width="1440" height="1000" fill="#ffffff"/>
-<rect x="24" y="22" width="1392" height="955" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<rect x="24" y="22" width="1392" height="58" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="0" y="0" width="1440" height="1000" fill="#ffffff" stroke="#ffffff" stroke-width="0"/>
+<rect x="24" y="22" width="1392" height="955" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="24" y="22" width="1392" height="58" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
 <circle cx="54" cy="51" r="14" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
 <text x="83" y="58" font-family="Arial,DejaVu Sans,sans-serif" font-size="21" font-weight="700" fill="#222222" text-anchor="start">EduMonitor AI</text>
 <text x="1120" y="57" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="400" fill="#222222" text-anchor="start">Docente</text>
 <circle cx="1350" cy="51" r="14" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
 <line x1="24" y1="93" x2="1416" y2="93" stroke="#c7c7c7" stroke-width="1.3"/>
-<rect x="24" y="93" width="178" height="883" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="24" y="93" width="178" height="883" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
 <circle cx="56" cy="126" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
 <text x="75" y="132" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Cursos</text>
 <circle cx="56" cy="193" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
 <text x="75" y="199" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Dashboard</text>
 <circle cx="56" cy="260" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
 <text x="75" y="266" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Ficha individual</text>
-<rect x="35" y="304" width="157" height="46" rx="0" fill="#e7e7e7" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="35" y="304" width="157" height="46" fill="#e7e7e7" stroke="#c7c7c7" stroke-width="1.3"/>
 <circle cx="56" cy="327" r="10" fill="#dddddd" stroke="#222222" stroke-width="1.3"/>
 <text x="75" y="333" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Alertas</text>
 <circle cx="56" cy="394" r="10" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
@@ -23,81 +23,89 @@
 <text x="40" y="953" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#777777" text-anchor="start">No funcional</text>
 <text x="237" y="128" font-family="Arial,DejaVu Sans,sans-serif" font-size="27" font-weight="700" fill="#222222" text-anchor="start">Alertas académicas</text>
 <text x="1381" y="126" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="end">RI-05</text>
-<rect x="237" y="157" width="280" height="39" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="252" y="181.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#777777" text-anchor="start">Curso: Matemáticas I ▾</text>
-<rect x="530" y="157" width="271" height="39" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="545" y="181.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#777777" text-anchor="start">Severidad: todas ▾</text>
-<rect x="814" y="157" width="258" height="39" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="829" y="181.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#777777" text-anchor="start">Regla: todas ▾</text>
-<rect x="1085" y="157" width="296" height="37" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<text x="1233.0" y="180.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Aplicar filtros</text>
-<text x="238" y="226" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="start">Severidad admitida por las reglas: info / warning / critical. No equivale a “riesgo alto/medio/bajo”.</text>
-<rect x="237" y="248" width="1144" height="346" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<rect x="237" y="248" width="1144" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="237" y="157" width="382" height="39" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="252" y="182" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#777777" text-anchor="start">Curso: Matemáticas I  v</text>
+<rect x="631" y="157" width="365" height="39" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="646" y="182" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#777777" text-anchor="start">Severidad: todas  v</text>
+<rect x="1085" y="157" width="296" height="39" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1233.0" y="181.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Aplicar filtros</text>
+<text x="238" y="226" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="start">Severidad: info / warning / critical. Estado: activo o resuelto. No equivale a nivel de riesgo.</text>
+<rect x="237" y="248" width="1144" height="346" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="237" y="248" width="1144" height="37" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
 <text x="249" y="272" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Alertas detectadas - seleccionar una para ver su evidencia</text>
 <text x="251" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Estudiante</text>
-<text x="526" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Regla</text>
-<text x="850" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Severidad</text>
-<text x="1000" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Fecha</text>
-<text x="1240" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Acción</text>
+<text x="448" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Regla</text>
+<text x="729" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Severidad</text>
+<text x="871" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Estado</text>
+<text x="1021" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Fecha</text>
+<text x="1225" y="307" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Acción</text>
 <line x1="250" y1="321" x2="1368" y2="321" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="251" y="361" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Carlos Medina</text>
-<text x="526" y="361" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Entregas sin registrar</text>
-<rect x="846" y="336" width="109" height="32" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="901" y="357" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">critical</text>
-<text x="1000" y="361" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">2026-10-27</text>
-<rect x="1225" y="337" width="137" height="31" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<text x="1293.5" y="357.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Ver evidencia</text>
+<text x="251" y="361" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Carlos Medina</text>
+<text x="448" y="361" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Entregas pendientes</text>
+<rect x="729" y="336" width="100" height="30" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="779.0" y="356" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">critical</text>
+<rect x="869" y="336" width="108" height="30" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="923.0" y="356" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">Activo</text>
+<text x="1021" y="361" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="start">2026-10-27</text>
+<rect x="1225" y="337" width="137" height="31" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1293.5" y="357.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">Ver evidencia</text>
 <line x1="250" y1="378" x2="1368" y2="378" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="251" y="416" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Ana Pérez</text>
-<text x="526" y="416" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Entrega pendiente</text>
-<rect x="846" y="391" width="109" height="32" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="901" y="412" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">warning</text>
-<text x="1000" y="416" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">2026-10-27</text>
-<rect x="1225" y="392" width="137" height="31" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<text x="1293.5" y="412.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Ver evidencia</text>
+<text x="251" y="416" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Ana Pérez</text>
+<text x="448" y="416" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Entrega pendiente</text>
+<rect x="729" y="391" width="100" height="30" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="779.0" y="411" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">warning</text>
+<rect x="869" y="391" width="108" height="30" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="923.0" y="411" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">Resuelto</text>
+<text x="1021" y="416" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="start">2026-10-27</text>
+<rect x="1225" y="392" width="137" height="31" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1293.5" y="412.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">Ver evidencia</text>
 <line x1="250" y1="433" x2="1368" y2="433" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="251" y="471" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">María González</text>
-<text x="526" y="471" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Actividad sin calificar</text>
-<rect x="846" y="446" width="109" height="32" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="901" y="467" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">info</text>
-<text x="1000" y="471" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">2026-10-27</text>
-<rect x="1225" y="447" width="137" height="31" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<text x="1293.5" y="467.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Ver evidencia</text>
+<text x="251" y="471" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">María González</text>
+<text x="448" y="471" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Sin calificar</text>
+<rect x="729" y="446" width="100" height="30" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="779.0" y="466" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">info</text>
+<rect x="869" y="446" width="108" height="30" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="923.0" y="466" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">Activo</text>
+<text x="1021" y="471" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="start">2026-10-27</text>
+<rect x="1225" y="447" width="137" height="31" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1293.5" y="467.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">Ver evidencia</text>
 <line x1="250" y1="488" x2="1368" y2="488" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="251" y="526" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Luis Ramírez</text>
-<text x="526" y="526" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Faltan actividades</text>
-<rect x="846" y="501" width="109" height="32" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="901" y="522" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">warning</text>
-<text x="1000" y="526" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">2026-10-27</text>
-<rect x="1225" y="502" width="137" height="31" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<text x="1293.5" y="522.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Ver evidencia</text>
+<text x="251" y="526" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Luis Ramírez</text>
+<text x="448" y="526" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Faltan actividades</text>
+<rect x="729" y="501" width="100" height="30" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="779.0" y="521" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">warning</text>
+<rect x="869" y="501" width="108" height="30" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="923.0" y="521" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="middle">Activo</text>
+<text x="1021" y="526" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#222222" text-anchor="start">2026-10-27</text>
+<rect x="1225" y="502" width="137" height="31" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="1293.5" y="522.5" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">Ver evidencia</text>
 <line x1="250" y1="543" x2="1368" y2="543" stroke="#c7c7c7" stroke-width="1.3"/>
-<rect x="237" y="615" width="1144" height="194" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<rect x="237" y="615" width="1144" height="37" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="250" y="574" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#777777" text-anchor="start">Tabla ilustrativa: estado visible por alerta (activo / resuelto).</text>
+<rect x="237" y="615" width="1144" height="194" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="237" y="615" width="1144" height="37" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
 <text x="249" y="639" font-family="Arial,DejaVu Sans,sans-serif" font-size="16" font-weight="700" fill="#222222" text-anchor="start">Detalle de alerta y trazabilidad</text>
 <text x="253" y="672" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">Estudiante: Carlos Medina</text>
-<text x="253" y="702" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Regla: entregas pendientes | Severidad: critical</text>
-<text x="253" y="730" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Hecho verificado: actividad no entregada | Fuente: estado de entrega en Moodle</text>
+<text x="253" y="700" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="400" fill="#222222" text-anchor="start">Regla: entregas pendientes   |   Severidad: critical   |   Estado: Activo</text>
+<text x="253" y="729" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#222222" text-anchor="start">Hecho verificable: actividad no entregada   |   Fuente: estado de entrega en Moodle</text>
 <line x1="253" y1="759" x2="995" y2="759" stroke="#c7c7c7" stroke-width="3"/>
-<rect x="1071" y="674" width="293" height="34" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="1071" y="674" width="293" height="34" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
 <text x="1217.5" y="696.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Abrir ficha individual</text>
-<text x="1071" y="752" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="400" fill="#777777" text-anchor="start">Configurar reglas: pendiente, sin pantalla en MVP.</text>
-<rect x="237" y="833" width="1144" height="134" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<rect x="237" y="833" width="1144" height="34" rx="0" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
-<text x="250" y="856" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">Estados de interfaz (RI-08) - vistas esquemáticas</text>
-<rect x="248.0" y="877" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="1071" y="752" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="400" fill="#777777" text-anchor="start">Configurar reglas: fuera de MVP (sin pantalla).</text>
+<rect x="237" y="833" width="1144" height="134" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<rect x="237" y="833" width="1144" height="34" fill="#f4f4f4" stroke="#c7c7c7" stroke-width="1.3"/>
+<text x="250" y="856" font-family="Arial,DejaVu Sans,sans-serif" font-size="15" font-weight="700" fill="#222222" text-anchor="start">Estados de interfaz (RI-08) - representaciones esquemáticas</text>
+<rect x="248.0" y="877" width="273.75" height="77" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
 <text x="257.0" y="898" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Cargando</text>
 <text x="257.0" y="924" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Consultando alertas</text>
-<rect x="530.75" y="877" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="530.75" y="877" width="273.75" height="77" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
 <text x="539.75" y="898" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Error</text>
 <text x="539.75" y="924" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Reintentar consulta</text>
-<rect x="693.5" y="910" width="100" height="28" rx="0" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
-<text x="743.5" y="929.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Reintentar</text>
-<rect x="813.5" y="877" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="693.75" y="910" width="100" height="28" fill="#ffffff" stroke="#222222" stroke-width="1.3"/>
+<text x="743.75" y="929.0" font-family="Arial,DejaVu Sans,sans-serif" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">Reintentar</text>
+<rect x="813.5" y="877" width="273.75" height="77" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
 <text x="822.5" y="898" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Vacío</text>
 <text x="822.5" y="924" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">No se detectan alertas</text>
-<rect x="1096.25" y="877" width="273.75" height="77" rx="0" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
+<rect x="1096.25" y="877" width="273.75" height="77" fill="#ffffff" stroke="#c7c7c7" stroke-width="1.3"/>
 <text x="1105.25" y="898" font-family="Arial,DejaVu Sans,sans-serif" font-size="14" font-weight="700" fill="#222222" text-anchor="start">Parcial</text>
-<text x="1105.25" y="924" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Faltan datos de curso</text>
+<text x="1105.25" y="924" font-family="Arial,DejaVu Sans,sans-serif" font-size="11" font-weight="400" fill="#777777" text-anchor="start">Faltan datos del curso</text>
 </svg>
