@@ -136,13 +136,13 @@ De la ficha del estudiante (`StudentDetail`) la herramienta solo toma `activitie
 {
   "courseId": 2,
   "snapshot": { "snapshotId": "s-001", "syncId": "y-001", "calculatedAt": "2026-10-22T14:05:00Z", "dataQuality": "partial" },
-  "averageScore":       { "value": 4.0, "unit": "score_0_10", "status": "available", "numerator": null, "denominator": null },
+  "averageScore10":    { "value": 4.0, "unit": "score_0_10", "status": "available", "numerator": null, "denominator": null },
   "submissionRate":     { "value": 50.0, "unit": "percent", "status": "available", "numerator": 2, "denominator": 4 },
   "gradingRate":        { "value": 100.0, "unit": "percent", "status": "available", "numerator": 2, "denominator": 2 },
   "completionRate":     { "value": null, "unit": "percent", "status": "unavailable", "code": "DATA_NOT_AVAILABLE",
                           "detail": "Moodle no configuró el seguimiento de finalización." },
   "pendingGradingRate": { "value": 25.0, "unit": "percent", "status": "available", "numerator": 1, "denominator": 4 },
-  "counts": { "graded": 2, "pendingGrading": 1, "notSubmitted": 1, "draft": 0 }
+  "counts": { "gradedCount": 2, "pendingGradingCount": 1, "notSubmittedCount": 1, "draftCount": 0 }
 }
 ```
 
@@ -380,7 +380,7 @@ Reglas del formato:
 | Con | Qué se necesita | Quién decide |
 |---|---|---|
 | Mikel | Confirmar que el gateway expone las rutas de analytics (`/analytics`, `/analytics/students/{id}`, `/analytics/alerts` y `/analytics/report`) con esas mismas rutas, y que reenvía `X-Request-Id` | Mikel |
-| Gabriel | Dudas sobre `analytics.v1`: (1) las alertas no se pueden filtrar por `status` (`active` o `resolved`), así que el agente recibiría también las resueltas; (2) `findings` del informe es una lista de textos, sin referencia a la alerta o métrica de origen; (3) el archivo aún declara la versión `1.0.0-borrador` y el puerto 5003, que no aparece en los otros contratos | Gabriel |
+| Gabriel | O-12 a O-20 resueltas en la PR de cierre de analytics: filtro de estado, hallazgos trazables, nombres de métricas, errores `400`, snapshots del MVP, compatibilidad de reglas, versión `1.0.0` y puerto `5003` | Gabriel |
 | Benjamín | Cómo se muestran en el chat los tres bloques (hechos, inferencias, recomendaciones) y los datos no disponibles | Benjamín |
 | Product Owner | Memoria de la conversación (pregunta 4), nombres en trazas (pregunta 9), evaluación del agente (pregunta 8), formato del informe (pregunta 2) y tratamiento del borrador (pregunta 15 de los requisitos) | Product Owner |
 

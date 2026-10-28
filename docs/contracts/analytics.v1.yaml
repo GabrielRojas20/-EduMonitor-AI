@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: EduMonitor AI - analytics-service
-  version: 1.0.0-borrador
+  version: 1.0.0
   description: |-
     Contrato v1 del servicio de indicadores y alertas. El servicio es interno;
     la interfaz y el agente lo consumen a través del api-gateway.
@@ -9,6 +9,14 @@ info:
     Analytics calcula de forma determinista sobre la última sincronización
     exitosa de Moodle. No recibe ni persiste onlinetext. score null nunca se
     convierte en 0. La escala funcional del MVP es 0 a 10.
+
+    Autorización: recibe el JWT reenviado por el api-gateway. El gateway valida
+    la firma, expiración y acceso del docente al curso antes de invocar este
+    servicio; analytics vuelve a rechazar tokens ausentes o inválidos. El
+    servicio no publica un puerto fuera de la red interna en el despliegue.
+
+    Si snapshotId se omite, todas las operaciones consultan la última
+    sincronización exitosa. El MVP no expone un catálogo de snapshots.
 servers:
 - url: http://localhost:5003
   description: Local (alinear puerto con docker-compose)
@@ -39,6 +47,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CourseAnalytics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -65,6 +75,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StudentAnalytics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -85,6 +97,7 @@ paths:
       - $ref: '#/components/parameters/snapshotId'
       - $ref: '#/components/parameters/studentIdQuery'
       - $ref: '#/components/parameters/severity'
+      - $ref: '#/components/parameters/alertStatus'
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/pageSize'
       responses:
@@ -94,6 +107,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageOfAlerts'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -120,6 +135,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CourseReportData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -162,23 +179,23 @@ components:
     Counts:
       type: object
       required:
-      - graded
-      - pendingGrading
-      - notSubmitted
+      - gradedCount
+      - pendingGradingCount
+      - notSubmittedCount
       properties:
-        graded:
+        gradedCount:
           type: integer
           minimum: 0
-        pendingGrading:
+        pendingGradingCount:
           type: integer
           minimum: 0
-        notSubmitted:
+        notSubmittedCount:
           type: integer
           minimum: 0
-        draft:
+        draftCount:
           type: integer
           minimum: 0
-          description: Borradores tratados como no entregados para los indicadores del MVP.
+          description: Subconjunto de notSubmittedCount correspondiente a borradores sin enviar. No se suma otra vez.
     SnapshotMeta:
       type: object
       required:
@@ -202,7 +219,7 @@ components:
       required:
       - courseId
       - snapshot
-      - averageScore
+      - averageScore10
       - submissionRate
       - gradingRate
       - completionRate
@@ -213,7 +230,7 @@ components:
           type: integer
         snapshot:
           $ref: '#/components/schemas/SnapshotMeta'
-        averageScore:
+        averageScore10:
           $ref: '#/components/schemas/Metric'
         submissionRate:
           $ref: '#/components/schemas/Metric'
@@ -231,7 +248,7 @@ components:
       - courseId
       - studentId
       - snapshot
-      - averageScore
+      - averageScore10
       - submissionRate
       - gradingRate
       - completionRate
@@ -245,7 +262,7 @@ components:
           description: Id del estudiante en Moodle.
         snapshot:
           $ref: '#/components/schemas/SnapshotMeta'
-        averageScore:
+        averageScore10:
           $ref: '#/components/schemas/Metric'
         submissionRate:
           $ref: '#/components/schemas/Metric'
@@ -265,6 +282,7 @@ components:
       properties:
         metric:
           type: string
+          enum: [averageScore10, submissionRate, gradingRate, completionRate, pendingGradingRate]
         observedValue:
           type: number
           nullable: true
@@ -362,11 +380,31 @@ components:
             $ref: '#/components/schemas/Metric'
         findings:
           type: array
+          description: Hallazgos estructurados para conservar la trazabilidad de la alerta o métrica de origen.
           items:
-            type: string
+            $ref: '#/components/schemas/ReportFinding'
         activeAlertCount:
           type: integer
           minimum: 0
+    ReportFinding:
+      type: object
+      required: [text]
+      properties:
+        alertId:
+          type: string
+          nullable: true
+        ruleCode:
+          type: string
+          nullable: true
+        studentId:
+          type: integer
+          nullable: true
+        metric:
+          type: string
+          nullable: true
+          enum: [averageScore10, submissionRate, gradingRate, completionRate, pendingGradingRate]
+        text:
+          type: string
     Problem:
       type: object
       required: [title, status, code]
@@ -426,13 +464,21 @@ components:
       in: query
       schema:
         type: string
-      description: Snapshot específico; si se omite se usa la última sincronización exitosa.
+      description: Snapshot específico; si se omite se usa la última sincronización exitosa. El MVP no expone una ruta para listar snapshots.
     severity:
       name: severity
       in: query
       schema:
         type: string
         enum: [info, warning, critical]
+    alertStatus:
+      name: status
+      in: query
+      schema:
+        type: string
+        enum: [active, resolved]
+        default: active
+      description: Estado de la alerta; por defecto solo se devuelven alertas activas.
     page:
       name: page
       in: query
@@ -450,6 +496,12 @@ components:
         type: string
       description: Identificador distribuido; se devuelve en errores y se propaga al servicio.
   responses:
+    BadRequest:
+      description: Parámetro de consulta inválido (por ejemplo page, pageSize, severity, status o snapshotId).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     Unauthorized:
       description: Token ausente, inválido o vencido.
       content:
@@ -479,3 +531,4 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: JWT reenviado por el api-gateway; el gateway valida autorización por curso y analytics valida que el token sea válido.
