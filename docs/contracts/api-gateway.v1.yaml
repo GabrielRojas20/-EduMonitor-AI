@@ -3,7 +3,7 @@ info:
   title: EduMonitor AI - api-gateway
   version: 1.0.0
   description: |-
-    Único punto de entrada para la interfaz web y para el agente.
+    S1-07, versión 1. Único punto de entrada para la interfaz web y para el agente.
 
     CÓMO VIAJA EL TOKEN DEL DOCENTE HASTA EL AGENTE
     1. El docente inicia sesión con POST /api/v1/auth/login y recibe un JWT (accessToken).
@@ -15,7 +15,14 @@ info:
     7. Si el JWT vence durante una conversación, el gateway responde 401 TOKEN_EXPIRED y el agente avisa al docente para que inicie sesión de nuevo.
 
     Rutas de indicadores y alertas (analytics-service) integradas en el gateway (S1-07 / Obs 0-01).
-    Todas las listas pueden devolver datos faltantes: un score null NO es 0 (ver GradeStatus).
+
+    DATOS FALTANTES
+    - Calificación sin nota: score null y status pending_grading o not_submitted. Nunca 0.
+    - Progreso de actividad sin dato: completionState not_available. Nunca null ni 0.
+    - DATA_NOT_AVAILABLE solo cuando no se puede obtener el recurso o la fuente completa.
+    - Un borrador se expone con submissionStatus draft y status not_submitted; la regla que decide cómo cuenta en los indicadores vive en analytics y está pendiente de confirmación del Product Owner.
+
+    SUPUESTOS DE DESARROLLO: el login con Microsoft se podría agregar después como una ruta nueva sin romper la v1; los puertos y la firma del JWT se alinean con docker-compose y el .env.
 servers:
   - url: http://localhost:5000
     description: Local (alinear puerto con docker-compose)
@@ -218,7 +225,7 @@ paths:
         '403': *id004
         '404': *id005
 
-  # --- RUTAS DE ANALYTICS (Resuelve Observación 0-01) ---
+  # --- RUTAS DE ANALYTICS (Observación 0-01) ---
   /api/v1/courses/{courseId}/analytics/summary:
     get:
       operationId: getCourseAnalyticsSummary
@@ -358,7 +365,39 @@ components:
         - graded
         - pending_grading
         - not_submitted
-      description: graded = calificado (una nota 0 es graded con score 0). pending_grading = entregó y falta calificar (score null). not_submitted = no entregó (score null). Un score null nunca debe contarse como 0.
+      description: 'graded = calificado (una nota 0 es graded con score 0). pending_grading = entregó y falta calificar (score null). not_submitted = nada entregado para calificar. Un score null nunca debe contarse como 0.'
+
+    SubmissionStatus:
+      type: string
+      enum:
+        - none
+        - draft
+        - submitted
+      description: Estado de la entrega en Moodle. none = el estudiante no aparece en las entregas. draft = borrador sin enviar. submitted = enviada.
+
+    CompletionState:
+      type: string
+      enum:
+        - complete
+        - incomplete
+        - passed
+        - failed
+        - not_available
+      description: Progreso de una actividad en Moodle.
+
+    ActivityProgress:
+      type: object
+      required:
+        - activityId
+        - completionState
+      properties:
+        activityId:
+          type: integer
+        activityType:
+          type: string
+          example: assign
+        completionState:
+          $ref: '#/components/schemas/CompletionState'
 
     GradeEntry:
       type: object
@@ -367,6 +406,7 @@ components:
         - activityId
         - activityName
         - status
+        - submissionStatus
         - maxScore
       properties:
         studentId:
@@ -377,6 +417,8 @@ components:
           type: string
         status:
           $ref: '#/components/schemas/GradeStatus'
+        submissionStatus:
+          $ref: '#/components/schemas/SubmissionStatus'
         score:
           type: number
           nullable: true
@@ -397,6 +439,7 @@ components:
       required:
         - student
         - grades
+        - activities
       properties:
         student:
           $ref: '#/components/schemas/Student'
@@ -404,6 +447,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GradeEntry'
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityProgress'
 
     SyncStatus:
       type: object
@@ -432,4 +479,263 @@ components:
         errorCode:
           type: string
           nullable: true
-        message
+        message:
+          type: string
+          nullable: true
+
+    SyncAccepted:
+      type: object
+      required:
+        - syncId
+        - state
+      properties:
+        syncId:
+          type: string
+        state:
+          type: string
+          enum:
+            - running
+
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - role
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - teacher
+            - admin
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - expiresIn
+        - user
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          enum:
+            - Bearer
+        expiresIn:
+          type: integer
+          example: 3600
+        user:
+          $ref: '#/components/schemas/User'
+
+    PageOfStudents:
+      type: object
+      required:
+        - items
+        - page
+        - pageSize
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Student'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+
+    PageOfGrades:
+      type: object
+      required:
+        - items
+        - page
+        - pageSize
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradeEntry'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+
+    # ESQUEMAS PARA ANALYTICS (Observación 0-01)
+    CourseAnalyticsSummary:
+      type: object
+      required:
+        - courseId
+        - averageGrade
+        - totalStudentsAtRisk
+        - submissionRate
+      properties:
+        courseId:
+          type: integer
+        averageGrade:
+          type: number
+          nullable: true
+        totalStudentsAtRisk:
+          type: integer
+        submissionRate:
+          type: number
+
+    StudentRiskAlert:
+      type: object
+      required:
+        - studentId
+        - studentName
+        - riskLevel
+        - reason
+      properties:
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        riskLevel:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+        reason:
+          type: string
+
+    PageOfRiskAlerts:
+      type: object
+      required:
+        - items
+        - page
+        - pageSize
+        - total
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentRiskAlert'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+
+    StudentAnalytics:
+      type: object
+      required:
+        - studentId
+        - currentAverage
+        - riskLevel
+        - missingSubmissionsCount
+      properties:
+        studentId:
+          type: integer
+        currentAverage:
+          type: number
+          nullable: true
+        riskLevel:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+        missingSubmissionsCount:
+          type: integer
+
+  parameters:
+    courseId:
+      name: courseId
+      in: path
+      required: true
+      schema:
+        type: integer
+    studentId:
+      name: studentId
+      in: path
+      required: true
+      schema:
+        type: integer
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    pageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    requestId:
+      name: X-Request-Id
+      in: header
+      schema:
+        type: string
+
+  responses:
+    Unauthorized:
+      description: Token ausente, inválido o vencido.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: El usuario no tiene acceso a ese curso.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Curso o estudiante inexistente.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Ya hay una sincronización en curso.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unavailable:
+      description: Servicio no disponible.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
