@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: EduMonitor AI - api-gateway
-  version: 1.0.0
-  description: |-
+  version: 1.1.0
+  description: |
     S1-07, versión 1. Único punto de entrada para la interfaz web y para el agente.
 
     CÓMO VIAJA EL TOKEN DEL DOCENTE HASTA EL AGENTE
@@ -14,7 +14,7 @@ info:
     6. El JWT no se guarda ni se escribe en las trazas del agente.
     7. Si el JWT vence durante una conversación, el gateway responde 401 TOKEN_EXPIRED y el agente avisa al docente para que inicie sesión de nuevo.
 
-    NOTA: las rutas de indicadores y alertas (analytics-service) también salen por este gateway; su contrato lo define Gabriel (S1-10).
+    NOTA: las rutas de analytics-service (indicadores, alertas e informe) se publican por este gateway con la misma ruta. Sus esquemas se referencian desde analytics.v1.yaml, que es su única definición (S1-10, Gabriel).
     Todas las listas pueden devolver datos faltantes: un score null NO es 0 (ver GradeStatus).
 
     DATOS FALTANTES
@@ -23,7 +23,27 @@ info:
     - DATA_NOT_AVAILABLE solo cuando no se puede obtener el recurso o la fuente completa.
     - Un borrador se expone con submissionStatus draft y status not_submitted; la regla que decide cómo cuenta en los indicadores vive en analytics y está pendiente de confirmación del Product Owner.
 
-    SUPUESTOS DE DESARROLLO (no afectan el contrato): el login con Microsoft se podría agregar después como una ruta nueva sin romper la v1; los puertos y la firma del JWT se alinean con docker-compose y el .env.
+    SUPUESTOS DE DESARROLLO (no afectan el contrato): el login con Microsoft se podría agregar después como una ruta nueva sin romper la v1; los puertos y la firma del JWT se alinean con docker-compose y el .env. La restricción del rol admin queda como suposición del MVP, pendiente de la pregunta 13 al Product Owner.
+
+    MAPEO A SERVICIOS INTERNOS (O-01)
+    - POST /api/v1/auth/login -> auth-courses POST /auth/login
+    - GET /api/v1/me -> auth-courses GET /users/me
+    - GET /api/v1/courses y GET /api/v1/courses/{courseId} -> auth-courses GET /courses y GET /courses/{courseId}
+    - /api/v1/courses/{courseId}/students, /students/{studentId} y /grades -> moodle-sync, misma ruta sin el prefijo /api/v1
+    - GET y POST /api/v1/courses/{courseId}/sync -> moodle-sync /courses/{courseId}/sync
+    - Rutas de analytics (/analytics, /analytics/students/{studentId}, /analytics/alerts y /analytics/report) -> analytics-service, misma ruta con el prefijo /api/v1
+
+    LLAMADA PREVIA DE AUTORIZACIÓN (O-01)
+    Antes de enrutar cualquier ruta /api/v1/courses/{courseId}/..., el gateway llama a auth-courses GET /internal/courses/{courseId}/access reenviando el JWT del docente.
+    204 = continúa; 403 = COURSE_NOT_AUTHORIZED; 404 = COURSE_NOT_FOUND. Solo después reenvía la petición al servicio interno.
+
+    CURSO SIN SINCRONIZAR: las rutas de lectura (students, students/{studentId}, grades y analytics) responden 503 con code DATA_NOT_AVAILABLE y un detail que indica que el curso aún no se sincronizó. Si Moodle o un servicio interno no responde, 503 con code MOODLE_UNAVAILABLE. GET .../sync de un curso nunca sincronizado responde 200 con state never. El agente debe sugerir al docente sincronizar el curso.
+
+    ALCANCE DEL MVP (calificaciones): solo tareas (mod_assign). Otras actividades calificadas (cuestionarios, foros) no se normalizan en el MVP y se omiten de la lista de calificaciones en lugar de informarse como not_submitted. Se ampliará de forma compatible agregando un campo activityType a GradeEntry. Pendiente de confirmar con analytics (Gabriel).
+
+    PUERTOS (tabla única de los contratos): api-gateway 5000, auth-courses 5001, moodle-sync 5002, analytics 5003. El docker-compose y el .env.example deben coincidir con esta tabla.
+
+    AISLAMIENTO DE RED: solo el api-gateway publica puerto hacia el exterior; auth-courses, moodle-sync y analytics quedan en una red interna de docker-compose. Los servicios internos confían en que el gateway ya validó el acceso al curso, por lo que no deben ser alcanzables directamente. El refuerzo se revisa en el Sprint 4.
 servers:
 - url: http://localhost:5000
   description: Local (alinear puerto con docker-compose)
@@ -51,7 +71,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/InvalidCredentials'
   /api/v1/me:
     get:
       operationId: getMe
@@ -67,7 +87,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-        '401': &id001
+        '401':
           $ref: '#/components/responses/Unauthorized'
   /api/v1/courses:
     get:
@@ -86,18 +106,17 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Course'
-        '401': *id001
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/courses/{courseId}:
     get:
       operationId: getCourse
       tags:
       - courses
       summary: Detalle de un curso
-      parameters: &id006
-      - &id002
-        $ref: '#/components/parameters/courseId'
-      - &id003
-        $ref: '#/components/parameters/requestId'
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       responses:
         '200':
           description: OK
@@ -105,10 +124,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Course'
-        '401': *id001
-        '403': &id004
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
           $ref: '#/components/responses/Forbidden'
-        '404': &id005
+        '404':
           $ref: '#/components/responses/NotFound'
   /api/v1/courses/{courseId}/students:
     get:
@@ -117,8 +137,8 @@ paths:
       - courses
       summary: Estudiantes matriculados (rol Student)
       parameters:
-      - *id002
-      - *id003
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/pageSize'
       responses:
@@ -128,9 +148,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageOfStudents'
-        '401': *id001
-        '403': *id004
-        '404': *id005
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
   /api/v1/courses/{courseId}/students/{studentId}:
     get:
       operationId: getStudent
@@ -138,8 +163,8 @@ paths:
       - courses
       summary: Ficha del estudiante con sus calificaciones
       parameters:
-      - *id002
-      - *id003
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       - $ref: '#/components/parameters/studentId'
       responses:
         '200':
@@ -148,9 +173,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StudentDetail'
-        '401': *id001
-        '403': *id004
-        '404': *id005
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
   /api/v1/courses/{courseId}/grades:
     get:
       operationId: listGrades
@@ -159,8 +189,8 @@ paths:
       summary: Calificaciones por estudiante y actividad, con su estado
       description: Un registro por estudiante y actividad. Los estudiantes sin entrega aparecen con status not_submitted.
       parameters:
-      - *id002
-      - *id003
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/pageSize'
       - name: studentId
@@ -178,16 +208,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageOfGrades'
-        '401': *id001
-        '403': *id004
-        '404': *id005
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
   /api/v1/courses/{courseId}/sync:
     post:
       operationId: startSync
       tags:
       - sync
       summary: Sincronizar el curso con Moodle (manual)
-      parameters: *id006
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       responses:
         '202':
           description: Sincronización iniciada
@@ -199,15 +236,20 @@ paths:
           $ref: '#/components/responses/Conflict'
         '503':
           $ref: '#/components/responses/Unavailable'
-        '401': *id001
-        '403': *id004
-        '404': *id005
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     get:
       operationId: getSyncStatus
       tags:
       - sync
       summary: Estado y fecha de la última sincronización
-      parameters: *id006
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       responses:
         '200':
           description: OK
@@ -215,9 +257,127 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SyncStatus'
-        '401': *id001
-        '403': *id004
-        '404': *id005
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/courses/{courseId}/analytics:
+    get:
+      operationId: getCourseAnalytics
+      tags:
+      - indicators
+      summary: Obtener indicadores calculados del curso
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
+      - $ref: analytics.v1.yaml#/components/parameters/snapshotId
+      responses:
+        '200':
+          description: Indicadores del curso
+          content:
+            application/json:
+              schema:
+                $ref: analytics.v1.yaml#/components/schemas/CourseAnalytics
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/courses/{courseId}/analytics/students/{studentId}:
+    get:
+      operationId: getStudentAnalytics
+      tags:
+      - indicators
+      summary: Obtener indicadores de un estudiante del curso
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/studentId'
+      - $ref: '#/components/parameters/requestId'
+      - $ref: analytics.v1.yaml#/components/parameters/snapshotId
+      responses:
+        '200':
+          description: Indicadores del estudiante
+          content:
+            application/json:
+              schema:
+                $ref: analytics.v1.yaml#/components/schemas/StudentAnalytics
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/courses/{courseId}/analytics/alerts:
+    get:
+      operationId: listCourseAlerts
+      tags:
+      - alerts
+      summary: Listar alertas explicables del curso
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
+      - $ref: analytics.v1.yaml#/components/parameters/snapshotId
+      - $ref: analytics.v1.yaml#/components/parameters/studentIdQuery
+      - $ref: analytics.v1.yaml#/components/parameters/severity
+      - $ref: analytics.v1.yaml#/components/parameters/alertStatus
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          description: Alertas del curso
+          content:
+            application/json:
+              schema:
+                $ref: analytics.v1.yaml#/components/schemas/PageOfAlerts
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/courses/{courseId}/analytics/report:
+    get:
+      operationId: getCourseReportData
+      tags:
+      - reports
+      summary: Obtener datos calculados para el informe del curso
+      description: Devuelve hechos calculados y hallazgos; el agent-service redacta el informe y no recalcula indicadores.
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
+      - $ref: analytics.v1.yaml#/components/parameters/snapshotId
+      responses:
+        '200':
+          description: Datos del informe
+          content:
+            application/json:
+              schema:
+                $ref: analytics.v1.yaml#/components/schemas/CourseReportData
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
 components:
   schemas:
     Problem:
@@ -290,6 +450,8 @@ components:
         email:
           type: string
           format: email
+          description: Dato personal. Se devuelve solo al docente autorizado del curso y no se registra en las trazas del
+            agente. La regla de retención queda pendiente de la decisión del Product Owner sobre datos reales.
     GradeStatus:
       type: string
       enum:
@@ -580,6 +742,18 @@ components:
     Unavailable:
       description: Moodle o un servicio interno no responde (MOODLE_UNAVAILABLE), o no se puede obtener el recurso o la fuente
         de datos completa (DATA_NOT_AVAILABLE), por ejemplo porque el curso aún no se sincronizó.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InvalidCredentials:
+      description: Credenciales inválidas (INVALID_CREDENTIALS).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    BadRequest:
+      description: Parámetros inválidos (VALIDATION_ERROR).
       content:
         application/problem+json:
           schema:

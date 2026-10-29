@@ -1,15 +1,20 @@
 openapi: 3.0.3
 info:
   title: EduMonitor AI - auth-courses-service
-  version: 1.0.0
-  description: |-
+  version: 1.1.0
+  description: |
     S1-07, versión 1. Servicio interno (no se expone directo a la interfaz ni al agente; todo pasa por el gateway).
 
     Responsabilidades: iniciar sesión, emitir el JWT y decir a qué cursos tiene acceso cada docente.
 
-    JWT (propuesta para desarrollo): firma HS256 con secreto en variable de entorno (.env, nunca en el repositorio); vigencia 60 minutos; claims: sub (id de usuario), role (teacher|admin), iss, iat, exp. En el Sprint 4 se revisa el endurecimiento (rotación de claves, CORS).
+    JWT (propuesta para desarrollo, O-08): firma HS256 con un secreto compartido que se lee de una variable de entorno (.env, nunca en el repositorio; el nombre exacto de la variable lo fija .env.example); vigencia 60 minutos; claims: sub (id de usuario), role (teacher|admin), iss = edumonitor (coincide con JWT_ISSUER de .env.example), aud = edumonitor-api, iat y exp. Todo servicio que valide el token comprueba firma, exp, iss y aud con el mismo secreto. En el Sprint 4 se revisa el endurecimiento (rotación de claves, CORS).
+    Rol admin (pendiente del Product Owner): en el MVP no accede a datos de cursos que no tenga autorizados; sus permisos se definirán con el Product Owner (ver preguntas abiertas de los requisitos).
 
     El gateway llama a GET /internal/courses/{courseId}/access antes de enrutar cualquier ruta /courses/{courseId}/...
+
+    PUERTOS (tabla única de los contratos): api-gateway 5000, auth-courses 5001, moodle-sync 5002, analytics 5003. El docker-compose y el .env.example deben coincidir con esta tabla.
+
+    AISLAMIENTO DE RED: solo el api-gateway publica puerto hacia el exterior; auth-courses, moodle-sync y analytics quedan en una red interna de docker-compose. Los servicios internos confían en que el gateway ya validó el acceso al curso, por lo que no deben ser alcanzables directamente. El refuerzo se revisa en el Sprint 4.
 servers:
 - url: http://localhost:5001
   description: Local (alinear puerto con docker-compose)
@@ -37,7 +42,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/InvalidCredentials'
   /users/me:
     get:
       operationId: getMe
@@ -53,7 +58,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-        '401': &id001
+        '401':
           $ref: '#/components/responses/Unauthorized'
   /courses:
     get:
@@ -72,14 +77,15 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Course'
-        '401': *id001
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /courses/{courseId}:
     get:
       operationId: getCourse
       tags:
       - courses
       summary: Detalle de un curso autorizado
-      parameters: &id002
+      parameters:
       - $ref: '#/components/parameters/courseId'
       - $ref: '#/components/parameters/requestId'
       responses:
@@ -89,7 +95,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Course'
-        '401': *id001
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -100,7 +107,9 @@ paths:
       tags:
       - internal
       summary: Comprobar si el usuario del token puede acceder al curso
-      parameters: *id002
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       responses:
         '204':
           description: Acceso permitido.
@@ -248,7 +257,13 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     NotFound:
-      description: Curso o estudiante inexistente (COURSE_NOT_FOUND, STUDENT_NOT_FOUND).
+      description: Curso inexistente (COURSE_NOT_FOUND).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InvalidCredentials:
+      description: Credenciales inválidas (INVALID_CREDENTIALS).
       content:
         application/problem+json:
           schema:
