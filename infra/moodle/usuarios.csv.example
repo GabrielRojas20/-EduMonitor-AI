@@ -1,0 +1,7 @@
+username,password,firstname,lastname,email,course1,role1
+docente1,CAMBIAR-CLAVE,Docente,Prueba,docente1@example.com,PRUEBA01,editingteacher
+estudiante1,CAMBIAR-CLAVE,Estudiante,Uno,estudiante1@example.com,PRUEBA01,student
+estudiante2,CAMBIAR-CLAVE,Estudiante,Dos,estudiante2@example.com,PRUEBA01,student
+estudiante3,CAMBIAR-CLAVE,Estudiante,Tres,estudiante3@example.com,PRUEBA01,student
+estudiante4,CAMBIAR-CLAVE,Estudiante,Cuatro,estudiante4@example.com,PRUEBA01,student
+estudiante5,CAMBIAR-CLAVE,Estudiante,Cinco,estudiante5@example.com,PRUEBA01,student
