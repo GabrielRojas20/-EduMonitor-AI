@@ -27,14 +27,14 @@ Estados: **Hecha** (en `develop` mediante PR revisada), **En revisión** (PR abi
 | S1-04 | Benjamín | Tablero con las épicas de los seis sprints y las tareas del Sprint 1 | D2 | Por confirmar: el repositorio no enlaza el tablero | _Pendiente de enlace_ |
 | S1-05 | Mikel | Moodle en Docker, curso de prueba, usuarios, rol y token | D2 | Hecha (PR #25): `docker-compose.yml` y README con los pasos para levantarlo | [`infra/moodle/`](../../../infra/moodle/) |
 | S1-06 | Mikel | Prueba de acceso a Moodle: versión, permisos y escalas | D3 | Hecha; evidencia con el texto de las entregas redactado (PR #24) | [`docs/moodle-access/`](../../moodle-access/) |
-| S1-07 | Mikel | Contratos OpenAPI del gateway, `auth-courses` y `moodle-sync` | D3 / D4 | Hecha. El PR #26 (abierto) cierra las observaciones O-01 a O-11 | [`docs/contracts/`](../../contracts/) |
+| S1-07 | Mikel | Contratos OpenAPI del gateway, `auth-courses` y `moodle-sync` | D3 / D4 | Hecha (PR #26 cierra las observaciones O-01 a O-11) | [`docs/contracts/`](../../contracts/) |
 | S1-08 | Gabriel | Diagrama entidad-relación | D3 | Hecha | [`diagrama-er.md`](../../data-model/diagrama-er.md) |
 | S1-09 | Gabriel | Fórmulas de indicadores y reglas de alerta iniciales | D4 | Hecha | [`reglas-iniciales.md`](../../analytics-rules/reglas-iniciales.md) |
 | S1-10 | Gabriel | Contrato OpenAPI de `analytics-service` | D4 | Hecha (versión 1.0.0, PR #21) | [`analytics.v1.yaml`](../../contracts/analytics.v1.yaml), [`decisiones-s1-10.md`](../../analytics-rules/decisiones-s1-10.md) |
 | S1-11 | Juan | Contrato de las herramientas del agente y flujo de LangGraph | D4 | Hecha, con `POST /chat` y nombres de estudiantes (PR #22) | [`diseno-agente.md`](../../agent-design/diseno-agente.md) |
 | S1-12 | Juan | Ollama: modelos, tiempos, memoria y modelo elegido | D2 | Hecha | [`ollama-pruebas-modelos.md`](../../benchmarks/ollama-pruebas-modelos.md) |
 | S1-13 | Benjamín | Wireframes de baja fidelidad de las seis pantallas | D4 | Hecha (PR #19) | [`docs/wireframes/`](../../wireframes/) |
-| S1-14 | Juan | Revisión cruzada de contratos | D4 | Hecha. O-12 a O-20 resueltas; O-01 a O-11 en el PR #26 | [`revision-cruzada-contratos.md`](../../reviews/revision-cruzada-contratos.md) |
+| S1-14 | Juan | Revisión cruzada de contratos | D4 | Hecha. Las 20 observaciones (O-01 a O-20) resueltas (PR #21 y #26) | [`revision-cruzada-contratos.md`](../../reviews/revision-cruzada-contratos.md) |
 | S1-15 | Todos | Presentar al Product Owner requisitos, alcance, contratos y preguntas abiertas | D5 | Falta | Plantilla en [`reunion-sprint-01.md`](../../product-owner/reunion-sprint-01.md) |
 | S1-16 | Todos | Diagrama de arquitectura, revisión y retrospectiva del sprint | D5 | Diagrama hecho. Faltan la revisión y la retrospectiva | [`arquitectura.md`](../../architecture/arquitectura.md), plantilla en [`revision-y-retrospectiva.md`](revision-y-retrospectiva.md) |
 
@@ -44,7 +44,7 @@ Estados: **Hecha** (en `develop` mediante PR revisada), **En revisión** (PR abi
 - S1-04: enlazar el tablero desde el repositorio (por ejemplo, en el `README.md` raíz) y confirmar que tiene las épicas de los seis sprints y las tareas del Sprint 1.
 
 **Mikel**
-- PR #26: declarar la respuesta `503` en las rutas de lectura del gateway (`/students`, `/students/{studentId}` y `/grades`), como ya está en `moodle-sync`, y unificar las versiones de los contratos.
+- Sin pendientes: el PR #26 ya está unido.
 
 **Gabriel**
 - Al cerrar el sprint: PR de `develop` a `main` (hoy `main` solo tiene la estructura inicial).
@@ -52,7 +52,7 @@ Estados: **Hecha** (en `develop` mediante PR revisada), **En revisión** (PR abi
 
 **Juan**
 - Sus cinco tareas individuales (S1-03, S1-11, S1-12, S1-14 y la parte de S1-16) están hechas.
-- Revisar el PR #26.
+- Revisión del PR #26 hecha y aprobada.
 
 **Todos**
 - S1-01: confirmar el acuerdo de equipo.
