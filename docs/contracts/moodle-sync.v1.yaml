@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: EduMonitor AI - moodle-sync-service
-  version: 1.0.0
-  description: |-
+  version: 1.1.0
+  description: |
     S1-07, versión 1. Servicio interno. Lee Moodle con su cliente de servicios web, guarda lo sincronizado en el esquema sync y lo entrega normalizado.
 
     Reglas de normalización (S1-06):
@@ -14,6 +14,14 @@ info:
     - core_completion_get_activities_completion_status acepta un solo userid por llamada. El campo timecompleted no se expone porque no es fiable como fecha real.
 
     Autorización: recibe el JWT reenviado por el gateway, que ya comprobó el acceso al curso.
+
+    CURSO SIN SINCRONIZAR: las rutas de lectura (students, students/{studentId} y grades) responden 503 con code DATA_NOT_AVAILABLE y un detail que indica que el curso aún no se sincronizó. Si Moodle o un servicio interno no responde, 503 con code MOODLE_UNAVAILABLE. GET .../sync de un curso nunca sincronizado responde 200 con state never. El agente debe sugerir al docente sincronizar el curso.
+
+    ALCANCE DEL MVP (calificaciones): solo tareas (mod_assign). Otras actividades calificadas (cuestionarios, foros) no se normalizan en el MVP y se omiten de la lista de calificaciones en lugar de informarse como not_submitted. Se ampliará de forma compatible agregando un campo activityType a GradeEntry. Pendiente de confirmar con analytics (Gabriel).
+
+    PUERTOS (tabla única de los contratos): api-gateway 5000, auth-courses 5001, moodle-sync 5002, analytics 5003. El docker-compose y el .env.example deben coincidir con esta tabla.
+
+    AISLAMIENTO DE RED: solo el api-gateway publica puerto hacia el exterior; auth-courses, moodle-sync y analytics quedan en una red interna de docker-compose. Los servicios internos confían en que el gateway ya validó el acceso al curso, por lo que no deben ser alcanzables directamente. El refuerzo se revisa en el Sprint 4.
 servers:
 - url: http://localhost:5002
   description: Local (alinear puerto con docker-compose)
@@ -26,11 +34,9 @@ paths:
       tags:
       - sync
       summary: Iniciar la sincronización del curso (asíncrona)
-      parameters: &id001
-      - &id005
-        $ref: '#/components/parameters/courseId'
-      - &id006
-        $ref: '#/components/parameters/requestId'
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       responses:
         '202':
           description: Sincronización iniciada
@@ -42,18 +48,20 @@ paths:
           $ref: '#/components/responses/Conflict'
         '503':
           $ref: '#/components/responses/Unavailable'
-        '401': &id002
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        '403': &id003
+        '403':
           $ref: '#/components/responses/Forbidden'
-        '404': &id004
+        '404':
           $ref: '#/components/responses/NotFound'
     get:
       operationId: getSyncStatus
       tags:
       - sync
       summary: Estado de la última sincronización
-      parameters: *id001
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       responses:
         '200':
           description: OK
@@ -61,9 +69,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SyncStatus'
-        '401': *id002
-        '403': *id003
-        '404': *id004
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /courses/{courseId}/students:
     get:
       operationId: listStudents
@@ -71,8 +82,8 @@ paths:
       - data
       summary: Estudiantes sincronizados
       parameters:
-      - *id005
-      - *id006
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/pageSize'
       responses:
@@ -82,9 +93,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageOfStudents'
-        '401': *id002
-        '403': *id003
-        '404': *id004
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
   /courses/{courseId}/students/{studentId}:
     get:
       operationId: getStudent
@@ -92,8 +108,8 @@ paths:
       - data
       summary: Estudiante con sus calificaciones
       parameters:
-      - *id005
-      - *id006
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       - $ref: '#/components/parameters/studentId'
       responses:
         '200':
@@ -102,9 +118,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StudentDetail'
-        '401': *id002
-        '403': *id003
-        '404': *id004
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
   /courses/{courseId}/grades:
     get:
       operationId: listGrades
@@ -112,8 +133,8 @@ paths:
       - data
       summary: Calificaciones con su estado
       parameters:
-      - *id005
-      - *id006
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/pageSize'
       - name: studentId
@@ -131,9 +152,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PageOfGrades'
-        '401': *id002
-        '403': *id003
-        '404': *id004
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
 components:
   schemas:
     Problem:
@@ -185,6 +211,8 @@ components:
         email:
           type: string
           format: email
+          description: Dato personal. Se devuelve solo al docente autorizado del curso y no se registra en las trazas del
+            agente. La regla de retención queda pendiente de la decisión del Product Owner sobre datos reales.
     GradeStatus:
       type: string
       enum:

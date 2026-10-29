@@ -14,7 +14,7 @@ info:
     6. El JWT no se guarda ni se escribe en las trazas del agente.
     7. Si el JWT vence durante una conversación, el gateway responde 401 TOKEN_EXPIRED y el agente avisa al docente para que inicie sesión de nuevo.
 
-    NOTA: las rutas de indicadores y alertas (analytics-service) también salen por este gateway; su contrato lo define Gabriel (S1-10).
+    NOTA: las rutas de analytics-service (indicadores, alertas e informe) se publican por este gateway con la misma ruta. Sus esquemas se referencian desde analytics.v1.yaml, que es su única definición (S1-10, Gabriel).
     Todas las listas pueden devolver datos faltantes: un score null NO es 0 (ver GradeStatus).
 
     DATOS FALTANTES
@@ -218,6 +218,137 @@ paths:
         '401': *id001
         '403': *id004
         '404': *id005
+  /api/v1/courses/{courseId}/analytics:
+    get:
+      operationId: getCourseAnalytics
+      tags:
+        - indicators
+      summary: Obtener indicadores calculados del curso
+      parameters:
+        - $ref: '#/components/parameters/courseId'
+        - $ref: '#/components/parameters/requestId'
+        - $ref: 'analytics.v1.yaml#/components/parameters/snapshotId'
+      responses:
+        '200':
+          description: Indicadores del curso
+          content:
+            application/json:
+              schema:
+                $ref: 'analytics.v1.yaml#/components/schemas/CourseAnalytics'
+        '400':
+          description: Parámetros inválidos (VALIDATION_ERROR).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/courses/{courseId}/analytics/students/{studentId}:
+    get:
+      operationId: getStudentAnalytics
+      tags:
+        - indicators
+      summary: Obtener indicadores de un estudiante del curso
+      parameters:
+        - $ref: '#/components/parameters/courseId'
+        - $ref: '#/components/parameters/studentId'
+        - $ref: '#/components/parameters/requestId'
+        - $ref: 'analytics.v1.yaml#/components/parameters/snapshotId'
+      responses:
+        '200':
+          description: Indicadores del estudiante
+          content:
+            application/json:
+              schema:
+                $ref: 'analytics.v1.yaml#/components/schemas/StudentAnalytics'
+        '400':
+          description: Parámetros inválidos (VALIDATION_ERROR).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/courses/{courseId}/analytics/alerts:
+    get:
+      operationId: listCourseAlerts
+      tags:
+        - alerts
+      summary: Listar alertas explicables del curso
+      parameters:
+        - $ref: '#/components/parameters/courseId'
+        - $ref: '#/components/parameters/requestId'
+        - $ref: 'analytics.v1.yaml#/components/parameters/snapshotId'
+        - $ref: 'analytics.v1.yaml#/components/parameters/studentIdQuery'
+        - $ref: 'analytics.v1.yaml#/components/parameters/severity'
+        - $ref: 'analytics.v1.yaml#/components/parameters/alertStatus'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          description: Alertas del curso
+          content:
+            application/json:
+              schema:
+                $ref: 'analytics.v1.yaml#/components/schemas/PageOfAlerts'
+        '400':
+          description: Parámetros inválidos (VALIDATION_ERROR).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /api/v1/courses/{courseId}/analytics/report:
+    get:
+      operationId: getCourseReportData
+      tags:
+        - reports
+      summary: Obtener datos calculados para el informe del curso
+      description: Devuelve hechos calculados y hallazgos; el agent-service redacta el informe y no recalcula indicadores.
+      parameters:
+        - $ref: '#/components/parameters/courseId'
+        - $ref: '#/components/parameters/requestId'
+        - $ref: 'analytics.v1.yaml#/components/parameters/snapshotId'
+      responses:
+        '200':
+          description: Datos del informe
+          content:
+            application/json:
+              schema:
+                $ref: 'analytics.v1.yaml#/components/schemas/CourseReportData'
+        '400':
+          description: Parámetros inválidos (VALIDATION_ERROR).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/Unavailable'
 components:
   schemas:
     Problem:
