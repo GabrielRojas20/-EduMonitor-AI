@@ -93,7 +93,7 @@ Conclusiones:
    | **Borrador** | **`draft`** | `notgraded` | null |
    | Sin entrega | no aparece en la lista | no aplica | null |
 
-   ⚠ Propuesta para confirmar con Gabriel (S1-09): un borrador cuenta como **no entregado** en los indicadores, porque el estudiante no lo envió. El contrato `moodle-sync` puede exponer además un campo `submissionStatus` (`none`, `draft`, `submitted`) para que las reglas puedan distinguirlo.
+   ⚠ **Pendiente del Product Owner (pregunta 15, se cierra en S1-15):** si un borrador cuenta como no entregado en los indicadores. Mientras tanto, analytics lo trata como no entregado y el contrato expone `submissionStatus` (`none`, `draft`, `submitted`) para poder cambiar la regla sin cambiar el contrato.
 3. Un `graderaw` null **no** debe contarse como 0 en ningún indicador.
 
 ### Identificador de estudiantes
@@ -107,12 +107,14 @@ Decisión para el sistema: identificar a cada estudiante por su **`id` de Moodle
 - Finalización de actividades: el sitio la tiene activa (`enablecompletion: 1`) y la función responde, pero solo devuelve datos de las actividades que tienen el seguimiento configurado. Con la Tarea 1 sin configurar devuelve una lista vacía. Regla para el sistema: lista vacía significa "dato no disponible", no "0 % completado".
 - Progreso de actividades: ya probado con *Activity completion* configurado (ver sección 9).
 - Estado de entregas: resuelto con `mod_assign_get_submissions` (ver sección 6).
-- Privacidad: `mod_assign_get_submissions` devuelve también el **texto completo de lo que escribió cada estudiante** (`onlinetext`). El servicio de sincronización solo debe guardar `userid`, `status`, `gradingstatus` y las fechas, y descartar el contenido de la entrega.
+- Privacidad: `mod_assign_get_submissions` devuelve también el **texto completo de lo que escribió cada estudiante** (`onlinetext`). La salida de moodle-sync **no incluye ese texto**: solo contiene `userid`, `status`, `gradingstatus` y fechas.
+- ⚠ Comprobación pendiente (Sprint 2): una prueba automática que compare los campos de la salida con la lista de campos del contrato y falle si aparece cualquier otro. No debe depender de buscar una palabra.
 
 ## 8. Decisiones de diseño (revisión de Gabriel)
 
 1. **Identificador del estudiante:** el `id` de Moodle. Es la clave principal en todo el sistema (sección 6). No se usa el `username`.
-2. **Contenido de las entregas:** el servicio moodle-sync **descarta el texto `onlinetext`** y conserva solo metadatos de la entrega: `userid`, `status`, `gradingstatus` y fechas (`timecreated`, `timemodified`). Está en el contrato `moodle-sync.v1.yaml`. ⚠ Se comprobará con una prueba automática cuando exista el cliente de Moodle (Sprint 2).
+2. **Contenido de las entregas:** la salida de moodle-sync **no incluye el texto `onlinetext`**; solo contiene metadatos de la entrega: `userid`, `status`, `gradingstatus` y fechas (`timecreated`, `timemodified`). Está en el contrato `moodle-sync.v1.yaml`. ⚠ La comprobación automática por lista de campos permitidos queda para el Sprint 2.
+3. **Borrador de una entrega:** decisión **pendiente del Product Owner** (pregunta 15, se cierra en S1-15). Se mantiene visible hasta entonces (ver sección 6).
 
 ## 9. Progreso de actividades (Activity completion)
 
@@ -134,3 +136,4 @@ Cómo se obtiene el progreso y qué tener en cuenta:
 
 - Carpeta `evidencia/` con las respuestas JSON de las llamadas (archivos del 1 al 8, y los `4b`, `6b`, `6c`, `7b` y `8b` de las pruebas adicionales con la Tarea 2). En `1_site_info.json` el campo `userprivateaccesskey` está reemplazado por `REDACTED`.
 - `EduMonitor_Moodle_Postman.json`: colección con las mismas 8 llamadas. Las pruebas de esta tarea se ejecutaron con PowerShell (`Invoke-RestMethod`) y no con Postman; la colección contiene las mismas llamadas para repetirlas. El token va solo en la variable `token` (Current value) y nunca en el repositorio.
+- En `8_submissions.json` y `8b_submissions_con_borrador.json` el texto de las entregas fue reemplazado por `[REDACTADO]`.
