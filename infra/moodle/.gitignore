@@ -1,0 +1,5 @@
+# Secretos y datos locales: nunca al repositorio
+.env
+usuarios.csv
+token.txt
+*.token

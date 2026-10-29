@@ -1,0 +1,40 @@
+# Moodle local para pruebas de EduMonitor AI (S1-05).
+# Instancia SOLO de desarrollo con datos ficticios. Las contraseñas vienen del archivo .env (ver .env.example).
+name: edumonitor-moodle
+
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: moodle
+      MARIADB_USER: moodle
+      MARIADB_PASSWORD: ${MOODLE_DB_PASSWORD:?Falta MOODLE_DB_PASSWORD en .env}
+      MARIADB_ROOT_PASSWORD: ${MOODLE_DB_ROOT_PASSWORD:?Falta MOODLE_DB_ROOT_PASSWORD en .env}
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      retries: 30
+
+  moodle:
+    image: oksigenia/moodle:5.2
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      MOODLE_URL: http://localhost:8080
+      MOODLE_DB_PASSWORD: ${MOODLE_DB_PASSWORD:?Falta MOODLE_DB_PASSWORD en .env}
+      MOODLE_ADMIN_PASSWORD: ${MOODLE_ADMIN_PASSWORD:?Falta MOODLE_ADMIN_PASSWORD en .env}
+    volumes:
+      - moodle:/var/www/moodle
+      - moodledata:/var/www/moodledata
+
+volumes:
+  db: {}
+  moodle: {}
+  moodledata: {}
