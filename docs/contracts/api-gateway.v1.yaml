@@ -23,7 +23,7 @@ info:
     - DATA_NOT_AVAILABLE solo cuando no se puede obtener el recurso o la fuente completa.
     - Un borrador se expone con submissionStatus draft y status not_submitted; la regla que decide cómo cuenta en los indicadores vive en analytics y está pendiente de confirmación del Product Owner.
 
-    SUPUESTOS DE DESARROLLO (no afectan el contrato): el login con Microsoft se podría agregar después como una ruta nueva sin romper la v1; los puertos y la firma del JWT se alinean con docker-compose y el .env. La restricción del rol admin queda como suposición del MVP, pendiente de la pregunta 13 al Product Owner.
+    SUPUESTOS DE DESARROLLO (no afectan el contrato): el login con Microsoft se podría agregar después como una ruta nueva sin romper la v1; los puertos y la firma del JWT se alinean con docker-compose y el .env.
 
     MAPEO A SERVICIOS INTERNOS (O-01)
     - POST /api/v1/auth/login -> auth-courses POST /auth/login
@@ -31,7 +31,7 @@ info:
     - GET /api/v1/courses y GET /api/v1/courses/{courseId} -> auth-courses GET /courses y GET /courses/{courseId}
     - /api/v1/courses/{courseId}/students, /students/{studentId} y /grades -> moodle-sync, misma ruta sin el prefijo /api/v1
     - GET y POST /api/v1/courses/{courseId}/sync -> moodle-sync /courses/{courseId}/sync
-    - Rutas de analytics (/analytics, /analytics/students/{studentId}, /analytics/alerts y /analytics/report) -> analytics-service, misma ruta con el prefijo /api/v1
+    - /api/v1/courses/{courseId}/analytics (y /students/{studentId}, /alerts, /report) -> analytics-service, misma ruta con el prefijo /api/v1
 
     LLAMADA PREVIA DE AUTORIZACIÓN (O-01)
     Antes de enrutar cualquier ruta /api/v1/courses/{courseId}/..., el gateway llama a auth-courses GET /internal/courses/{courseId}/access reenviando el JWT del docente.
