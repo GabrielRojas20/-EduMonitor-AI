@@ -15,9 +15,10 @@ IF OBJECT_ID('analytics.alert_evidence','U') IS NULL CREATE TABLE analytics.aler
 GO
 MERGE analytics.alert_rule AS target USING (VALUES
  ('LOW_AVERAGE','Promedio bajo','averageScore10','lt',6.0,'warning',1),
- ('LOW_SUBMISSION','Baja entrega','submissionRate','lt',60.0,'warning',1),
- ('LOW_COMPLETION','Baja finalización','completionRate','lt',60.0,'info',1),
- ('PENDING_GRADING','Pendientes de calificar','pendingGradingRate','gt',30.0,'critical',1)
+ ('LOW_SUBMISSION','Baja entrega','submissionRate','lt',80.0,'warning',1),
+ ('LOW_COMPLETION','Baja finalización','completionRate','lt',70.0,'warning',1),
+ ('PENDING_GRADING','Pendientes de calificar','pendingGradingRate','gt',20.0,'info',1),
+ ('NO_DATA','Datos insuficientes','completionRate','eq',NULL,'info',1)
 ) AS source(rule_code,name,metric,operator,threshold,severity,enabled)
 ON target.rule_code = source.rule_code
 WHEN MATCHED THEN UPDATE SET name=source.name, metric=source.metric, operator=source.operator, threshold=source.threshold, severity=source.severity, enabled=source.enabled
