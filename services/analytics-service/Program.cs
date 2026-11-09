@@ -20,10 +20,10 @@ app.MapGet("/api/v1/courses/{courseId:int}/analytics", async (int courseId, Anal
 app.MapGet("/api/v1/courses/{courseId:int}/analytics/summary", async (int courseId, AnalyticsDbContext db, CancellationToken ct) => await Summary(courseId, db, ct));
 app.MapGet("/api/v1/courses/{courseId:int}/analytics/students/{studentId:int}", async (int courseId, int studentId, AnalyticsDbContext db, CancellationToken ct) => await Student(courseId, studentId, db, ct));
 app.MapGet("/api/v1/courses/{courseId:int}/students/{studentId:int}/analytics", async (int courseId, int studentId, AnalyticsDbContext db, CancellationToken ct) => await Student(courseId, studentId, db, ct));
-app.MapGet("/api/v1/courses/{courseId:int}/analytics/alerts", async (int courseId, int? studentId, string? severity, string? status, int page, int pageSize, AnalyticsDbContext db, CancellationToken ct) =>
+app.MapGet("/api/v1/courses/{courseId:int}/analytics/alerts", async (int courseId, int? studentId, string? severity, string? status, int? page, int? pageSize, AnalyticsDbContext db, CancellationToken ct) =>
 {
-    page = page < 1 ? 1 : page;
-    pageSize = pageSize is < 1 or > 200 ? 50 : pageSize;
+    var currentPage = page is null or < 1 ? 1 : page.Value;
+    var currentPageSize = pageSize is null or < 1 or > 200 ? 50 : pageSize.Value;
     var grades = await db.Grades.AsNoTracking().Where(x => x.CourseId == courseId).ToListAsync(ct);
     var completions = await db.Completions.AsNoTracking().Where(x => x.CourseId == courseId).ToListAsync(ct);
     var students = grades.Select(x => x.StudentId).Concat(completions.Select(x => x.StudentId)).Distinct();
@@ -42,7 +42,7 @@ app.MapGet("/api/v1/courses/{courseId:int}/analytics/alerts", async (int courseI
         if (indicators.CompletionRate.Status == "unavailable") items.Add(Alert(courseId, sid, "NO_DATA", "info", "completionRate", null, null, sourceIds, "Moodle no entregó observaciones de seguimiento de finalización."));
     }
     var filtered = items.Where(x => string.IsNullOrWhiteSpace(severity) || x.Severity.Equals(severity, StringComparison.OrdinalIgnoreCase)).Where(x => string.IsNullOrWhiteSpace(status) || x.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToArray();
-    return Results.Ok(new AlertPage(filtered.Skip((page - 1) * pageSize).Take(pageSize).ToArray(), page, pageSize, filtered.Length));
+    return Results.Ok(new AlertPage(filtered.Skip((currentPage - 1) * currentPageSize).Take(currentPageSize).ToArray(), currentPage, currentPageSize, filtered.Length));
 });
 app.MapGet("/api/v1/courses/{courseId:int}/analytics/report", async (int courseId, AnalyticsDbContext db, CancellationToken ct) =>
 {

@@ -6,6 +6,7 @@
     <RootNamespace>EduMonitor.Analytics</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="AnalyticsService.Tests/**/*.cs" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
       <PrivateAssets>all</PrivateAssets>
