@@ -13,7 +13,7 @@ Diseño completo: [`docs/agent-design/diseno-agente.md`](../../docs/agent-design
 Sprint 2. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas, las pruebas y la **primera
 herramienta real, `listar_cursos`**, que consulta el gateway con el JWT del docente. Faltan las demás herramientas
 (`obtener_calificaciones`, `obtener_progreso`, `identificar_alertas`, `generar_resumen`), que se añaden en
-`app/toolset.py`. Si una consulta necesita una herramienta que aún no existe, el agente lo dice en lugar de inventar.
+`app/catalog/`. Si una consulta necesita una herramienta que aún no existe, el agente lo dice en lugar de inventar.
 
 ## Cómo ejecutarlo
 
@@ -102,6 +102,20 @@ recibir_mensaje -> validar_contexto -> clasificar_intencion -> planificar_herram
 | `identificar_alertas` | Pendiente | `GET /api/v1/courses/{courseId}/analytics/alerts` |
 | `generar_resumen` | Pendiente | `GET /api/v1/courses/{courseId}/analytics/report` |
 
+### Cómo añadir una herramienta
+
+Cada herramienta es un archivo de `app/catalog/` con el nombre de la herramienta (`obtener_calificaciones.py`) que define
+una variable `TOOL`. **No hay que registrarla en ningún otro archivo**: `app/toolset.py` las descubre solas. Así, los PR de
+herramientas distintas no tocan los mismos archivos y no chocan. Mira `app/catalog/listar_cursos.py` como modelo. Cada
+archivo define:
+
+- `run(ctx, args)`: llama al gateway con `gateway_get` y devuelve `ok_output(...)` o el error de la herramienta.
+- `facts(data)`: redacta los hechos con código a partir de los datos (el modelo no los escribe).
+- `TOOL = Tool(name=..., description=..., input_model=..., run=run, facts=facts)`.
+
+Las piezas compartidas (`NoArgs`, `fecha`, `plural`) están en `app/catalog/common.py`. Las pruebas de `tests/test_toolset.py`
+comprueban que cada herramienta cumple esa convención.
+
 Todas son de solo lectura y devuelven la salida común del diseño (`ok`, `data`, `error`, `source`). Un fallo del gateway se
 traduce a un código del diseño (`TOKEN_EXPIRED`, `COURSE_NOT_AUTHORIZED`, `MOODLE_UNAVAILABLE`, `DATA_NOT_AVAILABLE`,
 `TOOL_TIMEOUT`...) y nunca lanza una excepción. El JWT se reenvía al gateway y no aparece en ninguna salida ni traza.
@@ -124,7 +138,7 @@ fallos de herramientas y del modelo, los límites, la seguridad frente a datos h
 
 ## Pendiente
 
-- Las demás herramientas contra el gateway (`app/toolset.py`), cada una con su redactor de hechos.
+- Las demás herramientas contra el gateway (un archivo cada una en `app/catalog/`), con su redactor de hechos.
 - Guardar las trazas en el esquema `agent` de SQL Server.
 - Afinar los prompts con el conjunto de evaluación (`evaluation/agent-scenarios/`). Con `qwen3:1.7b`, una consulta de
   datos tarda unos 6 s (la elección de la herramienta) y una con interpretación unos 16 s en un computador sin GPU; el

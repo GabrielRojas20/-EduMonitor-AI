@@ -6,7 +6,8 @@ import pytest
 
 from app.graph import Agent
 from app.tools import ToolContext
-from app.tools_catalog import LISTAR_CURSOS, NoArgs
+from app.catalog.common import NoArgs
+from app.catalog.listar_cursos import TOOL as LISTAR_CURSOS
 from app.toolset import default_registry
 from conftest import make_token
 
@@ -190,7 +191,7 @@ def test_when_the_model_is_asked_to_interpret(message, expected):
 
 
 def test_course_facts_wording():
-    from app.tools_catalog import listar_cursos_facts
+    from app.catalog.listar_cursos import facts as listar_cursos_facts
     assert listar_cursos_facts({"courses": [], "total": 0}) == ["No tienes cursos con acceso autorizado."]
     one = {"courses": [{"id": 2, "shortName": "A", "fullName": "Uno", "studentCount": 1, "lastSyncAt": "2026-01-05T00:00:00Z"}],
            "total": 1}
