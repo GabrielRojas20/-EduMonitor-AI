@@ -35,6 +35,13 @@ OUT_OF_SCOPE = [
 ]
 GREETING = r"^\s*(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|gracias|ayuda)\b|\bque puedes hacer\b|\bque sabes hacer\b|\bcomo funcionas\b"
 REPORT = r"\b(informe|reporte|resumen)\b"
+# El docente pide interpretación o consejo (no solo un dato): ahí sí interviene el modelo
+INTERPRETATION = (r"\b(que hago|que debo|que puedo hacer|como puedo|recomiend\w*|aconsej\w*|sugier\w*|analiz\w*|"
+                  r"interpret\w*|por que|riesgo|preocup\w*|mejor\w*|explic\w*|evalu\w*|conviene)\b")
+
+
+def needs_interpretation(message: str) -> bool:
+    return bool(re.search(INTERPRETATION, normalize(message)))
 
 
 def normalize(text: str) -> str:
@@ -99,6 +106,21 @@ def numbers_in(text: str) -> set[float]:
     return {float(n.replace(",", ".")) for n in NUMBER.findall(text)}
 
 
+def humanize_nulls(value):
+    """Reemplaza cada null por «no disponible» en la copia de los datos que ve el modelo.
+
+    Un modelo pequeño convierte un null en 0 aunque el prompt se lo prohíba; si el dato llega ya como texto,
+    no hay nada que convertir. La salida original de la herramienta (la que se usa para validar) no se toca.
+    """
+    if value is None:
+        return "no disponible"
+    if isinstance(value, dict):
+        return {k: humanize_nulls(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [humanize_nulls(v) for v in value]
+    return value
+
+
 def clean(text: str, limit: int = 6000) -> str:
     return CONTROL.sub("", text)[:limit]
 
@@ -150,6 +172,9 @@ class ChatState(TypedDict, total=False):
     validated: bool
     last_sync_at: str | None
     model_failed: bool
+    feedback: str | None  # cifras que no tenían fuente, para decirle al modelo qué corregir en el reintento
+    last_draft: str | None
+    last_draft_ms: int  # lo que tardó la última redacción: decide si el reintento cabe en el tiempo del mensaje
 
 
 class Agent:
@@ -198,7 +223,8 @@ class Agent:
     def recibir_mensaje(self, state: ChatState) -> dict:
         return {"trace_id": uuid.uuid4().hex, "started_at": now_iso(), "started_mono": time.monotonic(), "steps": [],
                 "tool_results": [], "plan": [], "unavailable": [], "redactions": 0, "unsourced_removed": 0,
-                "validated": True, "retry": False, "model_failed": False}
+                "validated": True, "retry": False, "model_failed": False, "feedback": None, "last_draft": None,
+                "last_draft_ms": 0}
 
     def validar_contexto(self, state: ChatState) -> dict:
         return {}
@@ -226,7 +252,7 @@ class Agent:
         messages = [{"role": "system", "content": prompts.PLANNER_SYSTEM},
                     {"role": "user", "content": state["message"] + hint}]
         try:
-            reply = self.llm.chat(messages, tools=self.tools.schemas(), temperature=0.0)
+            reply = self.llm.chat(messages, tools=self.tools.schemas(), temperature=0.0, max_tokens=200)
         except LLMError as exc:
             steps = state["steps"] + [{"n": len(state["steps"]) + 1, "node": "planificar_herramientas", "tool": None,
                                        "ok": False, "errorCode": exc.code, "durationMs": 0}]
@@ -295,13 +321,21 @@ class Agent:
             has_error = state.get("model_failed") or any(not r["output"]["ok"] for r in state["tool_results"])
             return {"answer": Answer(unavailable=notes).model_dump(), "unavailable": notes,
                     "status": "error" if has_error else "partial"}
+        code_facts = self._code_facts(good)
+        if code_facts is not None:
+            return self._answer_with_code_facts(state, good, code_facts, notes)
         data_blocks = "\n".join(
-            f'<datos_herramienta paso="{r["n"]}" herramienta="{r["tool"]}">\n{clean(json.dumps(r["output"]["data"], ensure_ascii=False))}\n</datos_herramienta>'
+            f'<datos_herramienta paso="{r["n"]}" herramienta="{r["tool"]}">\n{clean(json.dumps(humanize_nulls(r["output"]["data"]), ensure_ascii=False))}\n</datos_herramienta>'
             for r in good)
         messages = [{"role": "system", "content": prompts.DRAFTER_SYSTEM},
                     {"role": "user", "content": f"Pregunta del docente: {state['message']}\n\n{data_blocks}"}]
+        if state.get("feedback") and state.get("last_draft"):
+            # Con temperatura 0, repetir el mismo pedido da la misma respuesta: el reintento dice qué corregir.
+            messages += [{"role": "assistant", "content": state["last_draft"]},
+                         {"role": "user", "content": prompts.RETRY_FEEDBACK.format(numbers=state["feedback"])}]
         try:
-            reply = self.llm.chat(messages, response_format=Draft.model_json_schema(), temperature=0.0)
+            reply = self.llm.chat(messages, response_format=Draft.model_json_schema(), temperature=0.0,
+                                  max_tokens=self.settings.draft_max_tokens)
             draft = Draft.model_validate_json(reply["content"])
         except (LLMError, ValidationError, ValueError) as exc:
             code = getattr(exc, "code", "DRAFT_INVALID")
@@ -327,24 +361,90 @@ class Agent:
         last_sync = find_value([r["output"]["data"] for r in good], "lastSyncAt") or \
             find_value([r["output"]["data"] for r in good], "calculatedAt")
         return {"answer": answer.model_dump(), "steps": steps, "last_sync_at": last_sync,
-                "unavailable": notes}
+                "unavailable": notes, "last_draft": reply["content"], "last_draft_ms": reply["durationMs"]}
+
+    def _code_facts(self, good: list) -> list | None:
+        """Hechos redactados por código (texto, herramienta, paso), si TODAS las herramientas usadas saben hacerlo."""
+        out = []
+        for r in good:
+            tool = self.tools.get(r["tool"])
+            if tool is None or tool.facts is None:
+                return None
+            out += [(text, r["tool"], r["n"]) for text in tool.facts(r["output"]["data"])]
+        return out
+
+    def _answer_with_code_facts(self, state: ChatState, good: list, code_facts: list, notes: list) -> dict:
+        """Los hechos salen del código, sin pasar por el modelo. El modelo solo interpreta si el docente lo pide."""
+        facts = [Fact(text=t, sources=[Source(tool=tool, stepN=n)]) for t, tool, n in code_facts]
+        answer = Answer(facts=facts, unavailable=notes)
+        steps = list(state["steps"])
+        if needs_interpretation(state["message"]):
+            listing = "\n".join(f"[{i}] {f.text}" for i, f in enumerate(facts))
+            messages = [{"role": "system", "content": prompts.INTERPRETER_SYSTEM},
+                        {"role": "user", "content": f"Pregunta del docente: {state['message']}\n\nHechos:\n{listing}"}]
+            try:
+                reply = self.llm.chat(messages, response_format=Draft.model_json_schema(), temperature=0.0,
+                                      max_tokens=self.settings.draft_max_tokens)
+                draft = Draft.model_validate_json(reply["content"])
+            except (LLMError, ValidationError, ValueError) as exc:
+                steps.append({"n": len(steps) + 1, "node": "redactar_respuesta", "tool": None, "ok": False,
+                              "errorCode": getattr(exc, "code", "DRAFT_INVALID"), "durationMs": 0})
+                answer.unavailable = notes + ["No pude generar la interpretación; te muestro solo los hechos."]
+            else:
+                steps.append({"n": len(steps) + 1, "node": "redactar_respuesta", "tool": None, "ok": True,
+                              "errorCode": None, "durationMs": reply["durationMs"]})
+                inferences = [Inference(text=i.text, basedOn=[b for b in i.basedOn if 0 <= b < len(facts)])
+                              for i in draft.inferences]
+                answer.inferences = [i for i in inferences if i.basedOn]
+                answer.recommendations = [Recommendation(text=r.text, relatedFinding=r.relatedFinding)
+                                          for r in draft.recommendations
+                                          if r.relatedFinding is not None and 0 <= r.relatedFinding < len(facts)]
+        data = [r["output"]["data"] for r in good]
+        last_sync = find_value(data, "lastSyncAt") or find_value(data, "calculatedAt")
+        return {"answer": answer.model_dump(), "steps": steps, "last_sync_at": last_sync, "unavailable": answer.unavailable}
 
     def validar_salida(self, state: ChatState) -> dict:
-        """Código determinista: toda cifra de los hechos debe salir de la salida de alguna herramienta."""
+        """Código determinista: toda cifra de la respuesta debe salir de la salida de alguna herramienta."""
         answer = state["answer"]
         if not answer["facts"]:
             return {"retry": False}
         allowed = numbers_in(json.dumps([r["output"].get("data") for r in state["tool_results"]], ensure_ascii=False))
         allowed |= numbers_in(state["message"]) | ({float(state["course_id"])} if state.get("course_id") else set())
+        # Las inferencias y recomendaciones tampoco pueden traer cifras sin fuente (no se reintentan: se descartan)
+        inferences = [i for i in answer["inferences"] if not numbers_in(i["text"]) - allowed]
+        recommendations = [r for r in answer["recommendations"] if not numbers_in(r["text"]) - allowed]
+        trimmed = (len(answer["inferences"]) - len(inferences)) + (len(answer["recommendations"]) - len(recommendations))
+        omitted = "Se omitió una cifra que no pudo comprobarse con los datos de las herramientas."
+        if trimmed:
+            answer = {**answer, "inferences": inferences, "recommendations": recommendations,
+                      "unavailable": answer["unavailable"] + [omitted]}
         bad = [f for f in answer["facts"] if numbers_in(f["text"]) - allowed]
         if not bad:
+            if trimmed:
+                return {"retry": False, "validated": False, "answer": answer, "unsourced_removed": trimmed}
             return {"retry": False, "validated": True}
-        if state["redactions"] < 1:
-            return {"retry": True, "redactions": state["redactions"] + 1}
-        keep = [f for f in answer["facts"] if f not in bad]
-        answer = {**answer, "facts": keep, "unavailable": answer["unavailable"] + [
-            "Se omitió una cifra que no pudo comprobarse con los datos de las herramientas."]}
-        return {"retry": False, "validated": False, "answer": answer, "unsourced_removed": len(bad)}
+        # Un reintento solo si cabe en el tiempo máximo del mensaje (diseño, sección 2): redactar de nuevo cuesta
+        # casi lo mismo que la primera vez, y pasarse de 60 s es peor que omitir la cifra.
+        elapsed = time.monotonic() - state["started_mono"]
+        fits = elapsed + 1.5 * state.get("last_draft_ms", 0) / 1000 < self.settings.message_timeout_s
+        if state["redactions"] < 1 and fits:
+            unsourced = sorted({n for f in bad for n in numbers_in(f["text"]) - allowed})
+            return {"retry": True, "redactions": state["redactions"] + 1,
+                    "feedback": ", ".join(f"{n:g}".replace(".", ",") for n in unsourced)}
+        # Se descartan los hechos sin respaldo y todo lo que se apoyaba en ellos (diseño, sección 6).
+        kept = [i for i, f in enumerate(answer["facts"]) if f not in bad]
+        remap = {old: new for new, old in enumerate(kept)}
+        inferences = []
+        for inf in answer["inferences"]:
+            based = [remap[b] for b in inf["basedOn"] if b in remap]
+            if based:
+                inferences.append({**inf, "basedOn": based})
+        recommendations = [{**r, "relatedFinding": remap[r["relatedFinding"]]} for r in answer["recommendations"]
+                           if r["relatedFinding"] in remap]
+        notes = answer["unavailable"] if omitted in answer["unavailable"] else answer["unavailable"] + [omitted]
+        answer = {**answer, "facts": [answer["facts"][i] for i in kept], "inferences": inferences,
+                  "recommendations": recommendations, "unavailable": notes}
+        return {"retry": False, "validated": False, "answer": answer, "unsourced_removed": len(bad) + trimmed}
 
     def guardar_traza(self, state: ChatState) -> dict:
         answer = state["answer"]

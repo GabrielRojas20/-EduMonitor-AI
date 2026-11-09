@@ -42,11 +42,15 @@ class Tool:
     description: str
     input_model: type[BaseModel]
     run: Callable[[ToolContext, BaseModel], dict]
+    # Redacta los hechos a partir de los datos, con código: así un modelo pequeño no puede equivocarse al copiar cifras
+    # ni atribuir un dato a la entidad equivocada. Sin esta función, el modelo redacta los hechos.
+    facts: Callable[[dict], list[str]] | None = None
 
     def schema(self) -> dict:
         """Definición en el formato de herramientas de Ollama."""
         params = self.input_model.model_json_schema()
         params.pop("title", None)
+        params.pop("description", None)  # la docstring de la clase de entrada es para quien lee el código
         for prop in params.get("properties", {}).values():
             prop.pop("title", None)
         return {"type": "function", "function": {"name": self.name, "description": self.description, "parameters": params}}
@@ -64,6 +68,9 @@ class ToolRegistry:
 
     def schemas(self) -> list[dict]:
         return [t.schema() for t in self._tools.values()]
+
+    def get(self, name: str) -> Tool | None:
+        return self._tools.get(name)
 
     def execute(self, name: str, arguments: dict, ctx: ToolContext) -> dict:
         """Valida los argumentos y ejecuta la herramienta. Siempre devuelve la salida común."""

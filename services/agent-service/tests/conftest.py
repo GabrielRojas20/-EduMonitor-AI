@@ -28,7 +28,7 @@ def auth(exp_in: int = 3600) -> dict:
 @pytest.fixture
 def settings():
     return Settings(ollama_url="http://ollama.test", model="qwen3:1.7b", gateway_url="http://gateway.test",
-                    keep_alive="1m", max_tool_calls=5, tool_timeout_s=2.0, message_timeout_s=30.0,
+                    keep_alive="1m", max_tool_calls=5, tool_timeout_s=2.0, message_timeout_s=30.0, draft_max_tokens=450,
                     cors_origins=("http://localhost:5173",))
 
 
