@@ -8,6 +8,7 @@ import uuid
 
 from fastapi import Depends, FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel
@@ -33,6 +34,11 @@ app = FastAPI(
     ),
 )
 bearer = HTTPBearer(auto_error=False, description="JWT que devuelve /api/v1/auth/login")
+
+# La interfaz React llama al mock desde el navegador (otro origen, con Authorization): hace falta CORS abierto.
+# El gateway real restringe el origen; el mock no, porque solo corre en el computador de cada integrante.
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
+                   expose_headers=["X-Request-Id"])
 
 
 # ---------------------------------------------------------------- errores y encabezados

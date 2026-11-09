@@ -115,3 +115,16 @@ def test_request_id_is_echoed(client, teacher):
 def test_pagination(client, teacher):
     page = client.get(f"{C}/2/students", headers=teacher, params={"page": 2, "pageSize": 2}).json()
     assert page["total"] == 5 and page["page"] == 2 and [s["id"] for s in page["items"]] == [6, 7]
+
+
+def test_browser_calls_are_allowed_by_cors(client, teacher):
+    """La interfaz React (otro origen) puede llamar al mock, incluida la petición previa OPTIONS."""
+    origin = "http://localhost:5173"
+    pre = client.options(f"{C}", headers={"Origin": origin, "Access-Control-Request-Method": "GET",
+                                          "Access-Control-Request-Headers": "authorization"})
+    assert pre.status_code == 200
+    assert pre.headers["access-control-allow-origin"] in ("*", origin)
+    assert "authorization" in pre.headers["access-control-allow-headers"].lower()
+    r = client.get(C, headers={**teacher, "Origin": origin})
+    assert r.headers["access-control-allow-origin"] in ("*", origin)
+    assert "x-request-id" in r.headers["access-control-expose-headers"].lower()
