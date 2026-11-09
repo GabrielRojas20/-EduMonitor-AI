@@ -1,0 +1,24 @@
+name: Analytics service
+on:
+  pull_request:
+    paths:
+      - 'services/analytics-service/**'
+      - '.github/workflows/analytics-service.yml'
+  push:
+    branches: [develop, main]
+    paths:
+      - 'services/analytics-service/**'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/analytics-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet restore
+      - run: dotnet build --no-restore
+      - run: dotnet test AnalyticsService.Tests/AnalyticsService.Tests.csproj --no-build --verbosity normal
