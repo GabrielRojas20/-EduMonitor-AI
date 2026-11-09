@@ -28,3 +28,18 @@ dotnet test .\AnalyticsService.Tests\AnalyticsService.Tests.csproj
 ```
 
 Antes de ejecutar, crear la base con `database.sql` y configurar `ConnectionStrings__EduMonitor` o `MSSQL_SA_PASSWORD`.
+
+## Docker Compose
+
+Desde la raíz del repositorio:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d --build
+docker compose ps
+Invoke-WebRequest http://localhost:5003/health
+Invoke-WebRequest http://localhost:5003/api/v1/courses/101/analytics
+Invoke-WebRequest http://localhost:5003/api/v1/courses/101/analytics/alerts
+```
+
+El servicio `analytics-db-init` ejecuta `database.sql` después de que SQL Server esté saludable. El script es idempotente y contiene el esquema inicial y los datos ficticios reproducibles; funciona como migración SQL inicial mientras se incorpora el flujo formal de EF migrations.

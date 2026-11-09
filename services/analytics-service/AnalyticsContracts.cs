@@ -6,4 +6,6 @@ public sealed record StudentAnalyticsResponse(int CourseId, int StudentId, Snaps
 public sealed record AlertEvidence(string Metric, decimal? ObservedValue, decimal? Threshold, int? Numerator, int? Denominator, string[] SourceIds, string Explanation);
 public sealed record AlertResponse(string AlertId, string RuleCode, int CourseId, int? StudentId, string Severity, string Status, DateTime DetectedAt, DateTime? ResolvedAt, AlertEvidence[] Evidence);
 public sealed record AlertPage(AlertResponse[] Items, int Page, int PageSize, int Total);
+public sealed record ReportFinding(string? AlertId, string? RuleCode, int? StudentId, string? Metric, string Text);
+public sealed record CourseReportData(int CourseId, SnapshotMeta Snapshot, DateTime? PeriodStart, DateTime? PeriodEnd, Dictionary<string, Metric> Metrics, ReportFinding[] Findings, int ActiveAlertCount);
 public sealed record Problem(string Title, int Status, string Code, string Detail, string? TraceId = null);

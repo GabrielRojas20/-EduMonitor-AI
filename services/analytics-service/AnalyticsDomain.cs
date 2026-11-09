@@ -44,6 +44,8 @@ public static class AnalyticsCalculator
         var availableCompletion = cs.Where(x => x.State != CompletionState.NotAvailable).ToList();
         var completed = availableCompletion.Count(x => x.State is CompletionState.Complete or CompletionState.Passed);
         var completion = Rate(completed, availableCompletion.Count, "percent");
+        if (availableCompletion.Count > 0 && availableCompletion.Count < cs.Count)
+            completion = completion with { Status = "partial", Detail = "Algunas actividades no tienen seguimiento de finalización disponible." };
         var pendingRate = Rate(pending, gs.Count, "percent");
         return new(average, submission, grading, completion, pendingRate, new(graded, pending, notSubmitted, drafts));
     }
