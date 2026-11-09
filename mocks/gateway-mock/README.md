@@ -6,21 +6,126 @@ Servidor mock del api-gateway (contrato `docs/contracts/api-gateway.v1.yaml`, v1
 ficticios para que la interfaz y el agente se desarrollen sin esperar al backend real. Tiene las 13 operaciones
 de las 12 rutas del contrato, con los mismos errores (formato Problem, RFC 7807).
 
-## Cómo ejecutarlo
+## Cómo tenerlo en tu computador (paso a paso)
 
-Requiere Python 3.11 o superior (probado con 3.13).
+No necesitas Docker, ni base de datos, ni Moodle: solo Git y Python.
+
+### Antes de empezar
+
+| Herramienta | Cómo comprobarla | Si falta |
+|---|---|---|
+| Git | `git --version` | Instalar desde <https://git-scm.com> |
+| Python 3.11 o superior (probado con 3.13) | `python --version` | Instalar desde <https://www.python.org/downloads/> y marcar **Add Python to PATH**. En Windows también sirve `py --version`. |
+
+### 1. Obtener el código
+
+Si **todavía no tienes el repositorio**:
+
+```powershell
+git clone https://github.com/GabrielRojas20/-EduMonitor-AI.git EduMonitor-AI
+cd EduMonitor-AI
+```
+
+El nombre de la carpeta (`EduMonitor-AI`) se escribe a propósito sin el guion inicial, porque `cd -EduMonitor-AI`
+falla en la terminal. Si **ya lo tienes**, entra a su carpeta (por ejemplo `cd .\-EduMonitor-AI`) y sigue.
+
+### 2. Ponerte en la rama correcta
+
+Mientras el pull request del mock no se haya unido a `develop`:
+
+```powershell
+git fetch origin
+git checkout feat/S2-mock-gateway
+```
+
+Cuando ya esté unido, basta con `git checkout develop` y `git pull`.
+
+### 3. Entrar a la carpeta del mock
 
 ```powershell
 cd mocks/gateway-mock
+```
+
+### 4. Crear el entorno de Python e instalar lo necesario (solo la primera vez)
+
+Windows (PowerShell):
+
+```powershell
 python -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements-dev.txt
+```
+
+macOS o Linux:
+
+```bash
+python3 -m venv .venv
+./.venv/bin/python -m pip install -r requirements-dev.txt
+```
+
+`requirements-dev.txt` incluye lo necesario para ejecutar el mock y para correr sus pruebas. No hace falta
+«activar» el entorno: los comandos de abajo llaman directamente a su Python.
+
+### 5. Arrancar el mock
+
+```powershell
+.\.venv\Scripts\python -m uvicorn app.main:app --port 5000
+```
+
+En macOS o Linux: `./.venv/bin/python -m uvicorn app.main:app --port 5000`.
+
+Cuando funciona, la terminal muestra `Uvicorn running on http://127.0.0.1:5000`. **Deja esa terminal abierta**:
+mientras esté abierta, el mock está funcionando.
+
+### 6. Comprobar que funciona
+
+1. Abre <http://localhost:5000/health>. Debe mostrar `{"status":"ok","service":"gateway-mock"}`.
+2. Abre <http://localhost:5000/docs>, la documentación interactiva.
+3. En `POST /api/v1/auth/login` pulsa **Try it out**, escribe `docente1@example.com` y `Prueba123!`, y pulsa **Execute**.
+4. Copia el `accessToken` de la respuesta, pulsa **Authorize** (arriba a la derecha) y pégalo.
+5. Prueba `GET /api/v1/courses`: debe devolver el curso `PRUEBA01`.
+
+Desde PowerShell también sirve: `Invoke-RestMethod http://localhost:5000/health`.
+
+### 7. Usarlo desde tu parte del proyecto
+
+La dirección base es **`http://localhost:5000`**: la misma que tendrá el gateway real, así que más adelante solo cambia
+esa dirección.
+
+- **Interfaz (web-ui):** apunta tu variable de entorno de la API, por ejemplo `VITE_API_URL=http://localhost:5000`. El mock
+  acepta llamadas desde el navegador (CORS abierto).
+- **Agente u otros servicios:** usa esa dirección base y reenvía el JWT en `Authorization: Bearer <token>`.
+
+### Apagarlo, actualizarlo y volver a arrancarlo
+
+- **Apagar:** `Ctrl+C` en la terminal donde corre.
+- **Actualizar** (cuando alguien cambie el mock o el contrato): `git pull` en la rama y arrancarlo otra vez. No hace falta
+  repetir el paso 4, salvo que cambie `requirements.txt`.
+- **Volver a arrancarlo otro día:** pasos 3 y 5.
+- **Dejar los datos como al inicio:** reiniciarlo, o llamar a `POST /_mock/reset`.
+
+### Si algo falla
+
+| Síntoma | Causa probable | Qué hacer |
+|---|---|---|
+| `python` no se reconoce | Python no está instalado o no está en el PATH | Reinstalarlo marcando **Add Python to PATH**, o usar `py -m venv .venv` |
+| `Address already in use` o `error while attempting to bind` | Otro programa usa el puerto 5000 | Arrancar en otro puerto (`--port 5001`) y usar `http://localhost:5001` como dirección base |
+| `No module named 'fastapi'` | No se instalaron las dependencias o se usó otro Python | Repetir el paso 4 y arrancar con `.\.venv\Scripts\python`, no con `python` a secas |
+| `/docs` abre pero devuelve 401 | Falta el token | Hacer login y pulsar **Authorize** (paso 6) |
+| El navegador muestra un error de CORS | Se está llamando a otra dirección o el mock no está encendido | Comprobar que el mock corre y que la dirección base es la del mock |
+| `cd -EduMonitor-AI` falla | El nombre de la carpeta empieza con un guion | Usar `cd .\-EduMonitor-AI` o clonar con otro nombre (paso 1) |
+
+## Atajo para quien ya lo tiene instalado
+
+```powershell
+cd mocks/gateway-mock
 .\.venv\Scripts\python -m uvicorn app.main:app --port 5000 --reload
 ```
 
-- Documentación interactiva (probar rutas con «Try it out»): <http://localhost:5000/docs>
+`--reload` reinicia el mock solo cuando cambian los archivos; es útil si lo estás modificando.
+
+- Documentación interactiva: <http://localhost:5000/docs>
 - Estado: <http://localhost:5000/health>
-- El puerto 5000 es el del api-gateway en la tabla de puertos de los contratos, así que quien use el mock solo
-  cambia la dirección base cuando pase al gateway real.
+- El puerto 5000 es el del api-gateway en la tabla de puertos de los contratos.
 
 ## Cómo entrar
 
@@ -86,6 +191,7 @@ Ejemplo: `curl -H "Authorization: Bearer <token>" -H "X-Mock-Error: MOODLE_UNAVA
 ## Límites
 
 - No valida contraseñas reales ni firmas de un emisor real; la clave del JWT es de pruebas (`MOCK_JWT_SECRET`).
+- Tiene CORS abierto a cualquier origen para que la interfaz lo llame desde el navegador; el gateway real lo restringe.
 - Los datos son de solo lectura, salvo el estado de la sincronización; no hay alertas resueltas.
 - No habla con Moodle ni con la base de datos.
 - Falta su `Dockerfile` y su entrada en `docker-compose.yml`, que está a cargo de Gabriel.
