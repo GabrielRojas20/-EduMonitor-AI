@@ -35,7 +35,8 @@ def facts(data: dict) -> list[str]:
 TOOL = Tool(
     name="listar_cursos",
     description="Lista los cursos a los que el docente tiene acceso, con su nombre, la cantidad de estudiantes y la "
-                "fecha de la última sincronización con Moodle. No necesita parámetros.",
+                "fecha de la última sincronización con Moodle. Úsala para cualquier pregunta sobre los cursos del docente: cuáles "
+                "son, cuántos estudiantes tiene uno en concreto o cuándo se sincronizó por última vez. No necesita parámetros.",
     input_model=NoArgs,
     run=run,
     facts=facts,

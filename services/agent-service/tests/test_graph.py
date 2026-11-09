@@ -240,3 +240,12 @@ def test_simple_lists_ask_for_facts_only(make_agent, ollama):
     ollama.reply(draft())
     run(make_agent())
     assert "únicamente con hechos" in ollama.calls[1]["messages"][0]["content"]
+
+
+def test_planner_is_told_to_use_a_tool_for_questions_about_one_course(make_agent, ollama):
+    """Con qwen3:1.7b, «¿Cuántos estudiantes tiene PRUEBA01?» no llamaba a ninguna herramienta (escenario C03)."""
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(draft())
+    run(make_agent(), "¿Cuántos estudiantes tiene PRUEBA01?")
+    system = ollama.calls[0]["messages"][0]["content"]
+    assert "SIEMPRE" in system and "un dato concreto" in system
