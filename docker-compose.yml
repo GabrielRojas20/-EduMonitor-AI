@@ -1,2 +1,82 @@
-# Sprint 2 (Gabriel): docker-compose base con sqlserver, moodle, ollama y los cinco servicios.
-services: {}
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: edumonitor-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Define MSSQL_SA_PASSWORD en .env}
+    ports:
+      - "${MSSQL_PORT:-1433}:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  moodle-db:
+    image: mariadb:11.4
+    container_name: edumonitor-moodle-db
+    environment:
+      MARIADB_DATABASE: moodle
+      MARIADB_USER: moodle
+      MARIADB_PASSWORD: ${MOODLE_DB_PASSWORD:-moodle_dev_password}
+      MARIADB_ROOT_PASSWORD: ${MOODLE_DB_ROOT_PASSWORD:-root_dev_password}
+    volumes:
+      - moodle-db-data:/var/lib/mysql
+
+  moodle:
+    image: bitnami/moodle:4.5
+    container_name: edumonitor-moodle
+    depends_on:
+      moodle-db:
+        condition: service_started
+    environment:
+      MOODLE_DATABASE_TYPE: mariadb
+      MOODLE_DATABASE_HOST: moodle-db
+      MOODLE_DATABASE_PORT_NUMBER: 3306
+      MOODLE_DATABASE_NAME: moodle
+      MOODLE_DATABASE_USER: moodle
+      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD:-moodle_dev_password}
+      MOODLE_USERNAME: ${MOODLE_ADMIN_USER:-admin}
+      MOODLE_PASSWORD: ${MOODLE_ADMIN_PASSWORD:-Admin123!}
+      MOODLE_EMAIL: ${MOODLE_ADMIN_EMAIL:-admin@example.test}
+      MOODLE_SITE_NAME: EduMonitor Moodle
+    ports:
+      - "8080:8080"
+    volumes:
+      - moodle-data:/bitnami/moodle
+      - moodledata-data:/bitnami/moodledata
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: edumonitor-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+  analytics:
+    build:
+      context: ./services/analytics-service
+      dockerfile: Dockerfile
+    container_name: edumonitor-analytics
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5003
+      ConnectionStrings__EduMonitor: "Server=sqlserver,1433;Database=EduMonitor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+    ports:
+      - "5003:5003"
+
+volumes:
+  sqlserver-data:
+  moodle-db-data:
+  moodle-data:
+  moodledata-data:
+  ollama-data:
