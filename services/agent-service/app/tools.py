@@ -53,6 +53,11 @@ class Tool:
         params.pop("description", None)  # la docstring de la clase de entrada es para quien lee el código
         for prop in params.get("properties", {}).values():
             prop.pop("title", None)
+            prop.pop("default", None)
+            # `int | None` se publica como {"anyOf": [{"type": "integer"}, {"type": "null"}]}; un modelo pequeño lo sigue mejor simple
+            options = [o for o in prop.pop("anyOf", []) if o.get("type") != "null"]
+            if len(options) == 1:
+                prop.update(options[0])
         return {"type": "function", "function": {"name": self.name, "description": self.description, "parameters": params}}
 
 
