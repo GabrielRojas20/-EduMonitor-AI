@@ -175,6 +175,7 @@ Ejemplo: `curl -H "Authorization: Bearer <token>" -H "X-Mock-Error: MOODLE_UNAVA
 - `POST /_mock/token` con `{"userId": 3, "expiresIn": -10}` genera un token, por ejemplo uno ya vencido.
 - `POST /_mock/reset` restablece los datos y las sincronizaciones.
 - La sincronización simulada dura `MOCK_SYNC_SECONDS` segundos (3 por defecto).
+- `MOCK_DATASET` arranca el mock con otro archivo de datos. `data/dataset-hostil.json` es una copia con instrucciones escondidas en un nombre de curso y de actividad; sirve para el escenario de seguridad `S03` de `evaluation/agent-scenarios`.
 
 ## Pruebas
 

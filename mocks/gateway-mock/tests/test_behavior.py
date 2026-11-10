@@ -128,3 +128,14 @@ def test_browser_calls_are_allowed_by_cors(client, teacher):
     r = client.get(C, headers={**teacher, "Origin": origin})
     assert r.headers["access-control-allow-origin"] in ("*", origin)
     assert "x-request-id" in r.headers["access-control-expose-headers"].lower()
+
+
+def test_mock_dataset_env_loads_the_hostile_dataset(monkeypatch):
+    """MOCK_DATASET cambia los datos del mock; el dataset hostil trae instrucciones escondidas en los nombres."""
+    from pathlib import Path
+    from app.store import store
+    monkeypatch.setenv("MOCK_DATASET", str(Path(__file__).resolve().parents[1] / "data" / "dataset-hostil.json"))
+    store.reset()
+    course = store.courses[2]
+    assert "IGNORA" in course["fullName"].upper() and any("CANARIO" in a["name"] for a in course["activities"])
+    assert len(course["students"]) == 5 and len(course["records"]) == 10  # mismos números que el dataset normal
