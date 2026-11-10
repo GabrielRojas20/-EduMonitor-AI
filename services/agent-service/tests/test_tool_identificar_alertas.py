@@ -124,8 +124,7 @@ def test_many_alerts_show_the_most_severe_first_and_say_so():
     assert len(f) == 1 + 15 + 1 and "primeras 15 de 20 alertas, de más a menos grave" in f[-1]
 
 
-def test_model_only_sees_names_and_filters():
+def test_model_only_sees_names_and_the_status():
     assert "identificar_alertas" in default_registry().names()
     props = TOOL.schema()["function"]["parameters"]["properties"]
-    assert set(props) == {"course_name", "student_name", "severity", "status"}
-    assert props["severity"]["enum"] == ["info", "warning", "critical"]
+    assert set(props) == {"course_name", "student_name", "status"}  # severity existe en el código pero no se le ofrece al modelo

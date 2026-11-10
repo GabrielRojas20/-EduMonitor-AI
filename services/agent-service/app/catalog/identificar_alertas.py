@@ -116,11 +116,11 @@ TOOL = Tool(
     name="identificar_alertas",
     description="Devuelve las alertas del curso, con la regla que las activó, el valor observado, el umbral y su explicación: "
                 "promedio bajo, entrega baja, calificaciones pendientes, finalización baja o sin datos. Puede limitarse a un "
-                "estudiante o a una severidad (info, warning, critical). El curso y el estudiante se indican por su nombre "
+                "estudiante. El resumen cuenta las alertas por severidad (críticas, de atención e informativas). El curso y el estudiante se indican por su nombre "
                 "(por ejemplo PRUEBA01 o «Estudiante Dos»); nunca inventes números. Úsala para preguntas sobre alertas, "
                 "riesgos, estudiantes en riesgo o a quién prestar atención.",
     input_model=Args,
     run=run,
     facts=facts,
-    hidden=("course_id", "student_id", "snapshot_id"),
+    hidden=("course_id", "student_id", "snapshot_id", "severity"),  # severity: un modelo pequeño la inventa y oculta alertas
 )

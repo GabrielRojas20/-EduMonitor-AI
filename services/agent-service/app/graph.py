@@ -62,6 +62,34 @@ def classify(message: str) -> tuple[str, str | None]:
     return "consulta_datos", None
 
 
+# Respaldo del planificador: un modelo pequeño a veces no elige ninguna herramienta ante una pregunta de datos. Entonces se elige
+# por palabras clave (en orden: lo más específico primero). Sin argumentos: cada herramienta resuelve el curso por su cuenta
+# o pide que el docente indique cuál.
+FALLBACK_TOOLS = [
+    (r"alert|riesgo|preocup|atencion", "identificar_alertas"),
+    (r"nota|calific|entreg|pendiente", "obtener_calificaciones"),
+    (r"como va|como vamos|como esta|progreso|promedio|tasa|avance|indicador|desempen|rendimiento", "obtener_progreso"),
+    (r"curso", "listar_cursos"),
+]
+
+
+COURSE_CODE = re.compile(r"\b[A-Za-z]{3,}\d{1,3}\b")  # «PRUEBA01»
+
+
+def fallback_arguments(message: str) -> dict:
+    """Si el docente escribió un código de curso, se pasa como course_name (lo resuelve la herramienta, no el modelo)."""
+    code = COURSE_CODE.search(message)
+    return {"course_name": code.group()} if code else {}
+
+
+def fallback_tool(message: str, available: list[str]) -> str | None:
+    text = normalize(message)
+    for pattern, tool in FALLBACK_TOOLS:
+        if tool in available and re.search(pattern, text):
+            return tool
+    return None
+
+
 # ---------------------------------------------------------------- salida estructurada del modelo
 class DraftFact(BaseModel):
     text: str
@@ -272,8 +300,16 @@ class Agent:
                 if tool is not None and "course_id" in tool.input_model.model_fields:
                     args["course_id"] = state["course_id"]
             plan.append({"name": fn.get("name", ""), "arguments": args})
+        fallback = None
+        if not plan:
+            fallback = fallback_tool(state["message"], self.tools.names())
+            if fallback:
+                tool = self.tools.get(fallback)
+                args = fallback_arguments(state["message"]) if "course_name" in tool.input_model.model_fields else {}
+                plan.append({"name": fallback, "arguments": args})
         steps = state["steps"] + [{"n": len(state["steps"]) + 1, "node": "planificar_herramientas", "tool": None, "ok": True,
-                                   "errorCode": None, "durationMs": reply["durationMs"], "resultSummary": {"plannedCalls": len(plan)}}]
+                                   "errorCode": None, "durationMs": reply["durationMs"],
+                                   "resultSummary": {"plannedCalls": len(plan), **({"fallbackTool": fallback} if fallback else {})}}]
         return {"plan": plan, "steps": steps}
 
     def ejecutar_herramientas(self, state: ChatState) -> dict:
