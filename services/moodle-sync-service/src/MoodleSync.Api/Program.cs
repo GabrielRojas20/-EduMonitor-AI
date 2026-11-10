@@ -117,6 +117,9 @@ app.MapGet("/courses/{courseId:int}/grades", async Task<IResult> (int courseId, 
     return Results.Ok(Slice(grades, page, pageSize));
 }).RequireAuthorization();
 
+
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "moodle-sync" }));
+
 app.Run();
 
 public partial class Program { }

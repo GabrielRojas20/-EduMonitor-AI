@@ -139,6 +139,9 @@ app.Use(async (ctx, next) =>
 
 app.MapReverseProxy();
 
+
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "api-gateway" }));
+
 app.Run();
 
 public partial class Program { }
