@@ -6,17 +6,17 @@ Conjunto de 20 escenarios de evaluación del agente (5 consulta simple, 5 fallas
 3 seguridad y 2 informe), según la sección 8 de [`docs/agent-design/diseno-agente.md`](../../docs/agent-design/diseno-agente.md).
 Se ejecuta al final de cada sprint desde el Sprint 3.
 
-## Estado: parte 1 de 2 (10 escenarios)
+## Estado: 18 de 20 escenarios
 
-Esta primera parte reúne los escenarios que ya se pueden ejecutar con lo que hay hoy (la herramienta `listar_cursos`,
-el mock del gateway y Ollama). La segunda parte se escribe a medida que existen las herramientas que necesita.
+Están los 18 que se pueden ejecutar con las herramientas actuales (`listar_cursos`, `obtener_calificaciones`,
+`obtener_progreso` e `identificar_alertas`), el mock del gateway y Ollama. Faltan los dos de informe, que necesitan `generar_resumen`.
 
-| Categoría | Hechos (parte 1) | Pendientes (parte 2) | Necesitan |
+| Categoría | Hechos | Pendientes | Necesitan |
 |---|---|---|---|
 | Consulta simple (5) | `C01` a `C05` | — | — |
-| Falla de herramienta (5) | `F01` a `F03` | `F04` curso sin sincronizar, `F05` curso no autorizado | `obtener_calificaciones` o `obtener_progreso` |
-| Alertas con evidencia (5) | — | `A01` a `A05` | `identificar_alertas` |
-| Seguridad (3) | `S01` modificar una nota, `S02` acceso a un curso ajeno | `S03` instrucciones ocultas en los datos | datos hostiles en el mock |
+| Falla de herramienta (5) | `F01` a `F05` (token vencido o alterado, gateway caído, curso sin sincronizar, curso de otro docente) | — | — |
+| Alertas con evidencia (5) | `A01` a `A05` | — | — |
+| Seguridad (3) | `S01` modificar una nota, `S02` acceso a un curso ajeno, `S03` instrucciones ocultas en los datos | — | — |
 | Informe (2) | — | `I01`, `I02` | `generar_resumen` |
 
 ## Cómo ejecutarlo
@@ -33,13 +33,24 @@ Solo hace falta Python (no se instala nada). Antes, deja corriendo:
    .\.venv\Scripts\python -m uvicorn app.main:app --port 5014
    ```
 
+5. *(Opcional)* para `S03` (instrucciones ocultas en los datos): un segundo mock con datos hostiles y una copia del agente que
+   apunte a él.
+   ```powershell
+   # en mocks/gateway-mock
+   $env:MOCK_DATASET = "$PWD\data\dataset-hostil.json"
+   .\.venv\Scripts\python -m uvicorn app.main:app --port 5010
+   # en services/agent-service (otra terminal)
+   $env:GATEWAY_URL = "http://localhost:5010"
+   .\.venv\Scripts\python -m uvicorn app.main:app --port 5024
+   ```
+
 Luego, desde `evaluation/agent-scenarios`:
 
 ```powershell
-python ejecutar.py --agente-gateway-caido http://localhost:5014
+python ejecutar.py --agente-gateway-caido http://localhost:5014 --agente-datos-hostiles http://localhost:5024
 ```
 
-Sin `--agente-gateway-caido`, los escenarios de gateway caído se **omiten** (el script lo indica). Otras opciones:
+Sin `--agente-gateway-caido` o `--agente-datos-hostiles`, los escenarios que los necesitan (`F03` y `S03`) se **omiten** (el script lo indica). Otras opciones:
 `--solo C01,S02` ejecuta solo esos escenarios; `--agente`, `--gateway` y `--clave` cambian las direcciones y la contraseña.
 El script termina con código 0 si todos pasan y con 1 si alguno falla, así que puede usarse en CI.
 
