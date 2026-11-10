@@ -36,7 +36,22 @@ Si el curso nunca se sincronizó, las lecturas responden 503 `DATA_NOT_AVAILABLE
 
 ## Estado del almacenamiento
 
-Hoy guarda en **memoria** (se pierde al reiniciar). La interfaz `ISyncStore` aísla esa pieza: cuando esté el esquema `sync` de Gabriel se agrega una versión con SQL Server sin tocar lo demás.
+En ejecución normal utiliza `SqlSyncStore`, que persiste los datos en SQL Server usando el esquema `sync` existente:
+
+- `sync.course`: cursos sincronizados.
+- `sync.student`: estudiantes.
+- `sync.grade`: calificaciones.
+- `sync.completion`: progreso de actividades.
+
+La conexión se obtiene de `ConnectionStrings__EduMonitor`, por ejemplo:
+
+```text
+Server=sqlserver,1433;Database=EduMonitor;User Id=sa;Password=...;TrustServerCertificate=True;
+```
+
+El adaptador `InMemorySyncStore` se utiliza únicamente en las pruebas automatizadas para mantenerlas aisladas y rápidas. Los datos guardados en SQL Server permanecen disponibles después de reiniciar el servicio y pueden ser consumidos por Analytics.
+
+El texto de las entregas (`onlinetext`) nunca se lee, nunca se guarda y nunca se devuelve en las respuestas.
 
 ## Ejecutar y probar
 

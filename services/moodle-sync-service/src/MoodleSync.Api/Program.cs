@@ -50,7 +50,7 @@ builder.Services.AddHttpClient("moodle", (sp, c) =>
     c.Timeout = TimeSpan.FromSeconds(30);
 });
 builder.Services.AddSingleton<MoodleClient>();
-builder.Services.AddSingleton<ISyncStore, InMemorySyncStore>();
+builder.Services.AddSingleton<ISyncStore, SqlSyncStore>();
 builder.Services.AddSingleton<SyncService>();
 
 var app = builder.Build();

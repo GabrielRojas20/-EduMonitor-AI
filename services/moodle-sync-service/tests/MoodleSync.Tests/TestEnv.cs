@@ -6,6 +6,9 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using MoodleSync.Api;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Xunit;
@@ -27,6 +30,17 @@ public sealed class MoodleSyncFactory(string moodleUrl) : WebApplicationFactory<
             ["MOODLE_BASE_URL"] = moodleUrl,
             ["MOODLE_WS_TOKEN"] = FakeMoodle.Token,
         }));
+
+        builder.ConfigureTestServices(services =>
+        {
+            var descriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(ISyncStore));
+
+            if (descriptor is not null)
+                services.Remove(descriptor);
+
+            services.AddSingleton<ISyncStore, InMemorySyncStore>();
+        });
     }
 }
 
