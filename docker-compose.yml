@@ -30,8 +30,12 @@ services:
     entrypoint: ["/bin/bash", "-c"]
     command: ["/opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -i /scripts/database.sql"]
 
+
   moodle-db:
     image: mariadb:11.4
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     container_name: edumonitor-moodle-db
     environment:
       MARIADB_DATABASE: moodle
@@ -40,13 +44,18 @@ services:
       MARIADB_ROOT_PASSWORD: ${MOODLE_DB_ROOT_PASSWORD:-root_dev_password}
     volumes:
       - moodle-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
 
   moodle:
-    image: bitnami/moodle:4.5
+    image: bitnamilegacy/moodle:4.5
     container_name: edumonitor-moodle
     depends_on:
       moodle-db:
-        condition: service_started
+        condition: service_healthy
     environment:
       MOODLE_DATABASE_TYPE: mariadb
       MOODLE_DATABASE_HOST: moodle-db
@@ -63,6 +72,12 @@ services:
     volumes:
       - moodle-data:/bitnami/moodle
       - moodledata-data:/bitnami/moodledata
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8080'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
 
   ollama:
     image: ollama/ollama:latest
@@ -86,6 +101,118 @@ services:
       ConnectionStrings__EduMonitor: "Server=sqlserver,1433;Database=EduMonitor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
     ports:
       - "5003:5003"
+
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: edumonitor-api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ReverseProxy__Clusters__auth__Destinations__d1__Address=http://auth-courses:5001
+      - ReverseProxy__Clusters__sync__Destinations__d1__Address=http://moodle-sync:5002
+      - ReverseProxy__Clusters__analytics__Destinations__d1__Address=http://analytics:5003
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+    depends_on:
+      auth-courses:
+        condition: service_healthy
+      moodle-sync:
+        condition: service_healthy
+      analytics:
+        condition: service_started
+
+  auth-db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: edumonitor-auth-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    volumes:
+      - ./services/auth-courses-service/db/auth-001-esquema.sql:/scripts/auth-001-esquema.sql:ro
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        for i in $(seq 1 30); do
+          /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" && break
+          if [ "$$i" -eq 30 ]; then
+            echo "SQL Server no aceptó conexiones"
+            exit 1
+          fi
+          sleep 2
+        done
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "IF DB_ID('EduMonitorAuth') IS NULL CREATE DATABASE [EduMonitorAuth]"
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P "$${MSSQL_SA_PASSWORD}" -d EduMonitorAuth -C -i /scripts/auth-001-esquema.sql
+
+  auth-courses:
+    build:
+      context: ./services/auth-courses-service
+      dockerfile: Dockerfile
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: edumonitor-auth-courses
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__Auth=${ConnectionStrings__Auth}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - JWT_EXPIRES_MINUTES=${JWT_EXPIRES_MINUTES}
+      - AUTH_SEED_PASSWORD=${AUTH_SEED_PASSWORD}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      auth-db-init:
+        condition: service_completed_successfully
+
+  moodle-sync:
+    build:
+      context: ./services/moodle-sync-service
+      dockerfile: Dockerfile
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5002/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: edumonitor-moodle-sync
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5002
+      - JWT_SECRET=${JWT_SECRET}
+      - ConnectionStrings__EduMonitor=Server=sqlserver,1433;Database=EduMonitor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      - MOODLE_BASE_URL=http://moodle:8080
+      - MOODLE_WS_TOKEN=${MOODLE_WS_TOKEN}
+      - MOODLE_WS_SERVICE=${MOODLE_WS_SERVICE}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      analytics-db-init:
+        condition: service_completed_successfully
+      moodle:
+        condition: service_healthy
 
 volumes:
   sqlserver-data:

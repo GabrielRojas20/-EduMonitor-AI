@@ -134,6 +134,9 @@ app.MapGet("/internal/courses/{courseId:int}/access", async Task<IResult> (int c
     return denied ?? Results.NoContent();
 }).RequireAuthorization();
 
+
+app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "auth-courses" }));
+
 app.Run();
 
 public partial class Program { }
