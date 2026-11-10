@@ -23,7 +23,8 @@ class Store:
         self.reset()
 
     def reset(self) -> None:
-        with open(DATASET_PATH, encoding="utf-8") as fh:
+        # MOCK_DATASET permite arrancar el mock con otros datos (por ejemplo data/dataset-hostil.json, para la evaluación de seguridad)
+        with open(os.environ.get("MOCK_DATASET") or DATASET_PATH, encoding="utf-8") as fh:
             self.data = json.load(fh)
         self.password = os.environ.get("MOCK_PASSWORD", self.data["password"])
         self.users = {u["id"]: u for u in self.data["users"]}

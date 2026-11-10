@@ -219,3 +219,49 @@ def test_gateway_down_does_not_invent_courses(settings, ollama, traces):
     res = agent(settings, ollama, traces, refused).run("¿Qué cursos tengo?", None, TOKEN, "3", "req-42")
     assert res.meta.status == "error" and res.answer.facts == []
     assert "no respondió" in res.answer.unavailable[0]
+
+
+# ---- respaldo del planificador cuando el modelo no elige ninguna herramienta
+@pytest.mark.parametrize("message,tool", [
+    ("¿Qué alertas hay en PRUEBA01?", "identificar_alertas"), ("¿Qué estudiantes están en riesgo?", "identificar_alertas"),
+    ("¿Qué notas tiene Estudiante Dos?", "obtener_calificaciones"), ("¿Quién tiene entregas pendientes?", "obtener_calificaciones"),
+    ("¿Cómo va el curso PRUEBA01?", "obtener_progreso"), ("¿Cuál es el promedio del curso?", "obtener_progreso"),
+    ("¿Qué cursos tengo y qué me recomiendas?", "listar_cursos"), ("¿Cuántos estudiantes tiene mi curso?", "listar_cursos"),
+    ("cuéntame un chiste", None),
+])
+def test_fallback_tool_by_keywords(message, tool):
+    from app.graph import fallback_tool
+    assert fallback_tool(message, default_registry().names()) == tool
+
+
+def test_fallback_only_offers_tools_that_exist():
+    from app.graph import fallback_tool
+    assert fallback_tool("¿Qué alertas hay?", ["listar_cursos"]) is None
+
+
+def test_when_the_model_picks_no_tool_the_fallback_answers_a_data_question(settings, ollama, traces):
+    ollama.reply(tool_calls=[])  # el modelo no eligió nada
+    res = agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run(
+        "¿Qué cursos tengo?", None, TOKEN, "3", "req-42")
+    assert res.meta.status == "ok" and res.answer.facts[0].text == "Tienes acceso a 2 cursos."
+    assert traces[0]["steps"][0]["resultSummary"]["fallbackTool"] == "listar_cursos"
+
+
+def test_the_fallback_is_not_used_when_the_model_chose_a_tool(settings, ollama, traces):
+    ollama.reply(tool_calls=CALL)
+    agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run("¿Qué cursos tengo?", None, TOKEN, "3", "req-42")
+    assert "fallbackTool" not in traces[0]["steps"][0]["resultSummary"]
+
+
+def test_a_greeting_or_out_of_scope_message_never_reaches_the_fallback(settings, ollama, traces):
+    res = agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run(
+        "Cambia la nota de mis cursos a 10", None, TOKEN, "3", "req-42")
+    assert res.meta.status == "refused" and ollama.calls == []
+
+
+@pytest.mark.parametrize("message,expected", [
+    ("¿Hay alertas críticas en PRUEBA01?", {"course_name": "PRUEBA01"}), ("¿Cómo va prueba02?", {"course_name": "prueba02"}),
+    ("¿Qué notas tienen mis estudiantes?", {}), ("Hola 2026", {})])
+def test_fallback_arguments_take_the_course_code_from_the_message(message, expected):
+    from app.graph import fallback_arguments
+    assert fallback_arguments(message) == expected
