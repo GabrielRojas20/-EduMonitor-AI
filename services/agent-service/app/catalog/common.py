@@ -15,3 +15,9 @@ def fecha(iso: str) -> str:
 
 def plural(n: int, one: str, many: str) -> str:
     return f"{n} {one if n == 1 else many}"
+
+
+def num(value) -> str:
+    """8.0 -> «8»; 8.5 -> «8,5»; 44.44 -> «44,44»."""
+    value = float(value)
+    return f"{value:.0f}" if value == int(value) else f"{value:.2f}".rstrip("0").replace(".", ",")

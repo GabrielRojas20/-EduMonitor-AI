@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from ..gateway import gateway_get  # noqa: F401  (las pruebas lo reemplazan por un gateway simulado)
 from ..tools import Tool, ToolContext, error_output, ok_output
+from .common import num
 from ._resolve import course_students, fetch_all, norm, resolve_course, resolve_student
 
 MAX_ROWS_AS_FACTS = 15  # por encima, los hechos resumen en lugar de listar cada registro
@@ -89,12 +90,6 @@ def pick_activity(ctx: ToolContext, rows: list, wanted: str, endpoint: str):
 
 
 # ---------------------------------------------------------------- hechos redactados por código
-def num(value) -> str:
-    """8.0 -> «8»; 8.5 -> «8,5»."""
-    value = float(value)
-    return f"{value:.0f}" if value == int(value) else f"{value:.2f}".rstrip("0").replace(".", ",")
-
-
 def who(row: dict) -> str:
     return row["studentName"] or f"Estudiante {row['studentId']}"
 
