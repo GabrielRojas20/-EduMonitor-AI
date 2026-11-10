@@ -306,7 +306,7 @@ class Agent:
             if not r["output"]["ok"]:
                 err = r["output"]["error"]
                 # los errores de resolución (curso o estudiante ambiguo o inexistente) traen un mensaje concreto
-                specific = err["code"] in ("VALIDATION_ERROR", "COURSE_NOT_FOUND", "STUDENT_NOT_FOUND") and err["message"]
+                specific = err["code"] in ("VALIDATION_ERROR", "COURSE_NOT_FOUND", "STUDENT_NOT_FOUND", "ACTIVITY_NOT_FOUND") and err["message"]
                 note = err["message"] if specific else HUMAN_ERRORS.get(err["code"], err["message"])
                 notes.append(f"{r['tool']}: {note}")
         return {"unavailable": notes}

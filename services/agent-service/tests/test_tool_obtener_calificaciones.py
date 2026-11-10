@@ -142,7 +142,30 @@ def test_decimal_scores_use_a_comma():
 def test_registered_and_schema_is_simple():
     assert "obtener_calificaciones" in default_registry().names()
     params = TOOL.schema()["function"]["parameters"]
-    assert set(params["properties"]) == {"course_id", "course_name", "student_id", "student_name", "activity_id"}
+    assert set(params["properties"]) == {"course_name", "student_name", "activity_name"}
     assert "required" not in params
-    assert params["properties"]["course_id"]["type"] == "integer" and "anyOf" not in params["properties"]["course_name"]
+    assert "course_id" not in params["properties"] and "anyOf" not in params["properties"]["course_name"]
     assert params["properties"]["course_name"]["type"] == "string"
+
+
+def test_activity_by_name_keeps_only_that_activity():
+    out = run({"course_id": 2, "activity_name": "tarea 2"})
+    assert out["data"]["total"] == 2 and {i["activityName"] for i in out["data"]["items"]} == {"Tarea 2"}
+
+
+def test_unknown_activity_lists_the_real_ones():
+    out = run({"course_id": 2, "activity_name": "Examen"})
+    assert out["error"]["code"] == "ACTIVITY_NOT_FOUND" and "Tarea 1, Tarea 2" in out["error"]["message"]
+
+
+def test_ambiguous_activity_asks_which_one():
+    out = run({"course_id": 2, "activity_name": "Tarea"})
+    assert out["error"]["code"] == "VALIDATION_ERROR" and "Tarea 1, Tarea 2" in out["error"]["message"]
+
+
+def test_ids_invented_by_the_model_are_ignored():
+    """Si el modelo manda ids que no ofrecimos, llegan como argumentos extra y no deben usarse en lugar del nombre."""
+    from app.toolset import default_registry
+    ctx = ToolContext("http://gateway.test", TOKEN, "req-1", 2.0, httpx.MockTransport(gateway()))
+    out = default_registry().execute("obtener_calificaciones", {"course_name": "PRUEBA01", "activity_name": "Tarea 2"}, ctx)
+    assert out["ok"] and out["data"]["total"] == 2
