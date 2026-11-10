@@ -18,7 +18,7 @@ class OllamaClient:
         self._http = httpx.Client(base_url=settings.ollama_url, transport=transport, timeout=settings.message_timeout_s)
 
     def chat(self, messages: list, *, tools: list | None = None, response_format: dict | None = None,
-             temperature: float = 0.0, timeout: float | None = None) -> dict:
+             temperature: float = 0.0, timeout: float | None = None, max_tokens: int | None = None) -> dict:
         """Una petición al modelo. Devuelve {content, tool_calls, durationMs}.
 
         `think: false` desactiva el razonamiento de qwen3 (más rápido, como en el benchmark de S1-12).
@@ -32,6 +32,8 @@ class OllamaClient:
             "keep_alive": self.settings.keep_alive,
             "options": {"temperature": temperature},
         }
+        if max_tokens:
+            payload["options"]["num_predict"] = max_tokens  # tope de largo: evita respuestas largas y lentas
         if tools:
             payload["tools"] = tools
         if response_format:

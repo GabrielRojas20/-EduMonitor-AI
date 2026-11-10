@@ -10,11 +10,10 @@ Diseño completo: [`docs/agent-design/diseno-agente.md`](../../docs/agent-design
 
 ## Estado
 
-Esqueleto funcional del Sprint 2. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas y
-las pruebas. **Todavía no hay herramientas conectadas** al gateway: `app/toolset.py` está vacío y se llena a medida
-que se implementan (`listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas`,
-`generar_resumen`). Mientras tanto, el agente saluda, rechaza lo que está fuera de alcance y, ante una consulta de
-datos, avisa que aún no hay herramientas conectadas, en lugar de inventar.
+Sprint 2. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas, las pruebas y la **primera
+herramienta real, `listar_cursos`**, que consulta el gateway con el JWT del docente. Faltan las demás herramientas
+(`obtener_calificaciones`, `obtener_progreso`, `identificar_alertas`, `generar_resumen`), que se añaden en
+`app/catalog/`. Si una consulta necesita una herramienta que aún no existe, el agente lo dice en lugar de inventar.
 
 ## Cómo ejecutarlo
 
@@ -79,18 +78,52 @@ recibir_mensaje -> validar_contexto -> clasificar_intencion -> planificar_herram
 
 - **Clasificación por reglas:** rechaza modificar notas, enviar mensajes y predicciones psicológicas antes de usar el modelo.
 - **Planificar:** el modelo elige herramientas con temperatura 0 (máximo 5 por mensaje).
-- **Redactar:** el modelo redacta con salida estructurada y **solo** con lo que devolvieron las herramientas, dentro de un
-  bloque delimitado `<datos_herramienta>` que trata como datos y no como instrucciones.
+- **Redactar:** los **hechos los escribe el código**, a partir de la salida de la herramienta (cada herramienta sabe
+  redactar los suyos). Así un modelo pequeño no puede equivocarse al copiar una cifra ni atribuirla a otra entidad: en una
+  prueba, `qwen3:1.7b` escribió «PRUEBA02 tiene 5 estudiantes» (el 5 era de PRUEBA01), y el validador de cifras no
+  lo detectó porque ese 5 sí estaba en los datos. El modelo solo interviene si el docente pide **interpretación o consejo**
+  («¿qué me recomiendas?»): entonces redacta inferencias y recomendaciones sobre los hechos numerados. Para las herramientas
+  que aún no tengan redactor de hechos, el modelo redacta con salida estructurada, y recibe los datos dentro de un bloque
+  `<datos_herramienta>` (como datos, no como instrucciones) y con los `null` convertidos en «no disponible».
 - **Validar salida (código, sin modelo):** toda cifra de un hecho debe aparecer en la salida de alguna herramienta. Si no,
-  se reintenta una vez y, si persiste, se descarta el hecho. Las inferencias sin hechos en que basarse y las
+  se reintenta una vez (diciéndole al modelo qué cifras corregir, y solo si cabe en los 60 s del mensaje) y, si persiste, se
+  descarta el hecho. Las inferencias y recomendaciones con cifras sin fuente también se descartan. Las inferencias sin hechos en que basarse y las
   recomendaciones sin hallazgo se descartan.
 - **Traza:** una por mensaje, con los pasos, las herramientas y los tiempos. **Nunca** incluye el JWT. Por ahora se escribe
   en el registro `agent.trace`; guardarla en el esquema `agent` es una tarea siguiente.
 
+## Herramientas
+
+| Herramienta | Estado | Ruta del gateway |
+|---|---|---|
+| `listar_cursos` | Lista | `GET /api/v1/courses` |
+| `obtener_calificaciones` | Pendiente | `GET /api/v1/courses/{courseId}/grades` |
+| `obtener_progreso` | Pendiente | `GET /api/v1/courses/{courseId}/analytics` (y la del estudiante) |
+| `identificar_alertas` | Pendiente | `GET /api/v1/courses/{courseId}/analytics/alerts` |
+| `generar_resumen` | Pendiente | `GET /api/v1/courses/{courseId}/analytics/report` |
+
+### Cómo añadir una herramienta
+
+Cada herramienta es un archivo de `app/catalog/` con el nombre de la herramienta (`obtener_calificaciones.py`) que define
+una variable `TOOL`. **No hay que registrarla en ningún otro archivo**: `app/toolset.py` las descubre solas. Así, los PR de
+herramientas distintas no tocan los mismos archivos y no chocan. Mira `app/catalog/listar_cursos.py` como modelo. Cada
+archivo define:
+
+- `run(ctx, args)`: llama al gateway con `gateway_get` y devuelve `ok_output(...)` o el error de la herramienta.
+- `facts(data)`: redacta los hechos con código a partir de los datos (el modelo no los escribe).
+- `TOOL = Tool(name=..., description=..., input_model=..., run=run, facts=facts)`.
+
+Las piezas compartidas (`NoArgs`, `fecha`, `plural`) están en `app/catalog/common.py`. Las pruebas de `tests/test_toolset.py`
+comprueban que cada herramienta cumple esa convención.
+
+Todas son de solo lectura y devuelven la salida común del diseño (`ok`, `data`, `error`, `source`). Un fallo del gateway se
+traduce a un código del diseño (`TOKEN_EXPIRED`, `COURSE_NOT_AUTHORIZED`, `MOODLE_UNAVAILABLE`, `DATA_NOT_AVAILABLE`,
+`TOOL_TIMEOUT`...) y nunca lanza una excepción. El JWT se reenvía al gateway y no aparece en ninguna salida ni traza.
+
 ## Configuración
 
 Variables de entorno, todas opcionales (ver `.env.example`): `OLLAMA_URL`, `AGENT_MODEL` (por defecto `qwen3:1.7b`),
-`GATEWAY_URL`, `OLLAMA_KEEP_ALIVE`, `MAX_TOOL_CALLS`, `TOOL_TIMEOUT_SECONDS`, `MESSAGE_TIMEOUT_SECONDS` y
+`GATEWAY_URL`, `OLLAMA_KEEP_ALIVE`, `MAX_TOOL_CALLS`, `TOOL_TIMEOUT_SECONDS`, `MESSAGE_TIMEOUT_SECONDS`, `DRAFT_MAX_TOKENS` y
 `AGENT_CORS_ORIGINS` (orígenes de la interfaz React que pueden llamar al agente).
 
 ## Pruebas
@@ -105,8 +138,9 @@ fallos de herramientas y del modelo, los límites, la seguridad frente a datos h
 
 ## Pendiente
 
-- Las herramientas reales contra el gateway (`app/toolset.py`).
+- Las demás herramientas contra el gateway (un archivo cada una en `app/catalog/`), con su redactor de hechos.
 - Guardar las trazas en el esquema `agent` de SQL Server.
-- Afinar los prompts con el conjunto de evaluación (`evaluation/agent-scenarios/`); `qwen3:1.7b` tarda unos 15 s en
-  contestar una consulta con una herramienta y su redacción todavía es mejorable.
+- Afinar los prompts con el conjunto de evaluación (`evaluation/agent-scenarios/`). Con `qwen3:1.7b`, una consulta de
+  datos tarda unos 6 s (la elección de la herramienta) y una con interpretación unos 16 s en un computador sin GPU; el
+  modelo a veces enlaza una recomendación al hecho equivocado.
 - Dockerfile y entrada en `docker-compose.yml` (a cargo de Gabriel).

@@ -152,10 +152,100 @@ def test_inferences_and_recommendations_without_backing_are_dropped(make_agent, 
     ollama.reply(tool_calls=CALL)
     ollama.reply(draft(
         facts=[{"text": "Tienes 1 curso.", "tool": "listar_cursos", "stepN": 1}],
-        inferences=[{"text": "Con base en el hecho 0.", "basedOn": [0]}, {"text": "Sin base.", "basedOn": []},
+        inferences=[{"text": "Con base en el primer hecho.", "basedOn": [0]}, {"text": "Sin base.", "basedOn": []},
                     {"text": "Base inexistente.", "basedOn": [7]}],
         recommendations=[{"text": "Con respaldo.", "relatedFinding": 0}, {"text": "Sin hallazgo.", "relatedFinding": None},
                          {"text": "Hallazgo inexistente.", "relatedFinding": 9}]))
     res = run(make_agent())
-    assert [i.text for i in res.answer.inferences] == ["Con base en el hecho 0."]
+    assert [i.text for i in res.answer.inferences] == ["Con base en el primer hecho."]
     assert [r.text for r in res.answer.recommendations] == ["Con respaldo."]
+
+
+def test_retry_tells_the_model_which_figures_to_fix(make_agent, ollama):
+    """Con temperatura 0, repetir el mismo pedido da la misma respuesta: el reintento lleva la corrección."""
+    bad = draft(facts=[{"text": "El curso tiene 0 estudiantes.", "tool": "listar_cursos", "stepN": 1}])
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(bad)
+    ollama.reply(draft(facts=[{"text": "Tienes 1 curso.", "tool": "listar_cursos", "stepN": 1}]))
+    res = run(make_agent())
+    first, retry = ollama.calls[1]["messages"], ollama.calls[2]["messages"]
+    assert len(first) == 2 and len(retry) == 4                      # el reintento añade el borrador y la corrección
+    assert retry[2] == {"role": "assistant", "content": bad}
+    assert "0" in retry[3]["content"] and "no aparecen en los datos" in retry[3]["content"]
+    assert [f.text for f in res.answer.facts] == ["Tienes 1 curso."]
+
+
+def test_dropping_a_fact_also_drops_what_depended_on_it(make_agent, ollama):
+    """Sin el hecho descartado, no deben quedar recomendaciones ni inferencias apoyadas en él."""
+    ok = {"text": "Tienes 1 curso.", "tool": "listar_cursos", "stepN": 1}
+    bad = {"text": "El curso tiene 99 estudiantes.", "tool": "listar_cursos", "stepN": 1}
+    reply = draft(facts=[bad, ok],
+                  inferences=[{"text": "Depende solo del malo.", "basedOn": [0]},
+                              {"text": "Depende de ambos.", "basedOn": [0, 1]}],
+                  recommendations=[{"text": "Apoyada en el malo.", "relatedFinding": 0},
+                                   {"text": "Apoyada en el bueno.", "relatedFinding": 1}])
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(reply)
+    ollama.reply(reply)  # el reintento insiste
+    res = run(make_agent())
+    assert [f.text for f in res.answer.facts] == ["Tienes 1 curso."]
+    assert [(i.text, i.basedOn) for i in res.answer.inferences] == [("Depende de ambos.", [0])]   # reindexado
+    assert [(r.text, r.relatedFinding) for r in res.answer.recommendations] == [("Apoyada en el bueno.", 0)]
+
+
+def test_drafter_prompt_explains_that_null_is_not_zero(make_agent, ollama):
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(draft())
+    run(make_agent())
+    system = ollama.calls[1]["messages"][0]["content"]
+    assert "NO que sea 0" in system and "null" in system
+
+
+def test_model_output_is_capped_to_keep_answers_fast(make_agent, ollama, settings):
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(draft())
+    run(make_agent())
+    assert ollama.calls[0]["options"]["num_predict"] == 200                    # elegir herramientas es corto
+    assert ollama.calls[1]["options"]["num_predict"] == settings.draft_max_tokens
+
+
+def test_nulls_reach_the_model_as_no_disponible_not_as_null(make_agent, ollama):
+    """Un modelo pequeño convierte null en 0: se le entrega ya como texto. La salida original no cambia."""
+    data = {"courses": [{"id": 3, "shortName": "PRUEBA02", "fullName": "Sin sincronizar", "studentCount": None,
+                         "lastSyncAt": None}], "total": 1}
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(draft(facts=[{"text": "El conteo de PRUEBA02 no está disponible.", "tool": "listar_cursos", "stepN": 1}]))
+    res = run(make_agent(fake_tools(data)))
+    prompt = ollama.calls[1]["messages"][1]["content"]
+    assert "null" not in prompt and '"studentCount": "no disponible"' in prompt
+    assert res.meta.status == "ok"
+
+
+def test_no_retry_when_it_would_not_fit_in_the_message_time(settings, ollama, traces):
+    """Redactar de nuevo cuesta casi lo mismo: si no cabe en el tiempo máximo, se omite la cifra sin reintentar."""
+    from dataclasses import replace
+    from app.graph import Agent
+    from app.tools import ToolRegistry
+    tight = replace(settings, message_timeout_s=2.0)            # el Ollama simulado "tarda" 1,5 s por redacción
+    agent = Agent(tight, ollama.client(tight), fake_tools(), trace_sink=traces.append)
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(draft(facts=[{"text": "Tienes 7 cursos.", "tool": "listar_cursos", "stepN": 1}]))
+    res = run(agent)
+    assert len(ollama.calls) == 2                                # planificar + redactar, sin segundo intento
+    assert res.answer.facts == [] and traces[0]["output"]["unsourcedNumbersRemoved"] == 1
+
+
+def test_simple_lists_ask_for_facts_only(make_agent, ollama):
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(draft())
+    run(make_agent())
+    assert "únicamente con hechos" in ollama.calls[1]["messages"][0]["content"]
+
+
+def test_planner_is_told_to_use_a_tool_for_questions_about_one_course(make_agent, ollama):
+    """Con qwen3:1.7b, «¿Cuántos estudiantes tiene PRUEBA01?» no llamaba a ninguna herramienta (escenario C03)."""
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(draft())
+    run(make_agent(), "¿Cuántos estudiantes tiene PRUEBA01?")
+    system = ollama.calls[0]["messages"][0]["content"]
+    assert "SIEMPRE" in system and "un dato concreto" in system

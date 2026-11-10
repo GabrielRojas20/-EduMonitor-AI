@@ -12,6 +12,7 @@ class Settings:
     max_tool_calls: int  # máximo de llamadas a herramientas por mensaje (diseño, sección 2)
     tool_timeout_s: float  # tiempo máximo por herramienta
     message_timeout_s: float  # tiempo máximo por mensaje
+    draft_max_tokens: int  # largo máximo de la redacción del modelo
     cors_origins: tuple
 
 
@@ -26,5 +27,6 @@ def get_settings() -> Settings:
         max_tool_calls=int(env("MAX_TOOL_CALLS", "5")),
         tool_timeout_s=float(env("TOOL_TIMEOUT_SECONDS", "10")),
         message_timeout_s=float(env("MESSAGE_TIMEOUT_SECONDS", "60")),
+        draft_max_tokens=int(env("DRAFT_MAX_TOKENS", "450")),
         cors_origins=tuple(o.strip() for o in origins.split(",") if o.strip()),
     )
