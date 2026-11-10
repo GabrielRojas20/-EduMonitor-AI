@@ -30,40 +30,6 @@ services:
     entrypoint: ["/bin/bash", "-c"]
     command: ["/opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -i /scripts/database.sql"]
 
-  moodle-db:
-    image: mariadb:11.4
-    container_name: edumonitor-moodle-db
-    environment:
-      MARIADB_DATABASE: moodle
-      MARIADB_USER: moodle
-      MARIADB_PASSWORD: ${MOODLE_DB_PASSWORD:-moodle_dev_password}
-      MARIADB_ROOT_PASSWORD: ${MOODLE_DB_ROOT_PASSWORD:-root_dev_password}
-    volumes:
-      - moodle-db-data:/var/lib/mysql
-
-  moodle:
-    image: bitnami/moodle:4.5
-    container_name: edumonitor-moodle
-    depends_on:
-      moodle-db:
-        condition: service_started
-    environment:
-      MOODLE_DATABASE_TYPE: mariadb
-      MOODLE_DATABASE_HOST: moodle-db
-      MOODLE_DATABASE_PORT_NUMBER: 3306
-      MOODLE_DATABASE_NAME: moodle
-      MOODLE_DATABASE_USER: moodle
-      MOODLE_DATABASE_PASSWORD: ${MOODLE_DB_PASSWORD:-moodle_dev_password}
-      MOODLE_USERNAME: ${MOODLE_ADMIN_USER:-admin}
-      MOODLE_PASSWORD: ${MOODLE_ADMIN_PASSWORD:-Admin123!}
-      MOODLE_EMAIL: ${MOODLE_ADMIN_EMAIL:-admin@example.test}
-      MOODLE_SITE_NAME: EduMonitor Moodle
-    ports:
-      - "8080:8080"
-    volumes:
-      - moodle-data:/bitnami/moodle
-      - moodledata-data:/bitnami/moodledata
-
   ollama:
     image: ollama/ollama:latest
     container_name: edumonitor-ollama
@@ -87,9 +53,68 @@ services:
     ports:
       - "5003:5003"
 
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: edumonitor-api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ReverseProxy__Clusters__auth-cluster__Destinations__auth-destination__Address=http://auth-courses:5001
+      - ReverseProxy__Clusters__sync-cluster__Destinations__sync-destination__Address=http://moodle-sync:5002
+      - ReverseProxy__Clusters__analytics-cluster__Destinations__analytics-destination__Address=http://analytics:5003
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+    depends_on:
+      - auth-courses
+      - moodle-sync
+      - analytics
+
+  auth-courses:
+    build:
+      context: ./services/auth-courses-service
+      dockerfile: Dockerfile
+    container_name: edumonitor-auth-courses
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__Auth=${ConnectionStrings__Auth}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - JWT_EXPIRES_MINUTES=${JWT_EXPIRES_MINUTES}
+      - AUTH_SEED_PASSWORD=${AUTH_SEED_PASSWORD}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  moodle-sync:
+    build:
+      context: ./services/moodle-sync-service
+      dockerfile: Dockerfile
+    container_name: edumonitor-moodle-sync
+    ports:
+      - "5002:5002"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5002
+      - ConnectionStrings__EduMonitor=Server=sqlserver,1433;Database=EduMonitor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      - MOODLE_BASE_URL=${MOODLE_BASE_URL}
+      - MOODLE_WS_TOKEN=${MOODLE_WS_TOKEN}
+      - MOODLE_WS_SERVICE=${MOODLE_WS_SERVICE}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      analytics-db-init:
+        condition: service_completed_successfully
+
 volumes:
   sqlserver-data:
-  moodle-db-data:
-  moodle-data:
-  moodledata-data:
   ollama-data:
