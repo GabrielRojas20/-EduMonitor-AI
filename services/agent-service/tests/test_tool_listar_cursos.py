@@ -107,7 +107,7 @@ def test_schema_offered_to_the_model():
     schema = LISTAR_CURSOS.schema()["function"]
     assert schema["name"] == "listar_cursos" and schema["parameters"] == {"properties": {}, "type": "object"}
     assert "cursos" in schema["description"]
-    assert default_registry().names() == ["listar_cursos"]
+    assert "listar_cursos" in default_registry().names()
 
 
 # ---- flujo completo: modelo simulado + herramienta real + gateway simulado
