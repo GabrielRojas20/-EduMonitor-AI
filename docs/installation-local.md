@@ -1,5 +1,142 @@
 # Guía de instalación local de EduMonitor AI
 
+**Responsable:** Gabriel
+**Fecha:** 11 de noviembre de 2026
+**Objetivo:** levantar el entorno local y validar el Super Sprint 2.
+
+## 1. Requisitos
+
+En Windows se necesita Docker Desktop con Linux containers, Git y PowerShell 5.1 o superior. No es necesario instalar SQL Server, MariaDB ni Moodle directamente: Docker los ejecuta en contenedores. Para ejecutar el Agent fuera de Docker también se necesita Python 3.11 o superior y Ollama.
+
+## 2. Descargar o actualizar el repositorio
+
+Instalación nueva:
+
+~~~powershell
+git clone https://github.com/GabrielRojas20/-EduMonitor-AI.git
+cd -EduMonitor-AI
+git switch develop
+git pull origin develop
+~~~
+
+Copia existente:
+
+~~~powershell
+git switch develop
+git pull origin develop
+~~~
+
+## 3. Crear .env
+
+Nunca subir .env a GitHub. Crear una copia del ejemplo:
+
+~~~powershell
+Copy-Item .env.example .env
+notepad .env
+~~~
+
+Verificar como mínimo:
+
+~~~env
+MSSQL_SA_PASSWORD=UnaClaveSegura123!
+MSSQL_PORT=11433
+JWT_SECRET=una-clave-local-de-al-menos-32-caracteres
+JWT_ISSUER=edumonitor
+JWT_AUDIENCE=edumonitor-api
+JWT_EXPIRES_MINUTES=60
+AUTH_SEED_PASSWORD=Prueba123!
+ConnectionStrings__Auth=Server=sqlserver,1433;Database=EduMonitorAuth;User Id=sa;Password=UnaClaveSegura123!;TrustServerCertificate=True;
+MOODLE_ADMIN_USER=admin
+MOODLE_ADMIN_PASSWORD=Admin123!
+MOODLE_WS_TOKEN=
+~~~
+
+La contraseña de ConnectionStrings__Auth debe ser igual a MSSQL_SA_PASSWORD. JWT_SECRET debe tener al menos 32 caracteres. Si el puerto 1433 está ocupado, usar MSSQL_PORT=11433. Dentro de Docker SQL Server siempre usa sqlserver,1433.
+
+## 4. Levantar Docker
+
+Primera instalación:
+
+~~~powershell
+docker compose up -d --build
+~~~
+
+Ejecuciones posteriores:
+
+~~~powershell
+docker compose up -d
+docker compose ps
+~~~
+
+Servicios principales: SQL Server 1433/11433, Moodle 8080, Ollama 11434, Gateway 5000, Auth 5001, Moodle Sync 5002 y Analytics 5003. El Agent usa 5004 cuando se ejecuta fuera de Docker. analytics-db-init y auth-db-init pueden aparecer como Exited (0): son inicializadores correctos.
+
+## 5. Validar las bases
+
+Los scripts SQL del repositorio crean las bases y tablas automáticamente:
+
+~~~powershell
+docker compose ps sqlserver analytics-db-init auth-db-init
+docker compose logs analytics-db-init
+docker compose logs auth-db-init
+~~~
+
+En SSMS usar localhost,11433 si se configuró ese puerto; usuario sa; la contraseña de MSSQL_SA_PASSWORD; base EduMonitor. Con el puerto predeterminado usar localhost,1433.
+
+## 6. Validar el recorrido
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\smoke-test.ps1 -RequireGateway
+~~~
+
+El resultado validado es 7 correctos; 1 opcional omitido. El Agent puede aparecer omitido mientras su infraestructura no esté en Compose.
+
+Pruebas manuales:
+
+~~~powershell
+curl.exe http://localhost:5003/health
+curl.exe http://localhost:5003/api/v1/courses/101/analytics
+curl.exe "http://localhost:5003/api/v1/courses/101/analytics/alerts?page=1&pageSize=20"
+curl.exe http://localhost:5003/api/v1/courses/101/analytics/report
+~~~
+
+Analytics debe responder HTTP 200, usar score_0_10, explicar las alertas y no convertir not_available en cero.
+
+## 7. Demostración
+
+1. Mostrar docker compose ps.
+2. Ejecutar el smoke test.
+3. Mostrar indicadores, alertas y reporte.
+4. Explicar que Auth genera el JWT y Gateway dirige las solicitudes.
+5. Explicar que Moodle Sync obtiene los datos y Analytics calcula indicadores de 0 a 10.
+6. Consultar el chat si el Agent está disponible.
+
+## 8. Agent fuera de Docker (opcional)
+
+~~~powershell
+cd services/agent-service
+py -3 -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements-dev.txt
+ollama pull qwen3:1.7b
+$env:GATEWAY_URL="http://localhost:5000"
+$env:OLLAMA_URL="http://localhost:11434"
+.\.venv\Scripts\python -m uvicorn app.main:app --host 0.0.0.0 --port 5004
+~~~
+
+Las cinco herramientas disponibles son listar_cursos, obtener_calificaciones, obtener_progreso, identificar_alertas y generar_resumen.
+
+## 9. Después de futuros merges
+
+~~~powershell
+git switch develop
+git pull origin develop
+docker compose up -d --build
+docker compose ps
+powershell -ExecutionPolicy Bypass -File .\scripts\smoke-test.ps1 -RequireGateway
+~~~
+
+No borrar volúmenes para una actualización normal. Si aparece un conflicto de nombre, intentar docker compose down y luego docker compose up -d. No usar docker compose down -v salvo que se quiera borrar completamente la base local y los datos de Moodle.
+# Guía de instalación local de EduMonitor AI
+
 **Responsable de la guía:** Gabriel
 **Fecha:** 10 de noviembre de 2026
 **Objetivo:** levantar el entorno local y validar el recorrido del Super Sprint 2.
