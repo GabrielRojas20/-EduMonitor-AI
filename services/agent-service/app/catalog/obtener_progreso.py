@@ -14,7 +14,7 @@ from .common import fecha, num, plural
 
 class Args(BaseModel):
     course_id: int | None = Field(default=None, ge=1, description="Id del curso en Moodle")
-    course_name: str | None = Field(default=None, description="Nombre o código del curso, por ejemplo PRUEBA01")
+    course_name: str | None = Field(default=None, description="Nombre o código del curso, tal como lo escribió el docente")
     student_id: int | None = Field(default=None, ge=1, description="Id del estudiante en Moodle")
     student_name: str | None = Field(default=None, description="Nombre del estudiante; si no se indica, devuelve el progreso del curso")
     snapshot_id: str | None = Field(default=None, description="Sincronización a consultar; por defecto, la última")
@@ -109,8 +109,8 @@ TOOL = Tool(
     name="obtener_progreso",
     description="Devuelve los indicadores de progreso de un curso (promedio de notas, tasas de entrega, calificación y "
                 "finalización, entregas pendientes y conteos) o, si se indica un estudiante, los de ese estudiante y su "
-                "finalización por actividad. El curso y el estudiante se indican por su nombre (por ejemplo PRUEBA01 o "
-                "«Estudiante Dos»); nunca inventes números. Úsala para preguntas sobre cómo va el curso o un estudiante, "
+                "finalización por actividad. El curso y el estudiante se indican por su nombre tal como los escribió el docente; "
+                "nunca inventes números. Úsala para preguntas sobre cómo va el curso o un estudiante, "
                 "promedios, tasas o avance.",
     input_model=Args,
     run=run,

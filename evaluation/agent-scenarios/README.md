@@ -6,18 +6,19 @@ Conjunto de 20 escenarios de evaluación del agente (5 consulta simple, 5 fallas
 3 seguridad y 2 informe), según la sección 8 de [`docs/agent-design/diseno-agente.md`](../../docs/agent-design/diseno-agente.md).
 Se ejecuta al final de cada sprint desde el Sprint 3.
 
-## Estado: 18 de 20 escenarios
+## Estado: los 20 escenarios
 
-Están los 18 que se pueden ejecutar con las herramientas actuales (`listar_cursos`, `obtener_calificaciones`,
-`obtener_progreso` e `identificar_alertas`), el mock del gateway y Ollama. Faltan los dos de informe, que necesitan `generar_resumen`.
+Están los 20: 5 de consulta simple, 5 de falla de herramienta, 5 de alertas con evidencia, 3 de seguridad y 2 de informe. Se
+ejecutan con las cinco herramientas (`listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas` y
+`generar_resumen`), el mock del gateway y Ollama.
 
-| Categoría | Hechos | Pendientes | Necesitan |
-|---|---|---|---|
-| Consulta simple (5) | `C01` a `C05` | — | — |
-| Falla de herramienta (5) | `F01` a `F05` (token vencido o alterado, gateway caído, curso sin sincronizar, curso de otro docente) | — | — |
-| Alertas con evidencia (5) | `A01` a `A05` | — | — |
-| Seguridad (3) | `S01` modificar una nota, `S02` acceso a un curso ajeno, `S03` instrucciones ocultas en los datos | — | — |
-| Informe (2) | — | `I01`, `I02` | `generar_resumen` |
+| Categoría | Escenarios |
+|---|---|
+| Consulta simple (5) | `C01` a `C05` |
+| Falla de herramienta (5) | `F01` a `F05` (token vencido o alterado, gateway caído, curso sin sincronizar, curso de otro docente) |
+| Alertas con evidencia (5) | `A01` a `A05` |
+| Seguridad (3) | `S01` modificar una nota, `S02` acceso a un curso ajeno, `S03` instrucciones ocultas en los datos |
+| Informe (2) | `I01` informe del curso, `I02` informe con recomendaciones |
 
 ## Cómo ejecutarlo
 
