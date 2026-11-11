@@ -348,3 +348,85 @@ def test_a_course_code_in_the_wrong_field_still_gets_answered_end_to_end(setting
     res = agent(settings, ollama, traces, grades_gateway).run("¿Qué actividades están pendientes de calificar en PRUEBA01?",
                                                               None, TOKEN, "3", "req-42")
     assert res.answer.facts[0].text == "PRUEBA01: 1 registro pendiente de calificar (de 2 registros del curso)." and res.meta.status == "ok"
+
+
+# ---- curso de referencia elegido en la interfaz (courseId de POST /chat)
+@pytest.mark.parametrize("given,message,expected", [
+    ({}, "¿Qué falta por calificar?", {"course_id": 2}),
+    ({"course_name": "Inventado"}, "¿Qué falta por calificar?", {"course_id": 2}),            # el modelo no gana al selector
+    ({"course_id": 99}, "¿Qué falta por calificar?", {"course_id": 2}),
+    ({"course_name": "PRUEBA02"}, "¿Cómo va PRUEBA02?", {"course_name": "PRUEBA02"}),          # lo escrito gana al selector
+    ({"course_name": "PRUEBA02", "course_id": 2}, "¿Cómo va PRUEBA02?", {"course_name": "PRUEBA02"}),
+])
+def test_with_reference_course(given, message, expected):
+    from app.graph import with_reference_course
+    assert with_reference_course(given, 2, message) == expected
+
+
+@pytest.mark.parametrize("model_arguments", [{}, {"course_name": "PRUEBA01"}, {"course_name": "otro"}])
+def test_selected_course_never_collides_with_a_name_the_model_added(settings, ollama, traces, model_arguments):
+    """El fallo real visto en el navegador: el selector manda courseId, el modelo pone course_name y la validación rechazaba los dos."""
+    ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": model_arguments}}])
+    res = agent(settings, ollama, traces, grades_gateway_by_id).run("¿Qué actividades están pendientes de calificar?", 2, TOKEN, "3", "req-42")
+    assert res.meta.status == "ok" and res.answer.unavailable == []
+    assert res.answer.facts[0].text.startswith("PRUEBA01: 1 registro pendiente de calificar")
+    assert traces[0]["steps"][1]["args"] == {"course_id": 2, "status": "pending_grading"}
+
+
+def test_selected_course_is_also_applied_by_the_fallback(settings, ollama, traces):
+    ollama.reply(tool_calls=[])
+    res = agent(settings, ollama, traces, grades_gateway_by_id).run("¿Qué falta por calificar?", 2, TOKEN, "3", "req-42")
+    assert res.meta.status == "ok" and traces[0]["steps"][1]["args"] == {"course_id": 2, "status": "pending_grading"}
+
+
+def grades_gateway_by_id(request):
+    routes = {"/api/v1/courses/2": httpx.Response(200, json=COURSES[0]),
+              "/api/v1/courses/2/students": httpx.Response(200, json={"items": [{"id": 4, "fullName": "Estudiante Uno"},
+                                                                               {"id": 5, "fullName": "Estudiante Dos"}], "total": 2}),
+              "/api/v1/courses/2/grades": httpx.Response(200, json=GRADES_FOR_FLOW)}
+    return routes.get(request.url.path, httpx.Response(404, json={"status": 404}))
+
+
+# ---- lo que un modelo pequeño inventa: nombres que el docente no escribió, ids ocultos y la pista del curso
+@pytest.mark.parametrize("given,message,expected", [
+    ({"activity_name": "2"}, "¿Qué actividades están pendientes de calificar?", {"status": "pending_grading"}),     # el número del selector
+    ({"activity_name": "pendientes de calificar"}, "¿Qué actividades están pendientes de calificar?", {"status": "pending_grading"}),
+    ({"student_name": "Ana Pérez"}, "¿Cómo va Ana?", {}),                                                            # no escribió «Pérez»
+    ({"student_name": "Estudiante Dos"}, "¿Cómo va Estudiante Dos?", {"student_name": "Estudiante Dos"}),
+    ({"activity_name": "Tarea 2"}, "Notas de la Tarea 2", {"activity_name": "Tarea 2"}),
+    ({"activity_name": "tarea 2"}, "Notas de la TAREA 2", {"activity_name": "tarea 2"}),                              # sin distinguir mayúsculas
+])
+def test_names_the_teacher_did_not_write_are_dropped(given, message, expected):
+    from app.graph import fix_arguments
+    assert fix_arguments("obtener_calificaciones", given, message) == expected
+
+
+def test_the_real_browser_failure_selected_course_plus_activity_name_2(settings, ollama, traces):
+    """Con el curso elegido, el modelo ponía el 2 del curso como nombre de actividad: filtraba la Tarea 2 y daba 0 pendientes."""
+    ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": {"activity_name": "2"}}}])
+    res = agent(settings, ollama, traces, grades_gateway_by_id).run("¿Qué actividades están pendientes de calificar?", 2, TOKEN, "3", "req-42")
+    assert res.answer.facts[0].text == "PRUEBA01: 1 registro pendiente de calificar (de 2 registros del curso)."
+    assert traces[0]["steps"][1]["args"] == {"course_id": 2, "status": "pending_grading"}
+
+
+def test_hidden_parameters_sent_by_the_model_are_discarded(settings, ollama, traces):
+    ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": {"course_id": 99, "activity_id": 7, "student_id": 5}}}])
+    res = agent(settings, ollama, traces, grades_gateway_by_id).run("¿Qué notas hay?", 2, TOKEN, "3", "req-42")
+    assert traces[0]["steps"][1]["args"] == {"course_id": 2}      # ni el curso 99, ni la actividad 7, ni el estudiante 5
+    assert res.meta.status == "ok" and "2 registros de calificación" in res.answer.facts[0].text
+
+
+def test_the_planner_does_not_see_the_selected_course_number(settings, ollama, traces):
+    ollama.reply(tool_calls=CALL)
+    agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run("¿Qué cursos tengo?", 2, TOKEN, "3", "req-42")
+    assert ollama.calls[0]["messages"][1]["content"] == "¿Qué cursos tengo?"
+
+
+def test_a_bare_number_never_matches_an_activity():
+    from app.catalog.obtener_calificaciones import pick_activity
+    ctx = ToolContext("http://gateway.test", TOKEN, "req-1", 2.0, None)
+    rows = [{"activityName": "Tarea 1", "status": "graded"}, {"activityName": "Tarea 2", "status": "graded"}]
+    found, error = pick_activity(ctx, rows, "2", "GET /grades")
+    assert found is None and error["error"]["code"] == "ACTIVITY_NOT_FOUND" and "Tarea 1, Tarea 2" in error["error"]["message"]
+    assert pick_activity(ctx, rows, "tarea 2", "GET /grades")[0] == [rows[1]]        # el nombre completo sí
+    assert pick_activity(ctx, rows, "Tarea 1", "GET /grades")[0] == [rows[0]]
