@@ -96,6 +96,19 @@ NAME_ARGS = ("activity_name", "student_name")
 
 
 COURSE_CODE = re.compile(r"\b[A-Za-z]{3,}\d{1,3}\b")  # «PRUEBA01»
+WRITTEN_ARGS = ("course_name", "activity_name", "student_name")  # nombres que el modelo solo puede tomar de lo que escribió el docente
+
+
+def written_in(value: str, message: str) -> bool:
+    """¿El docente escribió este nombre? Todas sus palabras están en la pregunta, o (con 3 o más caracteres) aparece sin espacios,
+    para aceptar «prueba 01» por «PRUEBA01». Un nombre que el modelo inventa, aunque sea de otro curso real, no pasa."""
+    tokens = re.findall(r"\w+", normalize(value))
+    if not tokens:
+        return False
+    if set(tokens) <= set(re.findall(r"\w+", normalize(message))):
+        return True
+    compact = "".join(tokens)
+    return len(compact) >= 3 and compact in "".join(re.findall(r"\w+", normalize(message)))
 
 
 def fallback_arguments(message: str) -> dict:
@@ -109,12 +122,10 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
     cualquier otro campo (puso «PRUEBA01» como actividad), y el estado pedido se deduce del texto en vez de confiar en el modelo."""
     args = dict(arguments)
     args.pop("status", None)
-    words = set(re.findall(r"\w+", normalize(message)))
-    for key in NAME_ARGS:  # un nombre solo vale si el docente lo escribió: todas sus palabras tienen que estar en la pregunta
+    for key in WRITTEN_ARGS:  # un nombre solo vale si el docente lo escribió; si no, el código lo descarta (también el del curso)
         value = args.get(key)
         if isinstance(value, str):
-            tokens = re.findall(r"\w+", normalize(value))
-            if not tokens or any(t not in words for t in tokens):
+            if not written_in(value, message):
                 args.pop(key)
             elif key == "activity_name" and any(re.search(p, normalize(value)) for p, _ in STATUS_HINTS):
                 args.pop(key)  # «pendientes de calificar» es un estado, no una actividad
@@ -123,8 +134,9 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
         for key in NAME_ARGS:
             if isinstance(args.get(key), str) and normalize(args[key]).strip() == normalize(code.group()):
                 args.pop(key)
-        if args.get("course_id") is None and not args.get("course_name"):
+        if not args.get("course_name"):  # el código escrito por el docente gana a cualquier id y a un nombre que él no escribió
             args["course_name"] = code.group()
+            args.pop("course_id", None)
     args.update(hint_arguments(tool, message))
     return args
 

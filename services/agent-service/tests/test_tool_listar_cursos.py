@@ -331,8 +331,8 @@ def test_course_code_put_in_the_wrong_field_is_moved_to_the_course():
 
 @pytest.mark.parametrize("tool,given,message,expected", [
     ("obtener_progreso", {}, "¿Cómo va PRUEBA01?", {"course_name": "PRUEBA01"}),
-    ("obtener_progreso", {"course_name": "Otro"}, "¿Cómo va PRUEBA01?", {"course_name": "Otro"}),          # respeta lo que eligió el modelo
-    ("obtener_progreso", {"course_id": 2}, "¿Cómo va PRUEBA01?", {"course_id": 2}),
+    ("obtener_progreso", {"course_name": "Otro"}, "¿Cómo va PRUEBA01?", {"course_name": "PRUEBA01"}),         # lo escrito gana al modelo
+    ("obtener_progreso", {"course_id": 2}, "¿Cómo va PRUEBA01?", {"course_name": "PRUEBA01"}),                  # el código escrito gana a un id
     ("obtener_calificaciones", {"activity_name": "Tarea 2"}, "Notas de Tarea 2 en PRUEBA01", {"activity_name": "Tarea 2", "course_name": "PRUEBA01"}),
     ("identificar_alertas", {"student_name": "prueba01"}, "Alertas de PRUEBA01", {"course_name": "PRUEBA01"}),
     ("listar_cursos", {}, "¿Qué cursos tengo en PRUEBA01?", {}),                                          # sin parámetro de curso
@@ -430,3 +430,38 @@ def test_a_bare_number_never_matches_an_activity():
     assert found is None and error["error"]["code"] == "ACTIVITY_NOT_FOUND" and "Tarea 1, Tarea 2" in error["error"]["message"]
     assert pick_activity(ctx, rows, "tarea 2", "GET /grades")[0] == [rows[1]]        # el nombre completo sí
     assert pick_activity(ctx, rows, "Tarea 1", "GET /grades")[0] == [rows[0]]
+
+
+# ---- un curso que el modelo inventa no puede ganarle al que escribió el docente (revisión del PR #48)
+@pytest.mark.parametrize("invented", ["INVENTADO99", "PRUEBA02", "Curso de Prueba sin sincronizar", "prueba1"])
+def test_a_course_the_model_invents_never_beats_the_one_the_teacher_wrote(invented):
+    from app.graph import fix_arguments, with_reference_course
+    message = "¿Cómo va PRUEBA01?"
+    assert fix_arguments("obtener_progreso", {"course_name": invented}, message) == {"course_name": "PRUEBA01"}
+    fixed = fix_arguments("obtener_progreso", {"course_name": invented, "course_id": 3}, message)
+    assert with_reference_course(fixed, 2, message) == {"course_name": "PRUEBA01"}     # tampoco con un curso elegido en el selector
+
+
+@pytest.mark.parametrize("given,message,expected", [
+    ({"course_name": "PRUEBA01"}, "¿Cómo va prueba 01?", {"course_name": "PRUEBA01"}),             # «prueba 01» es PRUEBA01
+    ({"course_name": "Física"}, "¿Cómo va el curso Física?", {"course_name": "Física"}),           # un nombre escrito por el docente vale
+    ({"course_name": "Física"}, "¿Cómo va el curso de Química?", {}),                              # uno que no escribió, no
+    ({"course_name": "Prueba EduMonitor"}, "¿Cómo va Prueba EduMonitor?", {"course_name": "Prueba EduMonitor"}),
+])
+def test_course_names_must_be_written_by_the_teacher(given, message, expected):
+    from app.graph import fix_arguments
+    assert fix_arguments("obtener_progreso", given, message) == expected
+
+
+def test_an_invented_existing_course_is_not_queried_end_to_end(settings, ollama, traces):
+    """El modelo cambia PRUEBA01 por PRUEBA02 (que existe): la consulta tiene que ir a PRUEBA01, no a otro curso."""
+    seen = []
+
+    def gateway(request):
+        seen.append(request.url.path)
+        return httpx.Response(200, json=[{"id": 2, "shortName": "PRUEBA01", "fullName": "Uno"}, {"id": 3, "shortName": "PRUEBA02", "fullName": "Dos"}])             if request.url.path == "/api/v1/courses" else httpx.Response(404, json={"status": 404})
+
+    ollama.reply(tool_calls=[{"function": {"name": "obtener_progreso", "arguments": {"course_name": "PRUEBA02"}}}])
+    agent(settings, ollama, traces, gateway).run("¿Cómo va PRUEBA01?", None, TOKEN, "3", "req-42")
+    assert traces[0]["steps"][1]["args"] == {"course_name": "PRUEBA01"}
+    assert "/api/v1/courses/3" not in seen and "/api/v1/courses/3/analytics" not in seen
