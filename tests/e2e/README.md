@@ -16,7 +16,9 @@ Desde la raíz del repositorio, con Docker Desktop iniciado:
 .\scripts\smoke-test.ps1
 ```
 
-El script comprueba Analytics y marca como opcionales Gateway, Auth, Moodle Sync y Agent mientras la PR de infraestructura todavía no esté fusionada o esos procesos no estén levantados.
+El Compose ya incluye Gateway, Auth y Moodle Sync, por lo que deben estar levantados para validar el recorrido completo. El `agent-service`
+se ejecuta aparte por ahora; su healthcheck se puede exigir con `-RunAgentHealth` después de iniciarlo según la guía.
+Si se ejecuta el script antes de levantar algún servicio, los endpoints no disponibles se informan como omitidos.
 
 Para exigir que el Gateway esté disponible:
 

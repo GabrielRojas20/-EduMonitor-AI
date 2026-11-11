@@ -95,7 +95,8 @@ Los servicios principales del recorrido son:
 | Analytics | 5003 | Indicadores y alertas |
 | Agent Service | 5004 | Chat del agente |
 
-La PR de infraestructura puede incorporar los servicios .NET al Compose en momentos distintos. Si el agente todavía no está incluido en Compose, se puede ejecutar temporalmente fuera de Docker siguiendo la sección 8.
+La infraestructura de SQL Server, Moodle, Auth Courses, Moodle Sync, API Gateway y Analytics ya está incluida en Compose. El `agent-service`
+se ejecuta temporalmente fuera de Docker siguiendo la sección 8, porque todavía no tiene una imagen propia dentro de este Compose.
 
 ## 5. Validar la base de datos
 
@@ -160,7 +161,7 @@ Las alertas deben explicar la regla aplicada y no deben convertir `not_available
 
 ## 7. Flujo completo esperado
 
-Cuando la PR de infraestructura esté fusionada, la demostración debe seguir este orden:
+Con la infraestructura fusionada, la demostración debe seguir este orden:
 
 1. `POST /api/v1/auth/login` en el gateway.
 2. Guardar el `accessToken` solamente en memoria o en una variable local.
@@ -192,7 +193,7 @@ Invoke-RestMethod -Headers $headers `
 
 ## 8. Ejecutar el agente fuera de Docker
 
-Mientras Compose todavía no lo incluya, abrir otra terminal:
+Mientras el `agent-service` todavía no tenga una imagen en Compose, abrir otra terminal:
 
 ```powershell
 cd services/agent-service
@@ -210,7 +211,8 @@ Validar:
 curl.exe http://localhost:5004/health
 ```
 
-La herramienta `listar_cursos` consulta el gateway. Las demás herramientas se incorporarán en PR posteriores.
+Las herramientas `listar_cursos`, `obtener_calificaciones`, `obtener_progreso` e `identificar_alertas` consultan el gateway.
+La única herramienta del diseño todavía pendiente es `generar_resumen`, necesaria para los escenarios de informe `I01` e `I02`.
 
 ## 9. Ejecutar pruebas automatizadas
 
