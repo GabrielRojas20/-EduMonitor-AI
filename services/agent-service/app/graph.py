@@ -96,6 +96,19 @@ NAME_ARGS = ("activity_name", "student_name")
 
 
 COURSE_CODE = re.compile(r"\b[A-Za-z]{3,}\d{1,3}\b")  # «PRUEBA01»
+WRITTEN_ARGS = ("course_name", "activity_name", "student_name")  # nombres que el modelo solo puede tomar de lo que escribió el docente
+
+
+def written_in(value: str, message: str) -> bool:
+    """¿El docente escribió este nombre? Todas sus palabras están en la pregunta, o (con 3 o más caracteres) aparece sin espacios,
+    para aceptar «prueba 01» por «PRUEBA01». Un nombre que el modelo inventa, aunque sea de otro curso real, no pasa."""
+    tokens = re.findall(r"\w+", normalize(value))
+    if not tokens:
+        return False
+    if set(tokens) <= set(re.findall(r"\w+", normalize(message))):
+        return True
+    compact = "".join(tokens)
+    return len(compact) >= 3 and compact in "".join(re.findall(r"\w+", normalize(message)))
 
 
 def fallback_arguments(message: str) -> dict:
@@ -109,14 +122,36 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
     cualquier otro campo (puso «PRUEBA01» como actividad), y el estado pedido se deduce del texto en vez de confiar en el modelo."""
     args = dict(arguments)
     args.pop("status", None)
+    for key in WRITTEN_ARGS:  # un nombre solo vale si el docente lo escribió; si no, el código lo descarta (también el del curso)
+        value = args.get(key)
+        if isinstance(value, str):
+            if not written_in(value, message):
+                args.pop(key)
+            elif key == "activity_name" and any(re.search(p, normalize(value)) for p, _ in STATUS_HINTS):
+                args.pop(key)  # «pendientes de calificar» es un estado, no una actividad
     code = COURSE_CODE.search(message)
     if code and tool in COURSE_TOOLS:
         for key in NAME_ARGS:
             if isinstance(args.get(key), str) and normalize(args[key]).strip() == normalize(code.group()):
                 args.pop(key)
-        if args.get("course_id") is None and not args.get("course_name"):
+        if not args.get("course_name"):  # el código escrito por el docente gana a cualquier id y a un nombre que él no escribió
             args["course_name"] = code.group()
+            args.pop("course_id", None)
     args.update(hint_arguments(tool, message))
+    return args
+
+
+def with_reference_course(arguments: dict, reference: int, message: str) -> dict:
+    """Aplica el curso de referencia que el docente eligió en la interfaz, sin dejar `course_id` y `course_name` a la vez.
+
+    Si en la pregunta escribió un curso (PRUEBA01), lo escrito gana al selector. En otro caso manda el curso elegido, y se
+    descarta el nombre que el modelo pueda haber puesto por su cuenta."""
+    args = dict(arguments)
+    if args.get("course_name") and COURSE_CODE.search(message):
+        args.pop("course_id", None)
+    else:
+        args.pop("course_name", None)
+        args["course_id"] = reference
     return args
 
 
@@ -319,9 +354,10 @@ class Agent:
         """El modelo elige qué herramientas llamar y con qué argumentos (temperatura 0)."""
         if not len(self.tools):
             return {"plan": []}
-        hint = f"\nCurso de referencia elegido por el docente: {state['course_id']}." if state.get("course_id") else ""
+        # El curso elegido en la interfaz lo aplica el código (with_reference_course). El modelo no lo ve: un modelo pequeño
+        # copiaba ese número en otros campos (puso «2» como nombre de actividad y filtró la Tarea 2 sin que nadie lo pidiera).
         messages = [{"role": "system", "content": prompts.PLANNER_SYSTEM},
-                    {"role": "user", "content": state["message"] + hint}]
+                    {"role": "user", "content": state["message"]}]
         try:
             reply = self.llm.chat(messages, tools=self.tools.schemas(), temperature=0.0, max_tokens=200)
         except LLMError as exc:
@@ -338,13 +374,14 @@ class Agent:
                     args = json.loads(args)
                 except ValueError:
                     args = {}
-            if state.get("course_id") and "course_id" not in args:
-                tool = self.tools._tools.get(fn.get("name", ""))
-                if tool is not None and "course_id" in tool.input_model.model_fields:
-                    args["course_id"] = state["course_id"]
             plan.append({"name": fn.get("name", ""), "arguments": args})
         for call in plan:
+            tool = self.tools.get(call["name"])
+            if tool is not None and isinstance(call["arguments"], dict):  # los parámetros ocultos (ids) los pone el código
+                call["arguments"] = {k: v for k, v in call["arguments"].items() if k not in tool.hidden}
             call["arguments"] = fix_arguments(call["name"], call["arguments"], state["message"])
+            if state.get("course_id") and tool is not None and "course_id" in tool.input_model.model_fields:
+                call["arguments"] = with_reference_course(call["arguments"], state["course_id"], state["message"])
         fallback = None
         if not plan:
             fallback = fallback_tool(state["message"], self.tools.names())
@@ -352,6 +389,8 @@ class Agent:
                 tool = self.tools.get(fallback)
                 args = fallback_arguments(state["message"]) if "course_name" in tool.input_model.model_fields else {}
                 args.update(hint_arguments(fallback, state["message"]))
+                if state.get("course_id") and "course_id" in tool.input_model.model_fields:
+                    args = with_reference_course(args, state["course_id"], state["message"])
                 plan.append({"name": fallback, "arguments": args})
         steps = state["steps"] + [{"n": len(state["steps"]) + 1, "node": "planificar_herramientas", "tool": None, "ok": True,
                                    "errorCode": None, "durationMs": reply["durationMs"],

@@ -90,7 +90,9 @@ def pick_activity(ctx: ToolContext, rows: list, wanted: str, endpoint: str):
     """Deja solo los registros de la actividad indicada por nombre (el modelo no conoce los ids)."""
     w = norm(wanted)
     exact = [g for g in rows if norm(g.get("activityName")) == w]
-    found = exact or [g for g in rows if w and w in norm(g.get("activityName"))]
+    # Coincidencia parcial solo con un texto de verdad (al menos 3 caracteres y no solo cifras): «2» no es «Tarea 2».
+    partial = len(w) >= 3 and not w.isdigit()
+    found = exact or ([g for g in rows if w in norm(g.get("activityName"))] if partial else [])
     names = sorted({g.get("activityName") for g in found})
     if len(names) > 1:
         return None, error_output("VALIDATION_ERROR", f"Hay varias actividades posibles; indica cuál: {', '.join(names)}.",
