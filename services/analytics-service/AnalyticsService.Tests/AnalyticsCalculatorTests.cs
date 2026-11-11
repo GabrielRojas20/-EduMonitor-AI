@@ -1,3 +1,4 @@
+using System;
 using EduMonitor.Analytics;
 using Xunit;
 
