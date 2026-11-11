@@ -1,8 +1,8 @@
 # Guía de instalación local de EduMonitor AI
 
-**Responsable de la guía:** Gabriel
-**Fecha:** 10 de noviembre de 2026
-**Objetivo:** levantar el entorno local y validar el recorrido del Super Sprint 2.
+**Responsable:** Gabriel
+**Fecha:** 11 de noviembre de 2026
+**Objetivo:** levantar el entorno local y validar el recorrido del Sprint 2.
 
 ## 1. Requisitos
 
@@ -11,290 +11,197 @@ En Windows se necesita:
 - Docker Desktop iniciado y usando Linux containers.
 - Git.
 - PowerShell 5.1 o PowerShell 7.
-- Para ejecutar el agente fuera de Docker: Python 3.11 o superior y Ollama.
+- Para ejecutar el Agent fuera de Docker: Python 3.11 o superior y Ollama.
 
-No es obligatorio instalar SQL Server, MariaDB ni Moodle directamente en Windows. Docker los ejecuta en contenedores.
+No es necesario instalar SQL Server, MariaDB ni Moodle directamente en Windows: Docker los ejecuta en contenedores.
 
-## 2. Descargar el repositorio
+## 2. Descargar y configurar
 
 ```powershell
 git clone https://github.com/GabrielRojas20/-EduMonitor-AI.git
-cd -EduMonitor-AI
-git checkout develop
+cd .\-EduMonitor-AI
+git switch develop
 git pull origin develop
-```
-
-Si ya existe una copia local:
-
-```powershell
-git checkout develop
-git pull origin develop
-```
-
-## 3. Crear la configuración local
-
-Nunca se debe subir `.env` a GitHub. Se crea a partir del ejemplo:
-
-```powershell
 Copy-Item .env.example .env
-notepad .env
 ```
 
-Como mínimo, verificar que existan valores para:
+Edita `.env` y completa o verifica estos valores:
 
-```text
-MSSQL_SA_PASSWORD=UnaClaveSegura123!
-MSSQL_PORT=1433
-JWT_SECRET=una-clave-local-de-al-menos-32-caracteres
-JWT_ISSUER=edumonitor
-JWT_AUDIENCE=edumonitor-api
-AUTH_SEED_PASSWORD=Prueba123!
-MOODLE_ADMIN_USER=admin
-MOODLE_ADMIN_PASSWORD=Admin123!
-MOODLE_WS_TOKEN=
-```
+- `MSSQL_SA_PASSWORD`: contraseña de SQL Server. Si se usa `MSSQL_PORT=11433`, SQL Server se abre en `localhost,11433`; dentro de Docker sigue usando `sqlserver,1433`.
+- `JWT_SECRET`: secreto de al menos 32 caracteres.
+- `JWT_ISSUER`, `JWT_AUDIENCE` y `JWT_EXPIRES_MINUTES`.
+- `AUTH_SEED_PASSWORD`: contraseña local de los usuarios ficticios de Auth.
+- `ConnectionStrings__Auth`: debe usar la misma contraseña de `MSSQL_SA_PASSWORD`.
+- `MOODLE_WS_TOKEN`: token del servicio web de Moodle. Es necesario para sincronizar; no lo subas al repositorio.
+- `MOODLE_WS_SERVICE`: nombre del servicio web habilitado en Moodle, si corresponde.
+- `MOODLE_ADMIN_USER` y `MOODLE_ADMIN_PASSWORD`: credenciales del administrador local de Moodle.
+- `MOODLE_ADMIN_EMAIL`, `MOODLE_DB_PASSWORD` y `MOODLE_DB_ROOT_PASSWORD`, si necesitas cambiar los valores de desarrollo.
 
-La contraseña de `MSSQL_SA_PASSWORD` debe cumplir las reglas de SQL Server. Si el puerto 1433 está ocupado, cambiar solamente el puerto externo:
+El archivo `.env` es local y nunca debe subirse a GitHub.
 
-```text
-MSSQL_PORT=11433
-```
+## 3. Levantar Docker
 
-Dentro de Docker SQL Server continúa escuchando en `1433`; desde Windows se usaría `localhost,11433`.
-
-El servicio del agente usa por defecto:
-
-```text
-AGENT_URL=http://localhost:5004
-```
-
-## 4. Levantar la infraestructura
-
-Desde la raíz del repositorio:
+Primera instalación o después de cambiar código o Dockerfiles:
 
 ```powershell
 docker compose up -d --build
 ```
 
-Ver el estado:
+Ejecuciones posteriores:
 
 ```powershell
+docker compose up -d
 docker compose ps
 ```
 
-Los servicios principales del recorrido son:
+Puertos publicados por el entorno:
 
-| Servicio | Puerto local | Uso |
-|---|---:|---|
-| SQL Server | 1433 o 11433 | Persistencia |
-| Moodle | 8080 | Fuente Moodle |
-| Ollama | 11434 | Modelo local |
-| API Gateway | 5000 | Entrada REST |
-| Auth Courses | 5001 | Login y permisos |
-| Moodle Sync | 5002 | Sincronización |
-| Analytics | 5003 | Indicadores y alertas |
-| Agent Service | 5004 | Chat del agente |
+- SQL Server: `1433` por defecto o `11433` si se configuró `MSSQL_PORT=11433`.
+- Moodle: `8080`.
+- Ollama: `11434`.
+- API Gateway: `5000`.
+- Auth Courses: `5001`.
+- Moodle Sync: `5002`.
+- Analytics: `5003`.
+- Agent local: `5004`, cuando se ejecuta fuera de Docker.
 
-La infraestructura de SQL Server, Moodle, Auth Courses, Moodle Sync, API Gateway y Analytics ya está incluida en Compose. El `agent-service`
-se ejecuta temporalmente fuera de Docker siguiendo la sección 8, porque todavía no tiene una imagen propia dentro de este Compose.
+`analytics-db-init` y `auth-db-init` pueden aparecer como `Exited (0)`: son inicializadores que terminaron correctamente.
 
-## 5. Validar la base de datos
+## 4. Validar las bases y los servicios
 
-Cuando SQL Server esté saludable, el inicializador ejecuta `services/analytics-service/database.sql`. Consultar los contenedores:
+Comprueba que SQL Server y los servicios estén levantados:
 
 ```powershell
-docker compose ps sqlserver analytics-db-init
+docker compose ps
+docker compose logs sqlserver
 docker compose logs analytics-db-init
+docker compose logs auth-db-init
 ```
 
-Para conectarse desde SSMS:
+En SSMS usa `localhost,11433` si configuraste ese puerto; de lo contrario usa `localhost,1433`. El usuario es `sa`, la contraseña es `MSSQL_SA_PASSWORD` y la base principal es `EduMonitor`.
 
-```text
-Servidor: localhost,1433
-```
+Analytics debe responder HTTP 200 y conservar los indicadores en escala `score_0_10`. Los datos `not_available` no deben convertirse en cero.
 
-Si se configuró `MSSQL_PORT=11433`:
+## 5. Iniciar sesión y sincronizar Moodle
 
-```text
-Servidor: localhost,11433
-Usuario: sa
-Base: EduMonitor
-```
+Los usuarios ficticios creados por Auth son:
 
-El esquema de Analytics usa `analytics.*` y la sincronización usa `sync.*`.
+- `docente1@edumonitor.test`: docente con acceso al curso `2` (`PRUEBA01`).
+- `docente2@edumonitor.test`: docente con acceso al curso `3` (`PRUEBA02`).
+- `admin@edumonitor.test`: administrador técnico sin cursos asignados.
 
-## 6. Pruebas rápidas
+Todos usan el valor local de `AUTH_SEED_PASSWORD`.
 
-El smoke test automatizado se ejecuta así:
+Para obtener un JWT desde PowerShell:
 
 ```powershell
-.\scripts\smoke-test.ps1
+$login = Invoke-RestMethod -Method Post `
+  -Uri http://localhost:5000/api/v1/auth/login `
+  -ContentType 'application/json' `
+  -Body (@{
+    email = 'docente1@edumonitor.test'
+    password = $env:AUTH_SEED_PASSWORD
+  } | ConvertTo-Json)
+
+$token = $login.accessToken
 ```
 
-También se puede indicar otro puerto:
+Con ese token se puede iniciar una sincronización del curso autorizado. El token de Moodle debe estar configurado en `MOODLE_WS_TOKEN` antes de levantar Docker:
 
 ```powershell
-.\scripts\smoke-test.ps1 -AnalyticsUrl http://localhost:5003 -GatewayUrl http://localhost:5000
+Invoke-RestMethod -Method Post `
+  -Uri http://localhost:5000/api/v1/courses/2/sync `
+  -Headers @{ Authorization = "Bearer $token" }
+
+Invoke-RestMethod -Method Get `
+  -Uri http://localhost:5000/api/v1/courses/2/sync `
+  -Headers @{ Authorization = "Bearer $token" }
 ```
 
-Prueba manual mínima de Analytics:
+La primera respuesta confirma que la sincronización fue aceptada. La segunda muestra su estado: `never`, `running`, `succeeded` o `failed`.
+
+## 6. Smoke test y validación de Analytics
+
+Ejecuta el smoke test desde la raíz del repositorio:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\smoke-test.ps1 -RequireGateway
+```
+
+El resultado esperado es que los endpoints de Analytics estén correctos. Los checks de Gateway, Auth, Moodle Sync y Agent pueden omitirse si el servicio correspondiente todavía no está disponible; usa `-RunAgentHealth` cuando el Agent ya esté iniciado.
+
+También puedes comprobar Analytics directamente:
 
 ```powershell
 curl.exe http://localhost:5003/health
 curl.exe http://localhost:5003/api/v1/courses/101/analytics
-curl.exe http://localhost:5003/api/v1/courses/101/analytics/alerts
+curl.exe "http://localhost:5003/api/v1/courses/101/analytics/alerts?page=1&pageSize=20"
 curl.exe http://localhost:5003/api/v1/courses/101/analytics/report
 ```
 
-Una respuesta correcta de Analytics debe tener `200` y mostrar, entre otros campos:
+## 7. Agent opcional fuera de Docker
 
-```json
-{
-  "courseId": 101,
-  "averageScore10": { "unit": "score_0_10" },
-  "submissionRate": { "unit": "percent" },
-  "completionRate": { "unit": "percent" }
-}
-```
-
-Las alertas deben explicar la regla aplicada y no deben convertir `not_available` en cero.
-
-## 7. Flujo completo esperado
-
-Con la infraestructura fusionada, la demostración debe seguir este orden:
-
-1. `POST /api/v1/auth/login` en el gateway.
-2. Guardar el `accessToken` solamente en memoria o en una variable local.
-3. Consultar `GET /api/v1/courses` con `Authorization: Bearer <token>`.
-4. Iniciar `POST /api/v1/courses/{courseId}/sync`.
-5. Consultar el estado con `GET /api/v1/courses/{courseId}/sync`.
-6. Leer estudiantes y calificaciones desde el gateway.
-7. Consultar Analytics para indicadores y alertas.
-8. Enviar una pregunta a `POST http://localhost:5004/chat` usando el mismo JWT.
-
-Ejemplo de login:
+El Agent no se levanta con el `docker-compose.yml` actual. Para ejecutarlo localmente, deja Docker y Ollama iniciados y abre otra ventana de PowerShell:
 
 ```powershell
-$login = @{ email = "docente1@example.com"; password = "Prueba123!" } | ConvertTo-Json
-$response = Invoke-RestMethod -Method Post `
-  -Uri http://localhost:5000/api/v1/auth/login `
-  -ContentType "application/json" `
-  -Body $login
-$token = $response.accessToken
-```
-
-Ejemplo de consulta autenticada:
-
-```powershell
-$headers = @{ Authorization = "Bearer $token" }
-Invoke-RestMethod -Headers $headers `
-  http://localhost:5000/api/v1/courses
-```
-
-## 8. Ejecutar el agente fuera de Docker
-
-Mientras el `agent-service` todavía no tenga una imagen en Compose, abrir otra terminal:
-
-```powershell
-cd services/agent-service
+cd .\services\agent-service
 py -3 -m venv .venv
-.\.venv\Scripts\python -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 ollama pull qwen3:1.7b
-$env:GATEWAY_URL="http://localhost:5000"
-$env:OLLAMA_URL="http://localhost:11434"
-.\.venv\Scripts\python -m uvicorn app.main:app --host 0.0.0.0 --port 5004
+
+$env:GATEWAY_URL = 'http://localhost:5000'
+$env:OLLAMA_URL = 'http://localhost:11434'
+$env:AGENT_MODEL = 'qwen3:1.7b'
+
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 5004
 ```
 
-Validar:
+El Agent lee `OLLAMA_URL` y `AGENT_MODEL`; no usa `OLLAMA_BASE_URL` ni `OLLAMA_MODEL`. El host `127.0.0.1` evita exponerlo innecesariamente a la red local.
+
+Sus cinco herramientas son `listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas` y `generar_resumen`.
+
+Puedes comprobarlo con:
 
 ```powershell
 curl.exe http://localhost:5004/health
 ```
 
-Las cinco herramientas del diseño (`listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas` y
-`generar_resumen`) consultan el gateway.
+## 8. Pruebas automatizadas
 
-## 9. Ejecutar pruebas automatizadas
+Para probar el Agent con Ollama simulado:
 
-Analytics:
+```powershell
+cd .\services\agent-service
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+Para probar los servicios .NET desde la raíz:
 
 ```powershell
 dotnet test services/analytics-service/AnalyticsService.Tests/AnalyticsService.Tests.csproj
-```
-
-Moodle Sync:
-
-```powershell
-dotnet test services/moodle-sync-service/tests/MoodleSync.Tests/MoodleSync.Tests.csproj
-```
-
-Auth Courses:
-
-```powershell
 dotnet test services/auth-courses-service/tests/AuthCourses.Tests/AuthCourses.Tests.csproj
-```
-
-Gateway:
-
-```powershell
+dotnet test services/moodle-sync-service/tests/MoodleSync.Tests/MoodleSync.Tests.csproj
 dotnet test services/api-gateway/tests/ApiGateway.Tests/ApiGateway.Tests.csproj
 ```
 
-Agente:
+## 9. Problemas frecuentes
+
+- **SQL Server todavía no está saludable:** espera unos segundos y revisa `docker compose logs sqlserver`. Los inicializadores dependen de que SQL Server acepte conexiones.
+- **Moodle todavía se está instalando:** revisa `docker compose logs moodle` y espera a que el servicio responda en `http://localhost:8080`.
+- **Un inicializador aparece como `Exited (0)`:** es normal; significa que terminó correctamente.
+- **El Agent aparece omitido en el smoke test:** es opcional y se ejecuta fuera de Docker. Inícialo siguiendo la sección 7 y usa `-RunAgentHealth`.
+- **El puerto 1433 está ocupado:** configura `MSSQL_PORT=11433` en `.env` y usa `localhost,11433` desde Windows.
+- **Hay un conflicto de nombres de contenedor:** ejecuta `docker compose down` y luego `docker compose up -d`. No uses `docker compose down -v` salvo que quieras borrar los volúmenes y los datos locales.
+- **La sincronización falla:** verifica `MOODLE_WS_TOKEN`, `MOODLE_WS_SERVICE`, que Moodle esté disponible y que el token JWT corresponda a un docente autorizado para ese curso.
+
+## 10. Después de un merge
 
 ```powershell
-cd services/agent-service
-.\.venv\Scripts\python -m pytest
-```
-
-## 10. Problemas frecuentes
-
-### Puerto 1433 ocupado
-
-Cambiar `MSSQL_PORT=11433` en `.env` y recrear solamente SQL Server:
-
-```powershell
-docker compose down
+git switch develop
+git pull origin develop
 docker compose up -d --build
+docker compose ps
+powershell -ExecutionPolicy Bypass -File .\scripts\smoke-test.ps1 -RequireGateway
 ```
 
-### El servicio no inicia
-
-```powershell
-docker compose ps -a
-docker compose logs --tail=100 analytics
-```
-
-### SQL Server todavía no está saludable
-
-Esperar entre 30 y 60 segundos:
-
-```powershell
-docker compose logs -f sqlserver
-```
-
-### Falta `MOODLE_WS_TOKEN`
-
-El servicio puede iniciar, pero la sincronización real devolverá `MOODLE_UNAVAILABLE` o un error de configuración. El token se obtiene desde el servicio web configurado en Moodle y nunca debe guardarse en GitHub.
-
-### Moodle todavía está instalándose
-
-Esperar a que el healthcheck sea `healthy` antes de iniciar Moodle Sync.
-
-### Reiniciar todo sin borrar datos
-
-```powershell
-docker compose down
-docker compose up -d
-```
-
-### Reiniciar eliminando volúmenes de desarrollo
-
-Esto borra la base local, usuarios y datos de Moodle:
-
-```powershell
-docker compose down -v
-docker compose up -d --build
-```
-
-Usar esta última opción únicamente si se desea comenzar desde cero.
+No borres los volúmenes para una actualización normal. Usa `docker compose down -v` únicamente si quieres reiniciar por completo las bases locales y los datos de Moodle.
