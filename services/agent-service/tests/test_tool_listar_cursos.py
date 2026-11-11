@@ -226,6 +226,7 @@ def test_gateway_down_does_not_invent_courses(settings, ollama, traces):
     ("¿Qué alertas hay en PRUEBA01?", "identificar_alertas"), ("¿Qué estudiantes están en riesgo?", "identificar_alertas"),
     ("¿Qué notas tiene Estudiante Dos?", "obtener_calificaciones"), ("¿Quién tiene entregas pendientes?", "obtener_calificaciones"),
     ("¿Cómo va el curso PRUEBA01?", "obtener_progreso"), ("¿Cuál es el promedio del curso?", "obtener_progreso"),
+    ("Genera un informe del curso PRUEBA01", "generar_resumen"), ("Dame un resumen de PRUEBA01", "generar_resumen"),
     ("¿Qué cursos tengo y qué me recomiendas?", "listar_cursos"), ("¿Cuántos estudiantes tiene mi curso?", "listar_cursos"),
     ("cuéntame un chiste", None),
 ])

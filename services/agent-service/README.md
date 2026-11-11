@@ -11,9 +11,9 @@ Diseño completo: [`docs/agent-design/diseno-agente.md`](../../docs/agent-design
 ## Estado
 
 Sprint 2. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas (en el registro y, si se
-configura, en SQL Server), las pruebas y las herramientas `listar_cursos`, `obtener_calificaciones`, `obtener_progreso` e
-`identificar_alertas`. Todas consultan el gateway con el JWT del docente y redactan hechos verificables desde código. Si una
-consulta necesita una herramienta que aún no existe, el agente lo dice en lugar de inventar.
+configura, en SQL Server), las pruebas y las herramientas `listar_cursos`, `obtener_calificaciones`, `obtener_progreso`,
+`identificar_alertas` y `generar_resumen`. Todas consultan el gateway con el JWT del docente y redactan hechos verificables
+desde código. Si una consulta necesita una herramienta que aún no existe, el agente lo dice en lugar de inventar.
 
 ## Cómo ejecutarlo
 
@@ -89,8 +89,9 @@ recibir_mensaje -> validar_contexto -> clasificar_intencion -> planificar_herram
   se reintenta una vez (diciéndole al modelo qué cifras corregir, y solo si cabe en los 60 s del mensaje) y, si persiste, se
   descarta el hecho. Las inferencias y recomendaciones con cifras sin fuente también se descartan. Las inferencias sin hechos en que basarse y las
   recomendaciones sin hallazgo se descartan.
-- **Traza:** una por mensaje, con los pasos, las herramientas y los tiempos. **Nunca** incluye el JWT. Por ahora se escribe
-  en el registro `agent.trace`; guardarla en el esquema `agent` es una tarea siguiente.
+- **Traza:** una por mensaje, con los pasos, las herramientas y los tiempos. **Nunca** incluye el JWT. Se escribe en el
+  registro y, si se define `AGENT_DB_CONNECTION`, también en la tabla `agent.trace` de SQL Server (ver «Guardar las trazas
+  en SQL Server»).
 
 ## Herramientas
 
@@ -100,7 +101,7 @@ recibir_mensaje -> validar_contexto -> clasificar_intencion -> planificar_herram
 | `obtener_calificaciones` | Disponible | `GET /api/v1/courses/{courseId}/grades` |
 | `obtener_progreso` | Disponible | `GET /api/v1/courses/{courseId}/analytics` (y la del estudiante) |
 | `identificar_alertas` | Disponible | `GET /api/v1/courses/{courseId}/analytics/alerts` |
-| `generar_resumen` | Pendiente | `GET /api/v1/courses/{courseId}/analytics/report` |
+| `generar_resumen` | Disponible | `GET /api/v1/courses/{courseId}/analytics/report` |
 
 ### Cómo añadir una herramienta
 
@@ -160,7 +161,6 @@ guardado de trazas (con una conexión simulada).
 
 ## Pendiente
 
-- Implementar `generar_resumen` para completar los escenarios de informe `I01` e `I02`.
 - Incluir `db/agent-schema.sql` y `AGENT_DB_CONNECTION` en el Compose (a cargo de Gabriel).
 - Afinar los prompts con el conjunto de evaluación (`evaluation/agent-scenarios/`). Con `qwen3:1.7b`, una consulta de
   datos tarda unos 6 s (la elección de la herramienta) y una con interpretación unos 16 s en un computador sin GPU; el

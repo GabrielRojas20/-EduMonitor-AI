@@ -66,6 +66,7 @@ def classify(message: str) -> tuple[str, str | None]:
 # por palabras clave (en orden: lo más específico primero). Sin argumentos: cada herramienta resuelve el curso por su cuenta
 # o pide que el docente indique cuál.
 FALLBACK_TOOLS = [
+    (r"informe|reporte|resumen", "generar_resumen"),
     (r"alert|riesgo|preocup|atencion", "identificar_alertas"),
     (r"nota|calific|entreg|pendiente", "obtener_calificaciones"),
     (r"como va|como vamos|como esta|progreso|promedio|tasa|avance|indicador|desempen|rendimiento", "obtener_progreso"),
