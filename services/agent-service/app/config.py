@@ -14,6 +14,7 @@ class Settings:
     message_timeout_s: float  # tiempo máximo por mensaje
     draft_max_tokens: int  # largo máximo de la redacción del modelo
     cors_origins: tuple
+    agent_db_connection: str | None = None  # cadena ODBC de SQL Server para guardar las trazas; sin ella solo van al registro
 
 
 def get_settings() -> Settings:
@@ -29,4 +30,5 @@ def get_settings() -> Settings:
         message_timeout_s=float(env("MESSAGE_TIMEOUT_SECONDS", "60")),
         draft_max_tokens=int(env("DRAFT_MAX_TOKENS", "450")),
         cors_origins=tuple(o.strip() for o in origins.split(",") if o.strip()),
+        agent_db_connection=env("AGENT_DB_CONNECTION") or None,
     )

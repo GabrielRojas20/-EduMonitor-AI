@@ -140,8 +140,8 @@ def test_trace_follows_the_design_and_never_holds_the_jwt(make_agent, ollama, tr
     ollama.reply(draft(facts=[{"text": "Tienes 1 curso.", "tool": "listar_cursos", "stepN": 1}]))
     run(make_agent(), token=token)
     trace = traces[0]
-    assert set(trace) == {"traceId", "requestId", "startedAt", "finishedAt", "teacherId", "model", "message", "intent",
-                          "steps", "output", "totals", "status"}
+    assert set(trace) == {"traceId", "requestId", "startedAt", "finishedAt", "teacherId", "courseId", "model", "message",
+                          "intent", "steps", "output", "totals", "status"}
     assert trace["teacherId"] == "3" and trace["model"] == "qwen3:1.7b" and trace["intent"] == "consulta_datos"
     assert trace["steps"][1]["tool"] == "listar_cursos" and trace["steps"][1]["resultSummary"] == {"courses": 1, "total": 1}
     assert token not in json.dumps(trace) and "Bearer" not in json.dumps(trace)
