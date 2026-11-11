@@ -266,3 +266,85 @@ def test_a_greeting_or_out_of_scope_message_never_reaches_the_fallback(settings,
 def test_fallback_arguments_take_the_course_code_from_the_message(message, expected):
     from app.graph import fallback_arguments
     assert fallback_arguments(message) == expected
+
+
+# ---- el estado que pide el docente lo deduce el código del texto de la pregunta
+@pytest.mark.parametrize("message,expected", [
+    ("¿Qué actividades están pendientes de calificar?", {"status": "pending_grading"}),
+    ("¿Qué entregas están por calificar en PRUEBA01?", {"status": "pending_grading"}),
+    ("¿Qué falta calificar?", {"status": "pending_grading"}),
+    ("¿Quiénes no han entregado la tarea?", {"status": "not_submitted"}),
+    ("¿Quién está sin entrega?", {"status": "not_submitted"}),
+    ("¿Qué notas tiene Estudiante Dos?", {}), ("¿Cómo va el curso?", {}),
+])
+def test_status_hint_from_the_message(message, expected):
+    from app.graph import hint_arguments
+    assert hint_arguments("obtener_calificaciones", message) == expected
+
+
+def test_the_hint_only_applies_to_obtener_calificaciones():
+    from app.graph import hint_arguments
+    assert hint_arguments("listar_cursos", "¿Qué está pendiente de calificar?") == {}
+
+
+GRADES_FOR_FLOW = {"items": [
+    {"studentId": 4, "activityId": 2, "activityName": "Tarea 1", "status": "graded", "submissionStatus": "submitted", "score": 8, "maxScore": 10},
+    {"studentId": 5, "activityId": 2, "activityName": "Tarea 1", "status": "pending_grading", "submissionStatus": "submitted"}], "total": 2}
+
+
+def grades_gateway(request):
+    routes = {"/api/v1/courses": httpx.Response(200, json=COURSES[:1]),
+              "/api/v1/courses/2/students": httpx.Response(200, json={"items": [{"id": 4, "fullName": "Estudiante Uno"},
+                                                                               {"id": 5, "fullName": "Estudiante Dos"}], "total": 2}),
+              "/api/v1/courses/2/grades": httpx.Response(200, json=GRADES_FOR_FLOW)}
+    return routes.get(request.url.path, httpx.Response(404, json={"status": 404}))
+
+
+@pytest.mark.parametrize("model_arguments", [{}, {"status": "graded"}, {"status": "inventado"}])
+def test_pending_question_returns_only_pending_whatever_the_model_sent(settings, ollama, traces, model_arguments):
+    ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": model_arguments}}])
+    res = agent(settings, ollama, traces, grades_gateway).run("¿Qué actividades están pendientes de calificar?", None, TOKEN, "3", "req-42")
+    assert [f.text for f in res.answer.facts] == ["PRUEBA01: 1 registro pendiente de calificar (de 2 registros del curso).",
+                                                  "Estudiante Dos, Tarea 1: entregada, pendiente de calificar."]
+    assert res.meta.status == "ok" and res.answer.unavailable == []
+
+
+def test_a_normal_grades_question_is_not_filtered(settings, ollama, traces):
+    ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": {"status": "pending_grading"}}}])
+    res = agent(settings, ollama, traces, grades_gateway).run("¿Qué notas hay?", None, TOKEN, "3", "req-42")
+    assert len(res.answer.facts) == 3 and "2 registros de calificación" in res.answer.facts[0].text   # ignoró el filtro inventado
+
+
+def test_pending_question_also_works_through_the_fallback(settings, ollama, traces):
+    ollama.reply(tool_calls=[])
+    res = agent(settings, ollama, traces, grades_gateway).run("¿Qué entregas están pendientes de calificar?", None, TOKEN, "3", "req-42")
+    assert res.answer.facts[0].text.startswith("PRUEBA01: 1 registro pendiente de calificar")
+
+
+# ---- argumentos que el código corrige al modelo
+def test_course_code_put_in_the_wrong_field_is_moved_to_the_course():
+    """El fallo real de qwen3:1.7b: «¿Qué está pendiente de calificar en PRUEBA01?» -> activity_name='PRUEBA01'."""
+    from app.graph import fix_arguments
+    assert fix_arguments("obtener_calificaciones", {"activity_name": "PRUEBA01"}, "¿Qué actividades están pendientes de calificar en PRUEBA01?") \
+        == {"course_name": "PRUEBA01", "status": "pending_grading"}
+
+
+@pytest.mark.parametrize("tool,given,message,expected", [
+    ("obtener_progreso", {}, "¿Cómo va PRUEBA01?", {"course_name": "PRUEBA01"}),
+    ("obtener_progreso", {"course_name": "Otro"}, "¿Cómo va PRUEBA01?", {"course_name": "Otro"}),          # respeta lo que eligió el modelo
+    ("obtener_progreso", {"course_id": 2}, "¿Cómo va PRUEBA01?", {"course_id": 2}),
+    ("obtener_calificaciones", {"activity_name": "Tarea 2"}, "Notas de Tarea 2 en PRUEBA01", {"activity_name": "Tarea 2", "course_name": "PRUEBA01"}),
+    ("identificar_alertas", {"student_name": "prueba01"}, "Alertas de PRUEBA01", {"course_name": "PRUEBA01"}),
+    ("listar_cursos", {}, "¿Qué cursos tengo en PRUEBA01?", {}),                                          # sin parámetro de curso
+    ("obtener_progreso", {}, "¿Cómo van mis estudiantes?", {}),                                           # sin código: no se inventa
+])
+def test_fix_arguments(tool, given, message, expected):
+    from app.graph import fix_arguments
+    assert fix_arguments(tool, given, message) == expected
+
+
+def test_a_course_code_in_the_wrong_field_still_gets_answered_end_to_end(settings, ollama, traces):
+    ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": {"activity_name": "PRUEBA01"}}}])
+    res = agent(settings, ollama, traces, grades_gateway).run("¿Qué actividades están pendientes de calificar en PRUEBA01?",
+                                                              None, TOKEN, "3", "req-42")
+    assert res.answer.facts[0].text == "PRUEBA01: 1 registro pendiente de calificar (de 2 registros del curso)." and res.meta.status == "ok"

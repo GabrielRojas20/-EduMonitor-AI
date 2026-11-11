@@ -169,3 +169,37 @@ def test_ids_invented_by_the_model_are_ignored():
     ctx = ToolContext("http://gateway.test", TOKEN, "req-1", 2.0, httpx.MockTransport(gateway()))
     out = default_registry().execute("obtener_calificaciones", {"course_name": "PRUEBA01", "activity_name": "Tarea 2"}, ctx)
     assert out["ok"] and out["data"]["total"] == 2
+
+
+# ---- estado pedido («pendientes de calificar», «sin entrega»): lo deduce el código, no el modelo
+def test_status_filter_keeps_only_those_records_and_the_summary_says_so():
+    out = run({"course_id": 2, "status": "pending_grading"})
+    assert [(i["studentName"], i["activityName"]) for i in out["data"]["items"]] == [("Estudiante Uno", "Tarea 2")]
+    f = facts(out["data"])
+    assert f == ["PRUEBA01: 1 registro pendiente de calificar (de 4 registros del curso).",
+                 "Estudiante Uno, Tarea 2: entregada, pendiente de calificar."]
+
+
+def test_not_submitted_includes_drafts_and_each_row_says_which():
+    f = facts(run({"course_id": 2, "status": "not_submitted"})["data"])
+    assert f[0] == "PRUEBA01: 1 registro sin entrega (de 4 registros del curso)." and "Estudiante Dos, Tarea 2: borrador sin enviar." in f
+
+
+def test_status_filter_with_no_matches_is_a_clear_answer_not_a_failure():
+    only_graded = [g for g in GRADES if g["status"] == "graded"]
+    out = run({"course_id": 2, "status": "pending_grading"}, gateway(only_graded))
+    assert out["ok"] and facts(out["data"]) == ["No hay registros pendientes de calificar en PRUEBA01 (de 2 registros del curso)."]
+
+
+def test_an_unknown_status_is_ignored_instead_of_failing():
+    out = run({"course_id": 2, "status": "raro"})
+    assert out["ok"] and out["data"]["statusFilter"] is None and out["data"]["matching"] == 4
+
+
+def test_status_combines_with_a_student_filter():
+    out = run({"course_id": 2, "student_name": "Estudiante Uno", "status": "pending_grading"})
+    assert out["data"]["matching"] == 1
+
+
+def test_the_model_is_not_offered_the_status():
+    assert "status" not in TOOL.schema()["function"]["parameters"]["properties"]

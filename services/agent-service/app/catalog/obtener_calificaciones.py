@@ -2,7 +2,9 @@
 
 Gateway: GET /api/v1/courses/{courseId}/grades (paginado). Para mostrar nombres usa la lista de estudiantes del curso.
 """
-from pydantic import BaseModel, Field, model_validator
+from typing import Literal
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ..gateway import gateway_get  # noqa: F401  (las pruebas lo reemplazan por un gateway simulado)
 from ..tools import Tool, ToolContext, error_output, ok_output
@@ -19,6 +21,14 @@ class Args(BaseModel):
     student_name: str | None = Field(default=None, description="Nombre del estudiante; alternativa a student_id")
     activity_id: int | None = Field(default=None, ge=1, description="Id de la actividad")
     activity_name: str | None = Field(default=None, description="Solo si el docente nombra una actividad concreta. No lo uses para estados como «pendientes de calificar»")
+
+    # No se le ofrece al modelo (ver `hidden`): lo deduce el código del texto de la pregunta (graph.hint_arguments)
+    status: Literal["graded", "pending_grading", "not_submitted"] | None = Field(default=None, description="Solo registros en este estado")
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def ignore_unknown_status(cls, value):
+        return value if value in ("graded", "pending_grading", "not_submitted") else None
 
     @model_validator(mode="after")
     def only_one_of_each(self):
@@ -58,6 +68,8 @@ def run(ctx: ToolContext, args: Args) -> dict:
         if error:
             return error
         total = len(rows)
+    if args.status:
+        rows = [g for g in rows if g["status"] == args.status]
     items = [{"studentId": g["studentId"], "studentName": names.get(g["studentId"]), "activityId": g["activityId"],
               "activityName": g.get("activityName"), "status": g["status"], "submissionStatus": g.get("submissionStatus"),
               "score": g.get("score"), "maxScore": g.get("maxScore"), "submittedAt": g.get("submittedAt"),
@@ -69,7 +81,8 @@ def run(ctx: ToolContext, args: Args) -> dict:
               "drafts": drafts,
               "notSubmitted": sum(1 for r in items if r["status"] == "not_submitted") - drafts}
     data = {"courseId": cid, "courseName": course["shortName"], "items": items, "total": total, "truncated": truncated,
-            "counts": counts, "analyzed": len(items), "shown": min(len(items), MAX_ROWS_AS_FACTS)}
+            "counts": counts, "analyzed": len(items), "shown": min(len(items), MAX_ROWS_AS_FACTS),
+            "statusFilter": args.status, "matching": len(items)}
     return ok_output(data, endpoint, ctx.request_id)
 
 
@@ -107,8 +120,30 @@ def row_fact(row: dict) -> str:
     return f"{head}: sin entrega."
 
 
+STATUS_LABEL = {"graded": ("calificado", "calificados"), "pending_grading": ("pendiente de calificar", "pendientes de calificar"),
+                "not_submitted": ("sin entrega", "sin entrega")}
+
+
+def filtered_facts(data: dict, course: str) -> list[str]:
+    """Con un estado pedido («pendientes de calificar»), se muestran solo esos registros y el resumen dice el filtro aplicado."""
+    one, many = STATUS_LABEL[data["statusFilter"]]
+    n = data["matching"]
+    if not n:
+        return [f"No hay registros {many} en {course} (de {data['total']} registros del curso)."]
+    out = [f"{course}: {n} {'registro' if n == 1 else 'registros'} {one if n == 1 else many} (de {data['total']} registros del curso)."]
+    shown = data["items"][:data["shown"]]
+    out += [row_fact(r) for r in shown]
+    if n > len(shown):
+        out.append(f"Se muestran los primeros {len(shown)} de {n} registros.")
+    if data["truncated"]:
+        out.append(f"Solo se analizaron los primeros {data['analyzed']} registros de {data['total']}.")
+    return out
+
+
 def facts(data: dict) -> list[str]:
     items, course = data["items"], data["courseName"] or f"curso {data['courseId']}"
+    if data.get("statusFilter"):
+        return filtered_facts(data, course)
     if not items:
         return [f"No hay calificaciones registradas en {course} con esos criterios."]
     c = data["counts"]
@@ -136,5 +171,5 @@ TOOL = Tool(
     input_model=Args,
     run=run,
     facts=facts,
-    hidden=("course_id", "student_id", "activity_id"),
+    hidden=("course_id", "student_id", "activity_id", "status"),
 )

@@ -74,6 +74,27 @@ FALLBACK_TOOLS = [
 ]
 
 
+# Estado que pide el docente («pendientes de calificar», «sin entrega»): lo deduce el código, no el modelo, que inventaba filtros
+STATUS_HINTS = [
+    (r"pendientes? de calificar|por calificar|sin calificar|falta\w* (por )?calificar", "pending_grading"),
+    (r"sin entrega|sin entregar|no (han )?entregad\w*|no entreg\w*|falta\w* (por )?entregar", "not_submitted"),
+]
+
+
+def hint_arguments(tool: str, message: str) -> dict:
+    """Argumentos que se deducen del texto de la pregunta y que se imponen a lo que haya elegido el modelo."""
+    if tool == "obtener_calificaciones":
+        text = normalize(message)
+        for pattern, status in STATUS_HINTS:
+            if re.search(pattern, text):
+                return {"status": status}
+    return {}
+
+
+COURSE_TOOLS = {"obtener_calificaciones", "obtener_progreso", "identificar_alertas", "generar_resumen"}
+NAME_ARGS = ("activity_name", "student_name")
+
+
 COURSE_CODE = re.compile(r"\b[A-Za-z]{3,}\d{1,3}\b")  # «PRUEBA01»
 
 
@@ -81,6 +102,22 @@ def fallback_arguments(message: str) -> dict:
     """Si el docente escribió un código de curso, se pasa como course_name (lo resuelve la herramienta, no el modelo)."""
     code = COURSE_CODE.search(message)
     return {"course_name": code.group()} if code else {}
+
+
+def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
+    """Corrige lo que un modelo pequeño suele equivocar: el código de curso del mensaje (PRUEBA01) se usa como curso y se quita de
+    cualquier otro campo (puso «PRUEBA01» como actividad), y el estado pedido se deduce del texto en vez de confiar en el modelo."""
+    args = dict(arguments)
+    args.pop("status", None)
+    code = COURSE_CODE.search(message)
+    if code and tool in COURSE_TOOLS:
+        for key in NAME_ARGS:
+            if isinstance(args.get(key), str) and normalize(args[key]).strip() == normalize(code.group()):
+                args.pop(key)
+        if args.get("course_id") is None and not args.get("course_name"):
+            args["course_name"] = code.group()
+    args.update(hint_arguments(tool, message))
+    return args
 
 
 def fallback_tool(message: str, available: list[str]) -> str | None:
@@ -306,12 +343,15 @@ class Agent:
                 if tool is not None and "course_id" in tool.input_model.model_fields:
                     args["course_id"] = state["course_id"]
             plan.append({"name": fn.get("name", ""), "arguments": args})
+        for call in plan:
+            call["arguments"] = fix_arguments(call["name"], call["arguments"], state["message"])
         fallback = None
         if not plan:
             fallback = fallback_tool(state["message"], self.tools.names())
             if fallback:
                 tool = self.tools.get(fallback)
                 args = fallback_arguments(state["message"]) if "course_name" in tool.input_model.model_fields else {}
+                args.update(hint_arguments(fallback, state["message"]))
                 plan.append({"name": fallback, "arguments": args})
         steps = state["steps"] + [{"n": len(state["steps"]) + 1, "node": "planificar_herramientas", "tool": None, "ok": True,
                                    "errorCode": None, "durationMs": reply["durationMs"],
