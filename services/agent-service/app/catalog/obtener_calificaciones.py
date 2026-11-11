@@ -14,11 +14,11 @@ MAX_ROWS_AS_FACTS = 15  # por encima, los hechos resumen en lugar de listar cada
 
 class Args(BaseModel):
     course_id: int | None = Field(default=None, ge=1, description="Id del curso en Moodle")
-    course_name: str | None = Field(default=None, description="Nombre o código del curso, por ejemplo PRUEBA01; alternativa a course_id")
+    course_name: str | None = Field(default=None, description="Nombre o código del curso, tal como lo escribió el docente; alternativa a course_id")
     student_id: int | None = Field(default=None, ge=1, description="Id del estudiante en Moodle")
     student_name: str | None = Field(default=None, description="Nombre del estudiante; alternativa a student_id")
     activity_id: int | None = Field(default=None, ge=1, description="Id de la actividad")
-    activity_name: str | None = Field(default=None, description="Solo si el docente nombra una actividad concreta, por ejemplo «Tarea 2». No lo uses para estados como «pendientes de calificar»")
+    activity_name: str | None = Field(default=None, description="Solo si el docente nombra una actividad concreta. No lo uses para estados como «pendientes de calificar»")
 
     @model_validator(mode="after")
     def only_one_of_each(self):
@@ -131,7 +131,7 @@ TOOL = Tool(
     name="obtener_calificaciones",
     description="Devuelve las calificaciones de un curso, con su estado (calificada, nota cero, pendiente de calificar, "
                 "borrador sin enviar o sin entrega). Puede limitarse a un estudiante o a una actividad. El curso, el "
-                "estudiante y la actividad se indican por su nombre (por ejemplo PRUEBA01, «Estudiante Dos» o «Tarea 2»); nunca inventes números. Úsala para "
+                "estudiante y la actividad se indican por su nombre, tal como los escribió el docente; nunca inventes nombres ni números. Úsala para "
                 "preguntas sobre notas, entregas o cómo va un estudiante.",
     input_model=Args,
     run=run,

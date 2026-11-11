@@ -20,7 +20,7 @@ RANK = {"critical": 0, "warning": 1, "info": 2}
 
 class Args(BaseModel):
     course_id: int | None = Field(default=None, ge=1, description="Id del curso en Moodle")
-    course_name: str | None = Field(default=None, description="Nombre o código del curso, por ejemplo PRUEBA01")
+    course_name: str | None = Field(default=None, description="Nombre o código del curso, tal como lo escribió el docente")
     student_id: int | None = Field(default=None, ge=1, description="Id del estudiante en Moodle")
     student_name: str | None = Field(default=None, description="Nombre del estudiante; si no se indica, devuelve las alertas de todo el curso")
     severity: Literal["info", "warning", "critical"] | None = Field(default=None, description="Solo si el docente nombra una severidad (crítica, de atención o informativa); en otro caso no lo uses")
@@ -117,7 +117,7 @@ TOOL = Tool(
     description="Devuelve las alertas del curso, con la regla que las activó, el valor observado, el umbral y su explicación: "
                 "promedio bajo, entrega baja, calificaciones pendientes, finalización baja o sin datos. Puede limitarse a un "
                 "estudiante. El resumen cuenta las alertas por severidad (críticas, de atención e informativas). El curso y el estudiante se indican por su nombre "
-                "(por ejemplo PRUEBA01 o «Estudiante Dos»); nunca inventes números. Úsala para preguntas sobre alertas, "
+                "tal como los escribió el docente; nunca inventes números. Úsala para preguntas sobre alertas, "
                 "riesgos, estudiantes en riesgo o a quién prestar atención.",
     input_model=Args,
     run=run,
