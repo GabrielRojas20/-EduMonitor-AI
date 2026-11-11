@@ -211,8 +211,8 @@ Validar:
 curl.exe http://localhost:5004/health
 ```
 
-Las herramientas `listar_cursos`, `obtener_calificaciones`, `obtener_progreso` e `identificar_alertas` consultan el gateway.
-La única herramienta del diseño todavía pendiente es `generar_resumen`, necesaria para los escenarios de informe `I01` e `I02`.
+Las cinco herramientas del diseño (`listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas` y
+`generar_resumen`) consultan el gateway.
 
 ## 9. Ejecutar pruebas automatizadas
 
