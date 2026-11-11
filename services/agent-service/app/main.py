@@ -11,11 +11,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import get_settings
 from .errors import ApiError
-from .graph import Agent
+from .graph import Agent, log_trace
 from .llm import OllamaClient
 from .schemas import ChatRequest, ChatResponse
 from .security import check_token
 from .toolset import default_registry
+from .traces import build_trace_sink
 
 PROBLEM_JSON = "application/problem+json"
 bearer = HTTPBearer(auto_error=False, description="JWT del docente (el mismo que devuelve el login del gateway)")
@@ -32,7 +33,8 @@ def create_app(agent: Agent | None = None) -> FastAPI:
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["*"],
                        allow_headers=["*"], expose_headers=["X-Request-Id"])
     llm = OllamaClient(settings) if agent is None else agent.llm
-    app.state.agent = agent or Agent(settings, llm, default_registry())
+    app.state.agent = agent or Agent(settings, llm, default_registry(),
+                                     trace_sink=build_trace_sink(settings.agent_db_connection, log_trace))
 
     def trace_id(request: Request) -> str:
         return getattr(request.state, "request_id", uuid.uuid4().hex)

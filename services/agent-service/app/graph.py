@@ -206,13 +206,18 @@ class ChatState(TypedDict, total=False):
     last_draft_ms: int  # lo que tardó la última redacción: decide si el reintento cabe en el tiempo del mensaje
 
 
+def log_trace(trace: dict) -> None:
+    """Sumidero por defecto: la traza va al registro como una línea JSON."""
+    log.info(json.dumps(trace, ensure_ascii=False))
+
+
 class Agent:
     def __init__(self, settings: Settings, llm: OllamaClient, tools: ToolRegistry | None = None,
                  trace_sink: Callable[[dict], None] | None = None, tool_transport=None):
         self.settings = settings
         self.llm = llm
         self.tools = tools or ToolRegistry()
-        self.trace_sink = trace_sink or (lambda trace: log.info(json.dumps(trace, ensure_ascii=False)))
+        self.trace_sink = trace_sink or log_trace
         self.tool_transport = tool_transport
         self.graph = self._build()
 
@@ -495,7 +500,8 @@ class Agent:
         tools_used = [s for s in state["steps"] if s.get("tool")]
         trace = {
             "traceId": state["trace_id"], "requestId": state["request_id"], "startedAt": state["started_at"],
-            "finishedAt": now_iso(), "teacherId": state.get("teacher_id"), "model": self.settings.model,
+            "finishedAt": now_iso(), "teacherId": state.get("teacher_id"), "courseId": state.get("course_id"),
+            "model": self.settings.model,
             "message": {"text": state["message"], "redacted": False}, "intent": state.get("intent"),
             "steps": state["steps"],
             "output": {"validated": state.get("validated", True), "unsourcedNumbersRemoved": state.get("unsourced_removed", 0)},

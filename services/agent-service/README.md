@@ -10,10 +10,10 @@ Diseño completo: [`docs/agent-design/diseno-agente.md`](../../docs/agent-design
 
 ## Estado
 
-Sprint 2. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas, las pruebas y las herramientas
-`listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas` y `generar_resumen`. Todas consultan el
-gateway con el JWT del docente y redactan hechos verificables desde código. Si una consulta necesita una herramienta que aún no existe,
-el agente lo dice en lugar de inventar.
+Sprint 2. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas (en el registro y, si se
+configura, en SQL Server), las pruebas y las herramientas `listar_cursos`, `obtener_calificaciones`, `obtener_progreso`,
+`identificar_alertas` y `generar_resumen`. Todas consultan el gateway con el JWT del docente y redactan hechos verificables
+desde código. Si una consulta necesita una herramienta que aún no existe, el agente lo dice en lugar de inventar.
 
 ## Cómo ejecutarlo
 
@@ -89,8 +89,9 @@ recibir_mensaje -> validar_contexto -> clasificar_intencion -> planificar_herram
   se reintenta una vez (diciéndole al modelo qué cifras corregir, y solo si cabe en los 60 s del mensaje) y, si persiste, se
   descarta el hecho. Las inferencias y recomendaciones con cifras sin fuente también se descartan. Las inferencias sin hechos en que basarse y las
   recomendaciones sin hallazgo se descartan.
-- **Traza:** una por mensaje, con los pasos, las herramientas y los tiempos. **Nunca** incluye el JWT. Por ahora se escribe
-  en el registro `agent.trace`; guardarla en el esquema `agent` es una tarea siguiente.
+- **Traza:** una por mensaje, con los pasos, las herramientas y los tiempos. **Nunca** incluye el JWT. Se escribe en el
+  registro y, si se define `AGENT_DB_CONNECTION`, también en la tabla `agent.trace` de SQL Server (ver «Guardar las trazas
+  en SQL Server»).
 
 ## Herramientas
 
@@ -123,8 +124,29 @@ traduce a un código del diseño (`TOKEN_EXPIRED`, `COURSE_NOT_AUTHORIZED`, `MOO
 ## Configuración
 
 Variables de entorno, todas opcionales (ver `.env.example`): `OLLAMA_URL`, `AGENT_MODEL` (por defecto `qwen3:1.7b`),
-`GATEWAY_URL`, `OLLAMA_KEEP_ALIVE`, `MAX_TOOL_CALLS`, `TOOL_TIMEOUT_SECONDS`, `MESSAGE_TIMEOUT_SECONDS`, `DRAFT_MAX_TOKENS` y
+`GATEWAY_URL`, `AGENT_DB_CONNECTION` (ver más abajo), `OLLAMA_KEEP_ALIVE`, `MAX_TOOL_CALLS`, `TOOL_TIMEOUT_SECONDS`, `MESSAGE_TIMEOUT_SECONDS`, `DRAFT_MAX_TOKENS` y
 `AGENT_CORS_ORIGINS` (orígenes de la interfaz React que pueden llamar al agente).
+
+## Guardar las trazas en SQL Server
+
+Cada mensaje genera una traza (diseño, sección 5). Por defecto solo se escribe en el registro. Para guardarla también en la
+tabla `agent.trace`:
+
+1. Crea el esquema y la tabla (es idempotente) con [`db/agent-schema.sql`](db/agent-schema.sql), por ejemplo con `sqlcmd`.
+2. Instala el controlador **ODBC Driver 18 for SQL Server** (en Windows suele venir con SQL Server o se baja de Microsoft;
+   en una imagen de Docker hay que instalar `msodbcsql18`).
+3. Define la cadena de conexión y arranca el agente:
+
+```powershell
+$env:AGENT_DB_CONNECTION = "Driver={ODBC Driver 18 for SQL Server};Server=localhost,1433;Database=EduMonitor;UID=sa;PWD=<contraseña>;Encrypt=no;"
+.\.venv\Scripts\python -m uvicorn app.main:app --port 5004
+```
+
+- El guardado va en un hilo aparte: no retrasa la respuesta. Si la base no responde, el chat sigue funcionando y se avisa
+  en el registro (sin la cadena de conexión); si se acumulan 200 trazas sin guardar, las nuevas se descartan.
+- No se guarda el JWT. El nombre de estudiante que el agente usó como argumento se enmascara en los argumentos y dentro del
+  texto de la pregunta (`[nombre omitido]`), porque el diseño pide identificadores y no nombres mientras el Product Owner no
+  responda la pregunta 9. Solo cubre los nombres que el agente llegó a usar.
 
 ## Pruebas
 
@@ -134,11 +156,12 @@ Variables de entorno, todas opcionales (ver `.env.example`): `OLLAMA_URL`, `AGEN
 
 Corren con un Ollama simulado, así que no necesitan el modelo ni el gateway. Cubren la validación del token y del cuerpo,
 la clasificación, el flujo completo con herramientas simuladas, el reintento y el descarte de cifras sin fuente, los
-fallos de herramientas y del modelo, los límites, la seguridad frente a datos hostiles y que la traza no contenga el JWT.
+fallos de herramientas y del modelo, los límites, la seguridad frente a datos hostiles, que la traza no contenga el JWT y el
+guardado de trazas (con una conexión simulada).
 
 ## Pendiente
 
-- Guardar las trazas en el esquema `agent` de SQL Server.
+- Incluir `db/agent-schema.sql` y `AGENT_DB_CONNECTION` en el Compose (a cargo de Gabriel).
 - Afinar los prompts con el conjunto de evaluación (`evaluation/agent-scenarios/`). Con `qwen3:1.7b`, una consulta de
   datos tarda unos 6 s (la elección de la herramienta) y una con interpretación unos 16 s en un computador sin GPU; el
   modelo a veces enlaza una recomendación al hecho equivocado.
