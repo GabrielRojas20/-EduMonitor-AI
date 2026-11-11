@@ -10,10 +10,10 @@ Diseño completo: [`docs/agent-design/diseno-agente.md`](../../docs/agent-design
 
 ## Estado
 
-Sprint 2. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas, las pruebas y la **primera
-herramienta real, `listar_cursos`**, que consulta el gateway con el JWT del docente. Faltan las demás herramientas
-(`obtener_calificaciones`, `obtener_progreso`, `identificar_alertas`, `generar_resumen`), que se añaden en
-`app/catalog/`. Si una consulta necesita una herramienta que aún no existe, el agente lo dice en lugar de inventar.
+Sprint 2. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas, las pruebas y las herramientas
+`listar_cursos`, `obtener_calificaciones`, `obtener_progreso` e `identificar_alertas`. Todas consultan el gateway con el
+JWT del docente y redactan hechos verificables desde código. Si una consulta necesita una herramienta que aún no existe,
+el agente lo dice en lugar de inventar.
 
 ## Cómo ejecutarlo
 
@@ -96,10 +96,10 @@ recibir_mensaje -> validar_contexto -> clasificar_intencion -> planificar_herram
 
 | Herramienta | Estado | Ruta del gateway |
 |---|---|---|
-| `listar_cursos` | Lista | `GET /api/v1/courses` |
-| `obtener_calificaciones` | Pendiente | `GET /api/v1/courses/{courseId}/grades` |
-| `obtener_progreso` | Pendiente | `GET /api/v1/courses/{courseId}/analytics` (y la del estudiante) |
-| `identificar_alertas` | Pendiente | `GET /api/v1/courses/{courseId}/analytics/alerts` |
+| `listar_cursos` | Disponible | `GET /api/v1/courses` |
+| `obtener_calificaciones` | Disponible | `GET /api/v1/courses/{courseId}/grades` |
+| `obtener_progreso` | Disponible | `GET /api/v1/courses/{courseId}/analytics` (y la del estudiante) |
+| `identificar_alertas` | Disponible | `GET /api/v1/courses/{courseId}/analytics/alerts` |
 | `generar_resumen` | Pendiente | `GET /api/v1/courses/{courseId}/analytics/report` |
 
 ### Cómo añadir una herramienta
@@ -138,9 +138,10 @@ fallos de herramientas y del modelo, los límites, la seguridad frente a datos h
 
 ## Pendiente
 
-- Las demás herramientas contra el gateway (un archivo cada una en `app/catalog/`), con su redactor de hechos.
+- Implementar `generar_resumen` para completar los escenarios de informe `I01` e `I02`.
 - Guardar las trazas en el esquema `agent` de SQL Server.
 - Afinar los prompts con el conjunto de evaluación (`evaluation/agent-scenarios/`). Con `qwen3:1.7b`, una consulta de
   datos tarda unos 6 s (la elección de la herramienta) y una con interpretación unos 16 s en un computador sin GPU; el
   modelo a veces enlaza una recomendación al hecho equivocado.
-- Dockerfile y entrada en `docker-compose.yml` (a cargo de Gabriel).
+- Incorporar el `agent-service` al `docker-compose.yml` cuando el equipo cierre su empaquetado; por ahora se ejecuta fuera de Docker
+  siguiendo esta guía.
