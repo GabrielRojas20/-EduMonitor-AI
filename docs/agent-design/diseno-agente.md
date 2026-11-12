@@ -83,6 +83,8 @@ Lista los cursos a los que el docente tiene acceso.
 }
 ```
 
+- **Datos que el gateway puede no enviar:** si un curso llega sin `studentCount` o sin `lastSyncAt`, la herramienta consulta `GET /api/v1/courses/{courseId}/sync` y `GET /api/v1/courses/{courseId}/students?page=1&pageSize=1` (hasta 10 cursos) y agrega `syncState`. Si no puede consultarlos, lo dice; no afirma que el curso no se sincronizó.
+
 ### 3.2 `obtener_calificaciones`
 
 Devuelve las calificaciones de un curso, opcionalmente de un estudiante o de una actividad.
@@ -324,6 +326,16 @@ Comportamientos ante fallas:
 | `truncated: true` | Indica que se analizaron solo los primeros registros. |
 | Consulta fuera de alcance | Rechaza en una frase y explica qué sí puede hacer. |
 
+### 4.1 Controles que aplica el código
+
+Como el modelo local es pequeño, la confiabilidad de las respuestas la dan estos controles y no el modelo:
+
+- **Hechos escritos por el código:** cada herramienta redacta sus hechos (`Tool.facts`) a partir de sus datos. El modelo solo redacta las inferencias y las recomendaciones.
+- **Parámetros ocultos:** el modelo no ve los identificadores (`course_id`, `student_id`, `activity_id`, `snapshot_id`) ni `severity` y `status`. El curso que el docente elige en la interfaz lo aplica el código, y el estado (`pending_grading` o `not_submitted`) se deduce del texto de la pregunta.
+- **Nombres solo si el docente los escribió:** un `course_name`, `activity_name` o `student_name` que el modelo propone se acepta únicamente si todas sus palabras aparecen en el mensaje.
+- **Validación de salida:** toda cifra de la respuesta debe existir en los datos de alguna herramienta (nodo `validar_salida`).
+- **Herramienta de respaldo:** si el modelo no elige una herramienta válida, el código usa una según palabras clave de la pregunta.
+
 ## 5. Formato de las trazas
 
 Se guarda una traza por mensaje, en el esquema `agent`. Estructura (JSON, los valores son ilustrativos):
@@ -354,6 +366,7 @@ Reglas:
 - Las trazas guardan los identificadores de estudiantes de Moodle, no sus nombres, hasta que el Product Owner decida (pregunta abierta 9).
 - Para cada herramienta se guardan los argumentos, el código de resultado, la duración y un resumen del resultado, no la salida completa.
 - `status` puede ser `ok`, `partial` (falló alguna herramienta), `refused` (fuera de alcance) o `error`.
+- La traza se guarda en la tabla `agent.trace` de SQL Server (script `services/agent-service/db/agent-schema.sql`) mediante un hilo en segundo plano, de modo que un fallo de la base de datos no retrasa la respuesta. Antes de guardarla se enmascara el argumento `student_name`.
 
 ## 6. Formato de las respuestas
 
@@ -402,7 +415,7 @@ Reglas del formato:
 ## 8. Pruebas previstas
 
 - **Unitarias (pytest):** cada herramienta con respuestas simuladas del gateway, validación de esquemas, manejo de cada código de error y `validar_salida`.
-- **Evaluación:** los 20 escenarios del plan (5 consulta simple, 5 falla de herramienta, 5 alertas con evidencia, 3 seguridad, 2 informe), ejecutados al final de cada sprint desde el Sprint 3. Metas: 100 % de accesos no autorizados rechazados, ningún dato inventado en fallas y al menos 90 % de cifras que coinciden con la fuente.
+- **Evaluación:** los 20 escenarios del plan (5 consulta simple, 5 falla de herramienta, 5 alertas con evidencia, 3 seguridad, 2 informe), que se ejecutan con `evaluation/agent-scenarios/ejecutar.py` contra el servidor mock del gateway al final de cada sprint. Metas: 100 % de accesos no autorizados rechazados, ningún dato inventado en fallas y al menos 90 % de cifras que coinciden con la fuente.
 - **Seguridad:** escenarios con instrucciones escondidas en nombres de actividades y comentarios.
 
 ## 9. Dependencias y puntos por acordar
