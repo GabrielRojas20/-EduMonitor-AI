@@ -19,6 +19,15 @@ COURSES = [
 TOKEN = make_token()
 
 
+def courses_gw(request):
+    """Gateway simulado como el mock: la lista trae studentCount y lastSyncAt; el curso 3 nunca se sincronizó."""
+    if request.url.path == "/api/v1/courses":
+        return httpx.Response(200, json=COURSES)
+    if request.url.path == "/api/v1/courses/3/sync":
+        return httpx.Response(200, json={"state": "never"})
+    return httpx.Response(404, json={"status": 404})
+
+
 def gateway(handler):
     return httpx.MockTransport(handler)
 
@@ -37,12 +46,12 @@ def problem(status, code=None, **extra):
 
 
 def test_success_returns_the_common_output():
-    out = run(lambda r: httpx.Response(200, json=COURSES))
+    out = run(courses_gw)
     assert out["ok"] is True and out["error"] is None
     assert out["source"]["endpoint"] == "GET /api/v1/courses" and out["source"]["requestId"] == "req-42"
     assert out["data"]["total"] == 2
     assert out["data"]["courses"][0] == {"id": 2, "shortName": "PRUEBA01", "fullName": "Curso de Prueba EduMonitor",
-                                         "studentCount": 5, "lastSyncAt": "2026-10-22T15:04:05Z"}
+                                         "studentCount": 5, "lastSyncAt": "2026-10-22T15:04:05Z", "syncState": "succeeded"}
     assert out["data"]["courses"][1]["studentCount"] is None  # un curso sin sincronizar no tiene conteo
 
 
@@ -55,9 +64,10 @@ def test_forwards_the_teacher_jwt_and_the_request_id():
     seen = {}
 
     def handler(request: httpx.Request):
-        seen.update(method=request.method, path=request.url.path, auth=request.headers.get("authorization"),
-                    rid=request.headers.get("x-request-id"))
-        return httpx.Response(200, json=COURSES)
+        if not seen:  # solo la primera petición: la lista de cursos
+            seen.update(method=request.method, path=request.url.path, auth=request.headers.get("authorization"),
+                        rid=request.headers.get("x-request-id"))
+        return courses_gw(request)
 
     run(handler)
     assert seen == {"method": "GET", "path": "/api/v1/courses", "auth": f"Bearer {TOKEN}", "rid": "req-42"}
@@ -98,7 +108,7 @@ def test_a_200_that_is_not_json_is_an_error():
 
 
 def test_the_jwt_never_appears_in_any_output():
-    outputs = [run(lambda r: httpx.Response(200, json=COURSES)), run(lambda r: problem(401, "TOKEN_EXPIRED", detail="venció")),
+    outputs = [run(courses_gw), run(lambda r: problem(401, "TOKEN_EXPIRED", detail="venció")),
                run(lambda r: httpx.Response(502, text="x"))]
     assert all(TOKEN not in json.dumps(o) for o in outputs)
 
@@ -126,7 +136,7 @@ def agent(settings, ollama, traces, handler):
 
 def test_facts_are_written_by_code_and_the_model_is_not_needed_for_a_simple_list(settings, ollama, traces):
     ollama.reply(tool_calls=CALL)  # solo se usa el modelo para elegir la herramienta
-    res = agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run(
+    res = agent(settings, ollama, traces, courses_gw).run(
         "¿Qué cursos tengo?", None, TOKEN, "3", "req-42")
     assert [f.text for f in res.answer.facts] == [
         "Tienes acceso a 2 cursos.",
@@ -143,7 +153,7 @@ def test_facts_are_written_by_code_and_the_model_is_not_needed_for_a_simple_list
 def test_a_dato_no_disponible_is_never_attributed_to_another_course(settings, ollama, traces):
     """Un modelo pequeño escribió «PRUEBA02 tiene 5 estudiantes» (el 5 era de PRUEBA01). Ya no redacta los hechos."""
     ollama.reply(tool_calls=CALL)
-    res = agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run(
+    res = agent(settings, ollama, traces, courses_gw).run(
         "¿Qué cursos tengo?", None, TOKEN, "3", "req-42")
     sin_sincronizar = next(f.text for f in res.answer.facts if f.text.startswith("PRUEBA02"))
     assert "5" not in sin_sincronizar and "no está disponible" in sin_sincronizar
@@ -159,7 +169,7 @@ def test_the_model_only_interprets_when_the_teacher_asks_for_it(settings, ollama
                             {"text": "Revisa los 77 estudiantes.", "relatedFinding": 1},   # cifra sin fuente
                             {"text": "Sin hallazgo.", "relatedFinding": None}],
         "unavailable": []}))
-    res = agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run(
+    res = agent(settings, ollama, traces, courses_gw).run(
         "¿Qué cursos tengo y qué me recomiendas?", None, TOKEN, "3", "req-42")
     assert all("99" not in f.text for f in res.answer.facts)                          # los hechos siguen siendo del código
     assert [(i.text, i.basedOn) for i in res.answer.inferences] == [
@@ -174,7 +184,7 @@ def test_the_model_only_interprets_when_the_teacher_asks_for_it(settings, ollama
 def test_if_the_interpretation_fails_the_facts_are_still_shown(settings, ollama, traces):
     ollama.reply(tool_calls=CALL)
     ollama.fail(500)
-    res = agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run(
+    res = agent(settings, ollama, traces, courses_gw).run(
         "¿Qué me recomiendas hacer con mis cursos?", None, TOKEN, "3", "req-42")
     assert len(res.answer.facts) == 3 and res.answer.inferences == [] and res.answer.recommendations == []
     assert "solo los hechos" in res.answer.unavailable[0] and res.meta.status == "partial"
@@ -242,7 +252,7 @@ def test_fallback_only_offers_tools_that_exist():
 
 def test_when_the_model_picks_no_tool_the_fallback_answers_a_data_question(settings, ollama, traces):
     ollama.reply(tool_calls=[])  # el modelo no eligió nada
-    res = agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run(
+    res = agent(settings, ollama, traces, courses_gw).run(
         "¿Qué cursos tengo?", None, TOKEN, "3", "req-42")
     assert res.meta.status == "ok" and res.answer.facts[0].text == "Tienes acceso a 2 cursos."
     assert traces[0]["steps"][0]["resultSummary"]["fallbackTool"] == "listar_cursos"
@@ -250,12 +260,12 @@ def test_when_the_model_picks_no_tool_the_fallback_answers_a_data_question(setti
 
 def test_the_fallback_is_not_used_when_the_model_chose_a_tool(settings, ollama, traces):
     ollama.reply(tool_calls=CALL)
-    agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run("¿Qué cursos tengo?", None, TOKEN, "3", "req-42")
+    agent(settings, ollama, traces, courses_gw).run("¿Qué cursos tengo?", None, TOKEN, "3", "req-42")
     assert "fallbackTool" not in traces[0]["steps"][0]["resultSummary"]
 
 
 def test_a_greeting_or_out_of_scope_message_never_reaches_the_fallback(settings, ollama, traces):
-    res = agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run(
+    res = agent(settings, ollama, traces, courses_gw).run(
         "Cambia la nota de mis cursos a 10", None, TOKEN, "3", "req-42")
     assert res.meta.status == "refused" and ollama.calls == []
 
@@ -418,7 +428,7 @@ def test_hidden_parameters_sent_by_the_model_are_discarded(settings, ollama, tra
 
 def test_the_planner_does_not_see_the_selected_course_number(settings, ollama, traces):
     ollama.reply(tool_calls=CALL)
-    agent(settings, ollama, traces, lambda r: httpx.Response(200, json=COURSES)).run("¿Qué cursos tengo?", 2, TOKEN, "3", "req-42")
+    agent(settings, ollama, traces, courses_gw).run("¿Qué cursos tengo?", 2, TOKEN, "3", "req-42")
     assert ollama.calls[0]["messages"][1]["content"] == "¿Qué cursos tengo?"
 
 
@@ -465,3 +475,89 @@ def test_an_invented_existing_course_is_not_queried_end_to_end(settings, ollama,
     agent(settings, ollama, traces, gateway).run("¿Cómo va PRUEBA01?", None, TOKEN, "3", "req-42")
     assert traces[0]["steps"][1]["args"] == {"course_name": "PRUEBA01"}
     assert "/api/v1/courses/3" not in seen and "/api/v1/courses/3/analytics" not in seen
+
+
+# ---- gateway REAL: la lista de cursos trae studentCount y lastSyncAt en null aunque el curso esté sincronizado
+REAL_LIST = [{"id": 2, "shortName": "PRUEBA01", "fullName": "Curso de Prueba EduMonitor", "studentCount": None, "lastSyncAt": None},
+             {"id": 3, "shortName": "PRUEBA02", "fullName": "Curso sin sincronizar", "studentCount": None, "lastSyncAt": None}]
+
+
+def real_gateway(syncs, total=2, seen=None):
+    def handler(request: httpx.Request):
+        path = request.url.path
+        if seen is not None:
+            seen.append((path, dict(request.url.params)))
+        if path == "/api/v1/courses":
+            return httpx.Response(200, json=REAL_LIST)
+        for cid, status in syncs.items():
+            if path == f"/api/v1/courses/{cid}/sync":
+                return status if isinstance(status, httpx.Response) else httpx.Response(200, json=status)
+            if path == f"/api/v1/courses/{cid}/students":
+                return httpx.Response(200, json={"items": [], "page": 1, "pageSize": 1, "total": total})
+        return httpx.Response(404, json={"status": 404})
+    return handler
+
+
+def real_run(handler):
+    return LISTAR_CURSOS.run(ctx(handler), NoArgs())
+
+
+def test_null_sync_data_from_the_real_gateway_is_asked_for_not_assumed_to_mean_never_synced():
+    """El fallo visto en la demostración: el chat decía «aún no se sincronizó» de un curso que el dashboard mostraba actualizado."""
+    from app.catalog.listar_cursos import facts as f
+    ok = {"state": "succeeded", "lastSuccessAt": "2026-11-12T17:01:00Z", "finishedAt": "2026-11-12T17:01:05Z"}
+    out = real_run(real_gateway({2: ok, 3: {"state": "never"}}))
+    c = out["data"]["courses"]
+    assert (c[0]["studentCount"], c[0]["lastSyncAt"], c[0]["syncState"]) == (2, "2026-11-12T17:01:00Z", "succeeded")
+    assert c[1]["syncState"] == "never" and c[1]["lastSyncAt"] is None
+    assert f(out["data"]) == ["Tienes acceso a 2 cursos.",
+                              "PRUEBA01 (Curso de Prueba EduMonitor): 2 estudiantes; última sincronización con Moodle el 12/11/2026.",
+                              "PRUEBA02 (Curso sin sincronizar): aún no se sincronizó con Moodle, por lo que el número de estudiantes no está disponible."]
+
+
+@pytest.mark.parametrize("state,fragment", [("running", "se está sincronizando"), ("failed", "falló")])
+def test_running_and_failed_syncs_are_described_as_such(state, fragment):
+    from app.catalog.listar_cursos import facts as f
+    out = real_run(real_gateway({2: {"state": "succeeded", "lastSuccessAt": "2026-11-12T17:01:00Z"}, 3: {"state": state}}))
+    assert fragment in f(out["data"])[2] and "aún no se sincronizó" not in f(out["data"])[2]
+
+
+def test_if_the_sync_status_cannot_be_read_nothing_is_claimed_about_it():
+    from app.catalog.listar_cursos import facts as f
+    out = real_run(real_gateway({2: problem(503, "MOODLE_UNAVAILABLE"), 3: "no soy un objeto"}))
+    assert out["ok"] and [c["syncState"] for c in out["data"]["courses"]] == ["unknown", "unknown"]
+    assert all("no se pudo consultar su estado de sincronización" in line for line in f(out["data"])[1:])
+    assert all("aún no se sincronizó" not in line for line in f(out["data"]))
+
+
+def test_a_synced_course_with_failing_student_list_keeps_the_date_without_inventing_a_count():
+    from app.catalog.listar_cursos import facts as f
+    handler = real_gateway({2: {"state": "succeeded", "lastSuccessAt": "2026-11-12T17:01:00Z"}, 3: {"state": "never"}})
+
+    def with_students_down(request):
+        return problem(503, "DATA_NOT_AVAILABLE") if request.url.path.endswith("/students") else handler(request)
+    line = f(real_run(with_students_down)["data"])[1]
+    assert line == "PRUEBA01 (Curso de Prueba EduMonitor): última sincronización con Moodle el 12/11/2026; el número de estudiantes no está disponible."
+
+
+def test_no_extra_requests_when_the_list_already_has_the_data():
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.path)
+        return courses_gw(request)
+    real_run(handler)
+    assert seen[0] == "/api/v1/courses" and "/api/v1/courses/2/sync" not in seen     # el curso 2 ya traía fecha y conteo
+
+
+def test_the_sync_status_lookup_is_capped():
+    from app.catalog import listar_cursos
+    many = [{"id": i, "shortName": f"C{i}", "fullName": "x", "studentCount": None, "lastSyncAt": None} for i in range(1, 16)]
+    calls = []
+
+    def handler(request):
+        calls.append(request.url.path)
+        return httpx.Response(200, json=many) if request.url.path == "/api/v1/courses" else httpx.Response(200, json={"state": "never"})
+    out = real_run(handler)
+    assert sum(1 for c in calls if c.endswith("/sync")) == listar_cursos.MAX_ENRICHED
+    assert [c["syncState"] for c in out["data"]["courses"]].count("unknown") == 5
