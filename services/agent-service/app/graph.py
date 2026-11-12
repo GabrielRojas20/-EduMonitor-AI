@@ -76,7 +76,7 @@ FALLBACK_TOOLS = [
 
 # Estado que pide el docente («pendientes de calificar», «sin entrega»): lo deduce el código, no el modelo, que inventaba filtros
 STATUS_HINTS = [
-    (r"pendientes? de calificar|por calificar|sin calificar|falta\w* (por )?calificar", "pending_grading"),
+    (r"pendientes? de calificar|por calificar|sin calificar|falta\w* (por )?calificar|(calificacion(es)?|notas?) (esta(n)? |siguen )?pendientes?|pendientes? de (calificacion|nota)", "pending_grading"),
     (r"sin entrega|sin entregar|no (han )?entregad\w*|no entreg\w*|falta\w* (por )?entregar", "not_submitted"),
 ]
 
