@@ -183,6 +183,8 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
+      analytics-db-init:
+        condition: service_completed_successfully
       auth-db-init:
         condition: service_completed_successfully
 
