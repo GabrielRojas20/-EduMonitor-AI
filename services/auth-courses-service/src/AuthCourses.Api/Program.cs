@@ -16,6 +16,8 @@ builder.Services.AddSingleton<TokenService>();
 
 // Sin cadena de conexión usa una base en memoria (desarrollo y pruebas).
 // Con ConnectionStrings__Auth usa SQL Server (esquema auth, ver database/migrations).
+builder.Services.AddSingleton<ISyncCourseMetadataReader, SqlSyncCourseMetadataReader>();
+
 builder.Services.AddDbContext<AuthDb>((sp, o) =>
 {
     var cs = sp.GetRequiredService<IConfiguration>().GetConnectionString("Auth");
@@ -80,7 +82,14 @@ var dummyHash = passwords.Hash("clave-de-relleno"); // para no revelar por tiemp
 
 static int? UserId(ClaimsPrincipal p) => int.TryParse(p.FindFirst("sub")?.Value, out var id) ? id : null;
 static UserDto UserToDto(AppUser u) => new(u.Id, u.Name, u.Email, u.Role);
-static CourseDto CourseToDto(CourseEntity c) => new(c.Id, c.ShortName, c.FullName, null, null);
+static CourseDto CourseToDto(
+    CourseEntity c,
+    IReadOnlyDictionary<int, SyncCourseMetadata> metadata)
+{
+    return metadata.TryGetValue(c.Id, out var value)
+        ? new CourseDto(c.Id, c.ShortName, c.FullName, value.StudentCount, value.LastSyncAt)
+        : new CourseDto(c.Id, c.ShortName, c.FullName, null, null);
+}
 
 // null = acceso permitido; si no, la respuesta de error que corresponde.
 static async Task<IResult?> CheckAccess(HttpContext ctx, ClaimsPrincipal p, AuthDb db, int courseId)
@@ -111,20 +120,25 @@ app.MapGet("/users/me", async Task<IResult> (ClaimsPrincipal p, AuthDb db, HttpC
     return Results.Ok(UserToDto(user));
 }).RequireAuthorization();
 
-app.MapGet("/courses", async Task<IResult> (ClaimsPrincipal p, AuthDb db, HttpContext ctx) =>
+app.MapGet("/courses", async Task<IResult> (
+    ClaimsPrincipal p, AuthDb db, ISyncCourseMetadataReader metadataReader, HttpContext ctx) =>
 {
     if (UserId(p) is not int uid) return Problems.Result(ctx, 401, "TOKEN_INVALID", "Token inválido");
     var ids = await db.TeacherCourses.Where(t => t.UserId == uid).Select(t => t.CourseId).ToListAsync();
     var courses = await db.Courses.Where(c => ids.Contains(c.Id)).OrderBy(c => c.ShortName).ToListAsync();
-    return Results.Ok(courses.Select(c => CourseToDto(c)).ToList());
+    var metadata = await metadataReader.GetAsync(ids);
+    return Results.Ok(courses.Select(c => CourseToDto(c, metadata)).ToList());
 }).RequireAuthorization();
 
-app.MapGet("/courses/{courseId:int}", async Task<IResult> (int courseId, HttpContext ctx, ClaimsPrincipal p, AuthDb db) =>
+app.MapGet("/courses/{courseId:int}", async Task<IResult> (
+    int courseId, HttpContext ctx, ClaimsPrincipal p, AuthDb db,
+    ISyncCourseMetadataReader metadataReader) =>
 {
     var denied = await CheckAccess(ctx, p, db, courseId);
     if (denied is not null) return denied;
     var course = await db.Courses.FindAsync(courseId);
-    return Results.Ok(CourseToDto(course!));
+    var metadata = await metadataReader.GetAsync(new[] { courseId });
+    return Results.Ok(CourseToDto(course!, metadata));
 }).RequireAuthorization();
 
 // Lo llama el gateway antes de enrutar cualquier /courses/{courseId}/...
