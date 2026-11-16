@@ -63,8 +63,8 @@ public sealed class FakeMoodle : IDisposable
                     id = 2,
                     assignments = new object[]
                     {
-                        new { id = 1, cmid = 2, name = "Tarea 1", grade = 10 },
-                        new { id = 2, cmid = 3, name = "Tarea 2", grade = 100 },
+                        new { id = 1, cmid = 2, name = "Tarea U1 — Análisis del Manifiesto Ágil", grade = 10 },
+                        new { id = 2, cmid = 3, name = "Tarea U3 — Comparación entre XP, Scrum y Kanban", grade = 100 },
                     },
                 },
             },
@@ -92,7 +92,7 @@ public sealed class FakeMoodle : IDisposable
         return list.ToArray();
     }
 
-    // Notas (Tarea 1 sobre 10, Tarea 2 sobre 100). null = sin nota.
+    // Notas (Tarea U1 — Análisis del Manifiesto Ágil sobre 10, Tarea U3 — Comparación entre XP, Scrum y Kanban sobre 100). null = sin nota.
     private static readonly Dictionary<int, (double? T1, double? T2)> Scores = new()
     {
         [4] = (8, null), [5] = (0, 90), [6] = (null, null), [7] = (null, null), [8] = (5, null),
@@ -112,8 +112,8 @@ public sealed class FakeMoodle : IDisposable
             userfullname = s.Name,
             gradeitems = new object[]
             {
-                Item(2, "Tarea 1", Scores[s.Id].T1, 10),
-                Item(3, "Tarea 2", Scores[s.Id].T2, 100),
+                Item(2, "Tarea U1 — Análisis del Manifiesto Ágil", Scores[s.Id].T1, 10),
+                Item(3, "Tarea U3 — Comparación entre XP, Scrum y Kanban", Scores[s.Id].T2, 100),
                 new { itemtype = "course", itemmodule = (string?)null, graderaw = Scores[s.Id].T1, grademax = 10 },
             },
         });
@@ -143,7 +143,7 @@ public sealed class FakeMoodle : IDisposable
         warnings = Array.Empty<object>(),
     };
 
-    // Estado de finalización por estudiante (Tarea 1, Tarea 2): 0 incompleta, 1 completa.
+    // Estado de finalización por estudiante (Tarea U1 — Análisis del Manifiesto Ágil, Tarea U3 — Comparación entre XP, Scrum y Kanban): 0 incompleta, 1 completa.
     private static readonly Dictionary<int, (int T1, int T2)> Comp = new()
     {
         [4] = (1, 0), [5] = (1, 1), [6] = (0, 0), [7] = (0, 0), [8] = (1, 0),
