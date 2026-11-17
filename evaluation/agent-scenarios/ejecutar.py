@@ -9,6 +9,7 @@ Solo usa la biblioteca estándar de Python (no hay que instalar nada). Necesita:
 Ejemplos (desde evaluation/agent-scenarios):
     python ejecutar.py
     python ejecutar.py --solo C01,S02
+    python ejecutar.py --escenarios escenarios-reales.json --dominio-correos edumonitor.test   # contra el gateway real
     python ejecutar.py --agente-gateway-caido http://localhost:5014
 
 Termina con código 0 si todos los escenarios ejecutados pasan, y con 1 si alguno falla.
@@ -26,7 +27,9 @@ from datetime import datetime
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
-USUARIOS = {"docente1": "docente1@example.com", "docente2": "docente2@example.com"}  # los del mock del gateway
+USUARIOS = ("docente1", "docente2")
+DOMINIO_MOCK = "example.com"  # los docentes del servidor de pruebas del gateway; el gateway real usa edumonitor.test
+FECHA = re.compile(r"\b\d{1,2}/\d{1,2}/\d{4}\b")
 NUMERO = re.compile(r"\d+(?:[.,]\d+)?")
 
 
@@ -55,8 +58,8 @@ def get_json(url: str, timeout: float = 5) -> dict | None:
 
 
 # ---------------------------------------------------------------- tokens
-def login(gateway: str, usuario: str, clave: str) -> str:
-    estado, cuerpo = post_json(f"{gateway}/api/v1/auth/login", {"email": USUARIOS[usuario], "password": clave})
+def login(gateway: str, usuario: str, clave: str, dominio: str = DOMINIO_MOCK) -> str:
+    estado, cuerpo = post_json(f"{gateway}/api/v1/auth/login", {"email": f"{usuario}@{dominio}", "password": clave})
     if estado != 200:
         sys.exit(f"No se pudo iniciar sesión como {usuario} en {gateway} (HTTP {estado}). ¿Está encendido el gateway o su mock?")
     return cuerpo["accessToken"]
@@ -131,7 +134,8 @@ def comprobar(esperado: dict, estado_http: int, cuerpo: dict, segundos: float) -
             fallos.append("hay hechos, y no debería haber ninguno (posible dato inventado)")
         if "cifras_permitidas" in esperado:
             permitidas_set = {float(n) for n in esperado["cifras_permitidas"]}
-            usadas = [n for t in hechos.split("\n") for n in numeros(t)]
+            texto_cifras = FECHA.sub("", hechos) if esperado.get("ignorar_fechas") else hechos  # una fecha de sincronización cambia al volver a sincronizar
+            usadas = [n for t in texto_cifras.split("\n") for n in numeros(t)]
             cifras = len(usadas)
             permitidas = sum(1 for n in usadas if n in permitidas_set)
             inventadas = sorted({n for n in usadas if n not in permitidas_set})
@@ -149,6 +153,8 @@ def main() -> int:
     ap.add_argument("--agente-datos-hostiles", default=None,
                     help="copia del agente apuntando a un mock con MOCK_DATASET=data/dataset-hostil.json (escenario S03)")
     ap.add_argument("--clave", default=os.environ.get("EVAL_PASSWORD", "Prueba123!"), help="contraseña de los docentes de prueba")
+    ap.add_argument("--dominio-correos", default=os.environ.get("EVAL_DOMINIO", DOMINIO_MOCK),
+                    help="dominio de los correos docente1@ y docente2@ (por defecto %(default)s; con el gateway real, edumonitor.test)")
     ap.add_argument("--solo", default="", help="ids separados por coma, por ejemplo C01,S02")
     ap.add_argument("--escenarios", default=str(AQUI / "escenarios.json"))
     ap.add_argument("--salida", default=str(AQUI / "resultados" / "ultima-ejecucion.json"))
@@ -170,7 +176,7 @@ def main() -> int:
     for e in escenarios:
         usuario = e["usuario"]
         if usuario not in tokens:
-            tokens[usuario] = login(args.gateway, usuario, args.clave)
+            tokens[usuario] = login(args.gateway, usuario, args.clave, args.dominio_correos)
         token = tokens[usuario]
         variante = e.get("token", "valido")
         if variante == "vencido":

@@ -43,4 +43,7 @@ def gateway_get(ctx: ToolContext, path: str, params: dict | None = None) -> tupl
         code = CODE_BY_STATUS.get(response.status_code, "MOODLE_UNAVAILABLE")
     message = (problem.get("detail") or problem.get("title") or f"El gateway respondió {response.status_code}.") \
         if isinstance(problem, dict) else f"El gateway respondió {response.status_code}."
+    if code == "COURSE_NOT_FOUND" and "no existen observaciones" in str(message).lower():
+        # analytics responde así cuando el curso existe pero todavía no se sincronizó con Moodle
+        message = "El curso aún no tiene datos sincronizados. Sincronízalo desde «Mis cursos» y vuelve a preguntar."
     return None, error_output(code, str(message)[:300], code in RETRYABLE, endpoint, ctx.request_id)

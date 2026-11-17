@@ -101,6 +101,17 @@ def test_errors(args, code):
     assert out["ok"] is False and out["error"]["code"] == code
 
 
+def test_a_course_without_synced_data_tells_the_teacher_to_sync_it():
+    def handler(request):
+        if request.url.path == "/api/v1/courses":
+            return httpx.Response(200, json=COURSES)
+        return httpx.Response(404, json={"title": "Curso no encontrado", "status": 404, "code": "COURSE_NOT_FOUND",
+                                         "detail": "No existen observaciones para el curso."})
+    out = run({"course_id": 3}, handler)
+    assert out["ok"] is False and out["error"]["code"] == "COURSE_NOT_FOUND"
+    assert "sincroniz" in out["error"]["message"].lower() and "observaciones" not in out["error"]["message"].lower()
+
+
 def test_course_facts_are_written_by_code_with_numerators_and_partial_notice():
     f = facts(run({"course_id": 2})["data"])
     assert f[0] == "PRUEBA01: indicadores calculados el 22/10/2026; calidad de los datos parcial."

@@ -52,10 +52,31 @@ python ejecutar.py --agente-gateway-caido http://localhost:5014 --agente-datos-h
 ```
 
 Sin `--agente-gateway-caido` o `--agente-datos-hostiles`, los escenarios que los necesitan (`F03` y `S03`) se **omiten** (el script lo indica). Otras opciones:
-`--solo C01,S02` ejecuta solo esos escenarios; `--agente`, `--gateway` y `--clave` cambian las direcciones y la contraseña.
+`--solo C01,S02` ejecuta solo esos escenarios; `--agente`, `--gateway`, `--clave` y `--dominio-correos` cambian las direcciones, la contraseña y el dominio de los correos de los docentes.
 El script termina con código 0 si todos pasan y con 1 si alguno falla, así que puede usarse en CI.
 
 El resultado de cada ejecución se guarda en `resultados/ultima-ejecucion.json` (no se versiona).
+
+### Contra el gateway real, con el curso PRUEBA01
+
+Además del servidor de pruebas, la evaluación se puede ejecutar contra el gateway real con los datos de Moodle. Los 19 escenarios que
+dependen de los datos están adaptados en `escenarios-reales.json`; `S03` (instrucciones escondidas en los datos) se sigue ejecutando con
+`escenarios.json` y el servidor de pruebas de datos hostiles, porque necesita datos que Moodle no tiene.
+
+1. Levantar el proyecto con `docker compose` y restaurar el curso `PRUEBA01` en Moodle con `docs/demo/README-PRUEBA01.md`; con el ID del
+   curso en 2 y las dos cuentas `docente1@edumonitor.test` y `docente2@edumonitor.test`.
+2. Sincronizar el curso (`POST /courses/2/sync`) hasta que el estado sea `succeeded`.
+3. Con el agente en `http://localhost:5004` y, para `F03`, una copia en el puerto 5014 con `GATEWAY_URL` apuntando a un gateway que no existe:
+
+```powershell
+$env:EVAL_PASSWORD = "<la contraseña de AUTH_SEED_PASSWORD de tu .env>"
+python ejecutar.py --escenarios escenarios-reales.json --dominio-correos edumonitor.test --agente-gateway-caido http://localhost:5014
+```
+
+Las cifras esperadas salen del conjunto de datos de referencia del curso restaurado: 2 estudiantes (Ana Pérez y Luis Gómez), 6 registros de
+calificaciones (3 calificados, 1 pendiente de calificar y 2 sin entrega), promedio 6,0, tasa de entrega 50 %, tasa de calificación 75 %
+y 5 alertas activas (0 críticas, 2 de atención y 3 informativas). Si el curso se restaura con otros datos, hay que ajustar los escenarios.
+Las fechas de sincronización se ignoran al comprobar las cifras (`"ignorar_fechas": true`), porque cambian cada vez que se sincroniza.
 
 ### Qué muestra
 
