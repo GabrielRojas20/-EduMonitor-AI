@@ -49,3 +49,7 @@ export function submissionsDistribution(grades: Grade[]) {
   }
   return result
 }
+export function greeting(): [string, string] {
+  const h = new Date().getHours()
+  return h < 12 ? ['Buenos', 'días'] : h < 19 ? ['Buenas', 'tardes'] : ['Buenas', 'noches']
+}
