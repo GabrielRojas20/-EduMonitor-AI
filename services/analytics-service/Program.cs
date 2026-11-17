@@ -41,8 +41,9 @@ app.MapGet("/api/v1/courses/{courseId:int}/analytics/report", async (int courseI
     var response = ToCourse(courseId, data.Value.grades, data.Value.completions);
     var rules = await LoadRules(db, ct);
     var alerts = BuildAlerts(courseId, data.Value.grades, data.Value.completions, rules);
-    var findings = alerts.SelectMany(a => a.Evidence.Select(e => new ReportFinding(a.AlertId, a.RuleCode, a.StudentId, e.Metric, e.Explanation))).ToArray();
-    return Results.Ok(new CourseReportData(courseId, response.Snapshot, null, null, new Dictionary<string, Metric> { ["averageScore10"] = response.AverageScore10, ["submissionRate"] = response.SubmissionRate, ["gradingRate"] = response.GradingRate, ["completionRate"] = response.CompletionRate, ["pendingGradingRate"] = response.PendingGradingRate }, findings, alerts.Count(a => a.Status == "active")));
+    var findings = alerts.SelectMany(a => a.Evidence.Select(e => new ReportFinding(a.AlertId, a.RuleCode, a.StudentId, e.Metric, e.Explanation, e.ObservedValue, e.Threshold, e.SourceIds))).ToArray();
+    var (periodStart, periodEnd) = ReportPeriod.From(data.Value.grades.Select(x => x.SyncedAt).Concat(data.Value.completions.Select(x => x.ObservedAt)));
+    return Results.Ok(new CourseReportData(courseId, response.Snapshot, periodStart, periodEnd, new Dictionary<string, Metric> { ["averageScore10"] = response.AverageScore10, ["submissionRate"] = response.SubmissionRate, ["gradingRate"] = response.GradingRate, ["completionRate"] = response.CompletionRate, ["pendingGradingRate"] = response.PendingGradingRate }, findings, alerts.Count(a => a.Status == "active")));
 });
 app.Run();
 
@@ -87,7 +88,7 @@ static void AddThresholdAlert(List<AlertResponse> output, IReadOnlyDictionary<st
     if (!precondition || value is not decimal observed || !rules.TryGetValue(ruleCode, out var rule) || rule.Threshold is not decimal threshold || !Compare(observed, rule.Operator, threshold)) return;
     output.Add(Alert(courseId, studentId, rule, metric, observed, threshold, sourceIds, explanation));
 }
-static bool Compare(decimal value, string op, decimal threshold) => op.Trim().ToLowerInvariant() switch { "lt" or "<" => value < threshold, "lte" or "<=" => value <= threshold, "gt" or ">" => value > threshold, "gte" or ">=" => value >= threshold, "eq" or "=" => value == threshold, _ => false };
+static bool Compare(decimal value, string op, decimal threshold) => AlertRuleEvaluator.Matches(value, op, threshold);
 static CourseAnalyticsResponse ToCourse(int id, List<GradeRow> grades, List<CompletionRow> completions) { var c = AnalyticsCalculator.Calculate(grades.Select(ToGrade), completions.Select(ToCompletion)); return new(id, Meta(grades, completions), c.AverageScore10, c.SubmissionRate, c.GradingRate, c.CompletionRate, c.PendingGradingRate, c.Counts); }
 static StudentAnalyticsResponse ToStudent(int course, int student, List<GradeRow> grades, List<CompletionRow> completions) { var c = AnalyticsCalculator.Calculate(grades.Select(ToGrade), completions.Select(ToCompletion)); return new(course, student, Meta(grades, completions), c.AverageScore10, c.SubmissionRate, c.GradingRate, c.CompletionRate, c.PendingGradingRate, c.Counts); }
 static SnapshotMeta Meta(List<GradeRow> grades, List<CompletionRow> completions) => new(grades.FirstOrDefault()?.SyncId ?? completions.FirstOrDefault()?.SyncId ?? "unknown", grades.FirstOrDefault()?.SyncId ?? completions.FirstOrDefault()?.SyncId, DateTime.UtcNow, grades.Count == 0 && completions.Count == 0 ? "unavailable" : completions.Count == 0 || completions.Any(x => Normalize(x.State).Equals("NotAvailable", StringComparison.OrdinalIgnoreCase)) ? "partial" : "complete");

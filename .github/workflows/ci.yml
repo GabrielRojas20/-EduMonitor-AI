@@ -16,5 +16,24 @@ jobs:
           if git ls-files | grep -E '(^|/)\.env$'; then
             echo "Hay un .env versionado"; exit 1
           fi
-  # Sprint 2 (Gabriel): agregar jobs de pruebas y linters
-  # - analytics-service (xUnit), agent-service (pytest), web-ui (Vitest)
+
+  web-ui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/web-ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: services/web-ui/package-lock.json
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Ejecutar lint
+        run: npm run lint
+      - name: Compilar interfaz
+        run: npm run build
+      - name: Ejecutar pruebas si existen
+        run: npm run test --if-present
