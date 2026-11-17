@@ -42,7 +42,7 @@ public sealed class GatewayFactory : WebApplicationFactory<Program>
                 return Results.StatusCode(403);
             });
             app.MapPost("/auth/login", () => Results.Json(new { accessToken = "token-falso", tokenType = "Bearer" }));
-            app.MapGet("/courses", () => Results.Json(new[] { new { id = 2, shortName = "PRUEBA01" } }));
+            app.MapGet("/courses", () => Results.Json(new[] { new { id = 2, shortName = "PRUEBA01", fullName = "Metodologías Ágiles", studentCount = 2, lastSyncAt = "2026-01-15T12:00:00+00:00" } }));
         });
 
         _sync = Start(app =>
@@ -161,6 +161,17 @@ public class GatewayTests : IClassFixture<GatewayFactory>
     {
         var token = MakeToken("otra-clave-distinta-con-mas-de-32-caracteres", DateTime.UtcNow, DateTime.UtcNow.AddHours(1));
         await AssertProblem(await GetAsync("/api/v1/courses", token), HttpStatusCode.Unauthorized, "TOKEN_INVALID");
+    }
+
+    [Fact]
+    public async Task Courses_conserva_studentCount_y_lastSyncAt()
+    {
+        var r = await GetAsync("/api/v1/courses", ValidToken());
+        Assert.Equal(HttpStatusCode.OK, r.StatusCode);
+        var body = await r.Content.ReadFromJsonAsync<JsonElement>();
+        var course = body.EnumerateArray().Single();
+        Assert.Equal(2, course.GetProperty("studentCount").GetInt32());
+        Assert.Equal("2026-01-15T12:00:00+00:00", course.GetProperty("lastSyncAt").GetString());
     }
 
     [Fact]

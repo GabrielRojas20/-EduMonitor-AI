@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using AuthCourses.Api;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -7,6 +8,8 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Xunit;
 
@@ -24,6 +27,27 @@ public class AuthFactory : WebApplicationFactory<Program>
         builder.UseSetting("JWT_ISSUER", "edumonitor");
         builder.UseSetting("JWT_AUDIENCE", "edumonitor-api");
         builder.UseSetting("AUTH_SEED_PASSWORD", Password);
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<ISyncCourseMetadataReader>();
+            services.AddSingleton<ISyncCourseMetadataReader, FakeSyncCourseMetadataReader>();
+        });
+    }
+}
+
+public sealed class FakeSyncCourseMetadataReader : ISyncCourseMetadataReader
+{
+    public Task<IReadOnlyDictionary<int, SyncCourseMetadata>> GetAsync(
+        IReadOnlyCollection<int> courseIds, CancellationToken cancellationToken = default)
+    {
+        var result = courseIds
+            .Where(id => id == 2)
+            .ToDictionary(
+                id => id,
+                _ => new SyncCourseMetadata(
+                    2,
+                    new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero)));
+        return Task.FromResult<IReadOnlyDictionary<int, SyncCourseMetadata>>(result);
     }
 }
 
@@ -135,6 +159,40 @@ public class AuthTests : IClassFixture<AuthFactory>
 
         Assert.Equal(new[] { 2 }, c1.EnumerateArray().Select(x => x.GetProperty("id").GetInt32()).ToArray());
         Assert.Equal(new[] { 3 }, c2.EnumerateArray().Select(x => x.GetProperty("id").GetInt32()).ToArray());
+    }
+
+    [Fact]
+    public async Task Lista_de_cursos_devuelve_studentCount_y_lastSyncAt()
+    {
+        var token = await LoginAsync("docente1@edumonitor.test");
+        var r = await GetAsync("/courses", token);
+        Assert.Equal(HttpStatusCode.OK, r.StatusCode);
+        var body = await r.Content.ReadFromJsonAsync<JsonElement>();
+        var course = body.EnumerateArray().Single();
+        Assert.Equal(2, course.GetProperty("studentCount").GetInt32());
+        Assert.Equal("2026-01-15T12:00:00+00:00", course.GetProperty("lastSyncAt").GetString());
+    }
+
+    [Fact]
+    public async Task Curso_individual_devuelve_studentCount_y_lastSyncAt()
+    {
+        var token = await LoginAsync("docente1@edumonitor.test");
+        var r = await GetAsync("/courses/2", token);
+        Assert.Equal(HttpStatusCode.OK, r.StatusCode);
+        var body = await r.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(2, body.GetProperty("studentCount").GetInt32());
+        Assert.Equal("2026-01-15T12:00:00+00:00", body.GetProperty("lastSyncAt").GetString());
+    }
+
+    [Fact]
+    public async Task Curso_sin_metadatos_no_inventa_valores()
+    {
+        var token = await LoginAsync("docente2@edumonitor.test");
+        var r = await GetAsync("/courses/3", token);
+        Assert.Equal(HttpStatusCode.OK, r.StatusCode);
+        var body = await r.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.False(body.TryGetProperty("studentCount", out _));
+        Assert.False(body.TryGetProperty("lastSyncAt", out _));
     }
 
     [Fact]
