@@ -7,8 +7,23 @@ IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'analytics') EXEC('CREATE 
 GO
 IF OBJECT_ID('sync.course','U') IS NULL CREATE TABLE sync.course (course_id INT NOT NULL PRIMARY KEY, short_name NVARCHAR(100) NOT NULL, full_name NVARCHAR(200) NOT NULL, last_sync_at DATETIME2 NULL);
 IF OBJECT_ID('sync.student','U') IS NULL CREATE TABLE sync.student (student_id INT NOT NULL PRIMARY KEY, full_name NVARCHAR(200) NOT NULL, email NVARCHAR(320) NULL);
-IF OBJECT_ID('sync.grade','U') IS NULL CREATE TABLE sync.grade (grade_id INT IDENTITY PRIMARY KEY, course_id INT NOT NULL, student_id INT NOT NULL, activity_id INT NOT NULL, activity_name NVARCHAR(300) NULL, status NVARCHAR(30) NOT NULL
-IF COL_LENGTH('sync.grade', 'activity_name') IS NULL ALTER TABLE sync.grade ADD activity_name NVARCHAR(300) NULL;, submission_status NVARCHAR(30) NOT NULL, score DECIMAL(8,3) NULL, max_score DECIMAL(8,3) NOT NULL, sync_id NVARCHAR(80) NOT NULL, synced_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME());
+IF OBJECT_ID('sync.grade','U') IS NULL
+CREATE TABLE sync.grade (
+    grade_id INT IDENTITY PRIMARY KEY,
+    course_id INT NOT NULL,
+    student_id INT NOT NULL,
+    activity_id INT NOT NULL,
+    activity_name NVARCHAR(300) NULL,
+    status NVARCHAR(30) NOT NULL,
+    submission_status NVARCHAR(30) NOT NULL,
+    score DECIMAL(8,3) NULL,
+    max_score DECIMAL(8,3) NOT NULL,
+    sync_id NVARCHAR(80) NOT NULL,
+    synced_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+IF COL_LENGTH('sync.grade', 'activity_name') IS NULL
+    ALTER TABLE sync.grade ADD activity_name NVARCHAR(300) NULL;
 IF OBJECT_ID('sync.completion','U') IS NULL CREATE TABLE sync.completion (completion_id INT IDENTITY PRIMARY KEY, course_id INT NOT NULL, student_id INT NOT NULL, activity_id INT NOT NULL, state NVARCHAR(30) NOT NULL, sync_id NVARCHAR(80) NOT NULL, observed_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME());
 IF OBJECT_ID('analytics.alert_rule','U') IS NULL CREATE TABLE analytics.alert_rule (rule_code NVARCHAR(50) PRIMARY KEY, name NVARCHAR(200) NOT NULL, metric NVARCHAR(50) NOT NULL, operator NVARCHAR(5) NOT NULL, threshold DECIMAL(8,3) NULL, severity NVARCHAR(20) NOT NULL, enabled BIT NOT NULL DEFAULT 1, updated_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME());
 IF OBJECT_ID('analytics.alert','U') IS NULL CREATE TABLE analytics.alert (alert_id NVARCHAR(80) PRIMARY KEY, course_id INT NOT NULL, student_id INT NULL, rule_code NVARCHAR(50) NOT NULL, severity NVARCHAR(20) NOT NULL, status NVARCHAR(20) NOT NULL, detected_at DATETIME2 NOT NULL, resolved_at DATETIME2 NULL);
