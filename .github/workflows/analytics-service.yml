@@ -1,24 +1,45 @@
-name: Analytics service
+name: Analytics and Moodle Sync
+
 on:
   pull_request:
     paths:
       - 'services/analytics-service/**'
+      - 'services/moodle-sync-service/**'
+      - 'database/seed/**'
       - '.github/workflows/analytics-service.yml'
   push:
     branches: [develop, main]
     paths:
       - 'services/analytics-service/**'
+      - 'services/moodle-sync-service/**'
+      - 'database/seed/**'
+      - '.github/workflows/analytics-service.yml'
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/analytics-service
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      - run: dotnet restore
-      - run: dotnet build --no-restore
-      - run: dotnet test AnalyticsService.Tests/AnalyticsService.Tests.csproj --no-build --verbosity normal
+
+      - name: Restore Analytics
+        run: dotnet restore services/analytics-service/AnalyticsService.Tests/AnalyticsService.Tests.csproj
+
+      - name: Build Analytics
+        run: dotnet build services/analytics-service/AnalyticsService.Tests/AnalyticsService.Tests.csproj --configuration Release --no-restore
+
+      - name: Test Analytics
+        run: dotnet test services/analytics-service/AnalyticsService.Tests/AnalyticsService.Tests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Restore Moodle Sync
+        run: dotnet restore services/moodle-sync-service/tests/MoodleSync.Tests/MoodleSync.Tests.csproj
+
+      - name: Build Moodle Sync
+        run: dotnet build services/moodle-sync-service/tests/MoodleSync.Tests/MoodleSync.Tests.csproj --configuration Release --no-restore
+
+      - name: Test Moodle Sync
+        run: dotnet test services/moodle-sync-service/tests/MoodleSync.Tests/MoodleSync.Tests.csproj --configuration Release --no-build --verbosity normal

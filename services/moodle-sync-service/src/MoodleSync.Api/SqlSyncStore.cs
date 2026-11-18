@@ -71,7 +71,8 @@ public sealed class SqlSyncStore : ISyncStore
         if (latestGradeSyncId is not null)
         {
             await using var command = new SqlCommand("""
-                SELECT student_id, activity_id, status, submission_status, score, max_score
+                SELECT student_id, activity_id, activity_name, status,
+                       submission_status, score, max_score
                 FROM sync.grade
                 WHERE course_id = @courseId AND sync_id = @syncId
                 ORDER BY student_id, activity_id
@@ -84,11 +85,13 @@ public sealed class SqlSyncStore : ISyncStore
                 grades.Add(new GradeEntryDto(
                     reader.GetInt32(0),
                     reader.GetInt32(1),
-                    "Actividad " + reader.GetInt32(1),
-                    reader.GetString(2),
+                    reader.IsDBNull(2)
+                        ? $"Actividad {reader.GetInt32(1)}"
+                        : reader.GetString(2),
                     reader.GetString(3),
-                    reader.IsDBNull(4) ? null : (double)reader.GetDecimal(4),
-                    (double)reader.GetDecimal(5),
+                    reader.GetString(4),
+                    reader.IsDBNull(5) ? null : (double)reader.GetDecimal(5),
+                    (double)reader.GetDecimal(6),
                     null,
                     null));
             }
@@ -171,15 +174,16 @@ public sealed class SqlSyncStore : ISyncStore
             {
                 await ExecuteAsync(connection, transaction, """
                     INSERT INTO sync.grade
-                        (course_id, student_id, activity_id, status, submission_status,
-                         score, max_score, sync_id, synced_at)
+                        (course_id, student_id, activity_id, activity_name, status,
+                         submission_status, score, max_score, sync_id, synced_at)
                     VALUES
-                        (@courseId, @studentId, @activityId, @status, @submissionStatus,
-                         @score, @maxScore, @syncId, @syncedAt)
+                        (@courseId, @studentId, @activityId, @activityName, @status,
+                         @submissionStatus, @score, @maxScore, @syncId, @syncedAt)
                     """,
                     ("@courseId", snapshot.CourseId),
                     ("@studentId", grade.StudentId),
                     ("@activityId", grade.ActivityId),
+                    ("@activityName", (object?)grade.ActivityName ?? DBNull.Value),
                     ("@status", grade.Status),
                     ("@submissionStatus", grade.SubmissionStatus),
                     ("@score", (object?)grade.Score ?? DBNull.Value),

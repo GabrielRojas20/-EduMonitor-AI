@@ -7,7 +7,7 @@ namespace MoodleSync.Tests;
 public class NormalizerTests
 {
     private static readonly StudentDto Est = new(4, "Estudiante Uno", null);
-    private static readonly AssignmentInfo[] Tarea = { new(1, 2, "Tarea 1", 10) };
+    private static readonly AssignmentInfo[] Tarea = { new(1, 2, "Tarea U1 — Análisis del Manifiesto Ágil", 10) };
 
     private static GradeEntryDto Un(
         GradeInfo? nota, SubmissionInfo? entrega, CompletionInfo? finalizacion, out ActivityProgressDto progreso, List<string>? avisos = null)

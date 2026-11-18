@@ -15,7 +15,7 @@ public class SyncTests
         var score = g.GetProperty("score").ValueKind == JsonValueKind.Null
             ? "-"
             : g.GetProperty("score").GetDouble().ToString(CultureInfo.InvariantCulture);
-        return $"{g.GetProperty("studentId").GetInt32()}|{g.GetProperty("activityId").GetInt32()}|{g.GetProperty("status").GetString()}|{g.GetProperty("submissionStatus").GetString()}|{score}";
+        return $"{g.GetProperty("studentId").GetInt32()}|{g.GetProperty("activityId").GetInt32()}|{g.GetProperty("activityName").GetString()}|{g.GetProperty("status").GetString()}|{g.GetProperty("submissionStatus").GetString()}|{score}";
     }
 
     private static async Task AssertProblem(HttpResponseMessage r, HttpStatusCode status, string code)
@@ -65,13 +65,33 @@ public class SyncTests
         var actual = grades.GetProperty("items").EnumerateArray().Select(Line).OrderBy(x => x).ToArray();
         var expected = new[]
         {
-            "4|2|graded|submitted|8",          "4|3|not_submitted|draft|-",
-            "5|2|graded|submitted|0",          "5|3|graded|submitted|90",
-            "6|2|pending_grading|submitted|-", "6|3|not_submitted|none|-",
-            "7|2|not_submitted|none|-",        "7|3|not_submitted|none|-",
-            "8|2|graded|submitted|5",          "8|3|not_submitted|none|-",
+            "4|2|Tarea U1 — Análisis del Manifiesto Ágil|graded|submitted|8",
+            "4|3|Tarea U3 — Comparación entre XP, Scrum y Kanban|not_submitted|draft|-",
+
+            "5|2|Tarea U1 — Análisis del Manifiesto Ágil|graded|submitted|0",
+            "5|3|Tarea U3 — Comparación entre XP, Scrum y Kanban|graded|submitted|90",
+
+            "6|2|Tarea U1 — Análisis del Manifiesto Ágil|pending_grading|submitted|-",
+            "6|3|Tarea U3 — Comparación entre XP, Scrum y Kanban|not_submitted|none|-",
+
+            "7|2|Tarea U1 — Análisis del Manifiesto Ágil|not_submitted|none|-",
+            "7|3|Tarea U3 — Comparación entre XP, Scrum y Kanban|not_submitted|none|-",
+
+            "8|2|Tarea U1 — Análisis del Manifiesto Ágil|graded|submitted|5",
+            "8|3|Tarea U3 — Comparación entre XP, Scrum y Kanban|not_submitted|none|-",
         }.OrderBy(x => x).ToArray();
         Assert.Equal(expected, actual);
+
+        var primeraNota = grades
+            .GetProperty("items")
+            .EnumerateArray()
+            .Single(g =>
+                g.GetProperty("studentId").GetInt32() == 4 &&
+                g.GetProperty("activityId").GetInt32() == 2);
+
+        Assert.Equal(
+            "Tarea U1 — Análisis del Manifiesto Ágil",
+            primeraNota.GetProperty("activityName").GetString());
     }
 
     [Fact]
