@@ -132,7 +132,7 @@ public sealed class SqlSyncStore : ISyncStore
             readOnlyProgress);
     }
 
-    public async Task SaveSnapshotAsync(CourseSnapshot snapshot)
+    public async Task SaveSnapshotAsync(CourseSnapshot snapshot, string syncId)
     {
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
@@ -169,7 +169,6 @@ public sealed class SqlSyncStore : ISyncStore
                     ("@email", (object?)student.Email ?? DBNull.Value));
             }
 
-            var syncId = Guid.NewGuid().ToString("N");
             foreach (var grade in snapshot.Grades)
             {
                 await ExecuteAsync(connection, transaction, """
@@ -240,6 +239,62 @@ public sealed class SqlSyncStore : ISyncStore
     {
         _runningStatuses[courseId] = status;
         return Task.CompletedTask;
+    }
+
+    public async Task StartAuditAsync(SyncAuditRecord audit)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = new SqlCommand("""
+            INSERT INTO sync.sync_audit (sync_id, course_id, user_id, started_at, state)
+            VALUES (@syncId, @courseId, @userId, @startedAt, @state)
+            """, connection);
+        command.Parameters.AddWithValue("@syncId", audit.SyncId);
+        command.Parameters.AddWithValue("@courseId", audit.CourseId);
+        command.Parameters.AddWithValue("@userId", audit.UserId);
+        command.Parameters.AddWithValue("@startedAt", audit.StartedAt.UtcDateTime);
+        command.Parameters.AddWithValue("@state", audit.State);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task FinishAuditAsync(string syncId, SyncAuditRecord completed)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = new SqlCommand("""
+            UPDATE sync.sync_audit
+            SET finished_at = @finishedAt, state = @state, error_code = @errorCode
+            WHERE sync_id = @syncId
+            """, connection);
+        command.Parameters.AddWithValue("@syncId", syncId);
+        command.Parameters.AddWithValue("@finishedAt", (object?)completed.FinishedAt?.UtcDateTime ?? DBNull.Value);
+        command.Parameters.AddWithValue("@state", completed.State);
+        command.Parameters.AddWithValue("@errorCode", (object?)completed.ErrorCode ?? DBNull.Value);
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public async Task<IReadOnlyList<SyncAuditRecord>> GetAuditHistoryAsync(int courseId, int limit)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = new SqlCommand("""
+            SELECT TOP (@limit) sync_id, course_id, user_id, started_at, finished_at, state, error_code
+            FROM sync.sync_audit
+            WHERE course_id = @courseId
+            ORDER BY started_at DESC
+            """, connection);
+        command.Parameters.AddWithValue("@limit", limit);
+        command.Parameters.AddWithValue("@courseId", courseId);
+        var result = new List<SyncAuditRecord>();
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            result.Add(new SyncAuditRecord(reader.GetString(0), reader.GetInt32(1), reader.GetString(2),
+                new DateTimeOffset(reader.GetDateTime(3), TimeSpan.Zero),
+                reader.IsDBNull(4) ? null : new DateTimeOffset(reader.GetDateTime(4), TimeSpan.Zero),
+                reader.GetString(5), reader.IsDBNull(6) ? null : reader.GetString(6)));
+        }
+        return result;
     }
 
     private static async Task<string?> LatestSyncIdAsync(

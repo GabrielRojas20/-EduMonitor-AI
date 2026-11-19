@@ -201,4 +201,25 @@ public class SyncTests
         Assert.Equal("failed", status.GetProperty("state").GetString());
         Assert.Equal("COURSE_NOT_IN_MOODLE", status.GetProperty("errorCode").GetString());
     }
+
+    [Fact]
+    public async Task Dos_sincronizaciones_quedan_auditadas_con_usuario_y_resultado()
+    {
+        using var env = new TestEnv();
+        await env.SyncAndWaitAsync(2);
+        await env.SyncAndWaitAsync(2);
+
+        var history = await env.JsonAsync("/courses/2/sync/history?limit=10");
+        var items = history.GetProperty("items").EnumerateArray().ToArray();
+        Assert.Equal(2, items.Length);
+        Assert.All(items, item =>
+        {
+            Assert.Equal(2, item.GetProperty("courseId").GetInt32());
+            Assert.Equal("1", item.GetProperty("userId").GetString());
+            Assert.Equal("succeeded", item.GetProperty("state").GetString());
+            Assert.NotEqual(JsonValueKind.Null, item.GetProperty("startedAt").ValueKind);
+            Assert.NotEqual(JsonValueKind.Null, item.GetProperty("finishedAt").ValueKind);
+        });
+        Assert.NotEqual(items[0].GetProperty("syncId").GetString(), items[1].GetProperty("syncId").GetString());
+    }
 }
