@@ -75,6 +75,35 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  /courses/{courseId}/sync/history:
+    get:
+      operationId: getSyncHistory
+      tags:
+      - sync
+      summary: Historial de auditoría de las sincronizaciones del docente autorizado
+      parameters:
+      - $ref: '#/components/parameters/courseId'
+      - $ref: '#/components/parameters/requestId'
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      responses:
+        '200':
+          description: Historial de sincronizaciones del curso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncAuditPage'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /courses/{courseId}/students:
     get:
       operationId: listStudents
@@ -351,6 +380,52 @@ components:
           type: string
           enum:
           - running
+    SyncAuditPage:
+      type: object
+      required:
+      - items
+      - courseId
+      - limit
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SyncAudit'
+        courseId:
+          type: integer
+        limit:
+          type: integer
+    SyncAudit:
+      type: object
+      required:
+      - syncId
+      - courseId
+      - userId
+      - startedAt
+      - state
+      properties:
+        syncId:
+          type: string
+        courseId:
+          type: integer
+        userId:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        state:
+          type: string
+          enum:
+          - running
+          - succeeded
+          - failed
+        errorCode:
+          type: string
+          nullable: true
     PageOfStudents:
       type: object
       required:

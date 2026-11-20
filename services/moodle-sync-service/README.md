@@ -10,11 +10,14 @@ Lee Moodle (solo lectura), traduce los datos al formato de EduMonitor y los entr
 |---|---|
 | `POST /courses/{courseId}/sync` | Inicia la sincronización (202). 409 `SYNC_IN_PROGRESS` si ya hay una; 503 `MOODLE_UNAVAILABLE` si Moodle no responde |
 | `GET /courses/{courseId}/sync` | Estado y fecha: `never`, `running`, `succeeded` o `failed` |
+| `GET /courses/{courseId}/sync/history?limit=50` | Historial de auditoría: usuario, inicio, fin, estado y código de error |
 | `GET /courses/{courseId}/students` | Estudiantes (paginado) |
 | `GET /courses/{courseId}/students/{studentId}` | Ficha: notas y progreso de actividades |
 | `GET /courses/{courseId}/grades` | Notas con su estado (paginado, filtros `studentId` y `activityId`) |
 
 Si el curso nunca se sincronizó, las lecturas responden 503 `DATA_NOT_AVAILABLE`.
+
+El historial de auditoría solo puede consultarlo, a través del `api-gateway`, un docente cuyo JWT tenga acceso autorizado al curso. El `api-gateway` comprueba ese acceso antes de reenviar la petición. El acceso del rol administrador al historial queda pendiente de la decisión del Product Owner y no se concede de forma adicional en esta versión.
 
 ## Reglas de traducción
 
@@ -42,6 +45,7 @@ En ejecución normal utiliza `SqlSyncStore`, que persiste los datos en SQL Serve
 - `sync.student`: estudiantes.
 - `sync.grade`: calificaciones.
 - `sync.completion`: progreso de actividades.
+- `sync.sync_audit`: una fila por cada ejecución, con usuario, fechas, estado y error.
 
 La conexión se obtiene de `ConnectionStrings__EduMonitor`, por ejemplo:
 

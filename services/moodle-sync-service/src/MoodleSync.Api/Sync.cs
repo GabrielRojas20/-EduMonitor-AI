@@ -6,20 +6,24 @@ namespace MoodleSync.Api;
 public interface ISyncStore
 {
     Task<CourseSnapshot?> GetSnapshotAsync(int courseId);
-    Task SaveSnapshotAsync(CourseSnapshot snapshot);
+    Task SaveSnapshotAsync(CourseSnapshot snapshot, string syncId);
     Task<SyncStatusDto?> GetStatusAsync(int courseId);
     Task SaveStatusAsync(int courseId, SyncStatusDto status);
+    Task StartAuditAsync(SyncAuditRecord audit);
+    Task FinishAuditAsync(string syncId, SyncAuditRecord completed);
+    Task<IReadOnlyList<SyncAuditRecord>> GetAuditHistoryAsync(int courseId, int limit);
 }
 
 public sealed class InMemorySyncStore : ISyncStore
 {
     private readonly ConcurrentDictionary<int, CourseSnapshot> _snapshots = new();
     private readonly ConcurrentDictionary<int, SyncStatusDto> _statuses = new();
+    private readonly ConcurrentDictionary<string, SyncAuditRecord> _audits = new();
 
     public Task<CourseSnapshot?> GetSnapshotAsync(int courseId)
         => Task.FromResult(_snapshots.TryGetValue(courseId, out var s) ? s : null);
 
-    public Task SaveSnapshotAsync(CourseSnapshot snapshot)
+    public Task SaveSnapshotAsync(CourseSnapshot snapshot, string syncId)
     {
         _snapshots[snapshot.CourseId] = snapshot;
         return Task.CompletedTask;
@@ -33,6 +37,28 @@ public sealed class InMemorySyncStore : ISyncStore
         _statuses[courseId] = status;
         return Task.CompletedTask;
     }
+
+    public Task StartAuditAsync(SyncAuditRecord audit)
+    {
+        _audits[audit.SyncId] = audit;
+        return Task.CompletedTask;
+    }
+
+    public Task FinishAuditAsync(string syncId, SyncAuditRecord completed)
+    {
+        _audits[syncId] = completed;
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<SyncAuditRecord>> GetAuditHistoryAsync(int courseId, int limit)
+    {
+        IReadOnlyList<SyncAuditRecord> result = _audits.Values
+            .Where(x => x.CourseId == courseId)
+            .OrderByDescending(x => x.StartedAt)
+            .Take(limit)
+            .ToList();
+        return Task.FromResult(result);
+    }
 }
 
 public sealed record StartResult(string Outcome, string? SyncId = null, string? Detail = null); // accepted | conflict | unavailable
@@ -42,38 +68,72 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
     private readonly object _gate = new();
     private readonly HashSet<int> _running = new();
 
-    public async Task<StartResult> StartAsync(int courseId)
+    public async Task<StartResult> StartAsync(int courseId, string userId)
     {
         lock (_gate)
         {
             if (!_running.Add(courseId)) return new StartResult("conflict");
         }
 
+        var syncId = Guid.NewGuid().ToString("N");
+        var started = DateTimeOffset.UtcNow;
+        var audit = new SyncAuditRecord(syncId, courseId, userId, started, null, "running", null);
+        var handedOff = false;
         try
         {
+        try
+        {
+            await store.StartAuditAsync(audit);
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "No se pudo iniciar la auditoría de la sincronización {SyncId}", syncId);
+            }
+
             // Comprobación rápida: si Moodle no responde, se avisa de inmediato con un 503.
             await moodle.CallAsync("core_webservice_get_site_info", CancellationToken.None);
 
             var previous = await store.GetStatusAsync(courseId);
-            var started = DateTimeOffset.UtcNow;
             await store.SaveStatusAsync(courseId, new SyncStatusDto("running", started, null, previous?.LastSuccessAt, null, null));
-            _ = Task.Run(() => RunAsync(courseId, started, previous?.LastSuccessAt));
-            return new StartResult("accepted", Guid.NewGuid().ToString("N"));
+            _ = Task.Run(() => RunAsync(courseId, syncId, userId, started, previous?.LastSuccessAt));
+            handedOff = true;
+            return new StartResult("accepted", syncId);
         }
         catch (MoodleUnavailableException ex)
         {
-            Release(courseId);
-            return new StartResult("unavailable", Detail: ex.Message);
+            await TryFinishAuditAsync(audit with { State = "failed" }, "MOODLE_UNAVAILABLE");
+            return new StartResult("unavailable", syncId, ex.Message);
         }
         catch (MoodleApiException ex)
         {
-            Release(courseId);
-            return new StartResult("unavailable", Detail: $"Moodle rechazó el acceso del servicio ({ex.ErrorCode}).");
+            await TryFinishAuditAsync(audit with { State = "failed" }, ex.ErrorCode);
+            return new StartResult("unavailable", syncId, $"Moodle rechazó el acceso del servicio ({ex.ErrorCode}).");
         }
         catch
         {
-            Release(courseId);
+            await TryFinishAuditAsync(audit with { State = "failed" }, "UNEXPECTED");
             throw;
+        }
+        finally
+        {
+            if (!handedOff) Release(courseId);
+        }
+    }
+
+    private async Task TryFinishAuditAsync(SyncAuditRecord audit, string? errorCode)
+    {
+        try
+        {
+            await store.FinishAuditAsync(audit.SyncId,
+                audit with
+                {
+                    FinishedAt = DateTimeOffset.UtcNow,
+                    ErrorCode = errorCode,
+                });
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "No se pudo cerrar la auditoría de la sincronización {SyncId}", audit.SyncId);
         }
     }
 
@@ -82,36 +142,50 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
         lock (_gate) _running.Remove(courseId);
     }
 
-    private async Task RunAsync(int courseId, DateTimeOffset started, DateTimeOffset? lastSuccess)
+    private async Task RunAsync(int courseId, string syncId, string userId, DateTimeOffset started, DateTimeOffset? lastSuccess)
     {
         SyncStatusDto result;
         try
         {
+        try
+        {
             var snapshot = await FetchAsync(courseId, CancellationToken.None);
-            await store.SaveSnapshotAsync(snapshot);
+            await store.SaveSnapshotAsync(snapshot, syncId);
             var finished = DateTimeOffset.UtcNow;
             result = new SyncStatusDto("succeeded", started, finished, finished, null, null);
-        }
-        catch (MoodleUnavailableException ex)
-        {
-            result = Failed(started, lastSuccess, "MOODLE_UNAVAILABLE", ex.Message);
-        }
-        catch (MoodleApiException ex)
-        {
-            result = Failed(started, lastSuccess, "MOODLE_ERROR", $"Moodle respondió con el error '{ex.ErrorCode}'.");
-        }
-        catch (CourseNotFoundInMoodleException ex)
-        {
-            result = Failed(started, lastSuccess, "COURSE_NOT_IN_MOODLE", ex.Message);
+                await TryFinishAuditAsync(
+                    new SyncAuditRecord(syncId, courseId, userId, started, finished, "succeeded", null), null);
+            }
+            catch (MoodleUnavailableException ex)
+            {
+                result = Failed(started, lastSuccess, "MOODLE_UNAVAILABLE", ex.Message);
+                await TryFinishAuditAsync(
+                    new SyncAuditRecord(syncId, courseId, userId, started, null, "failed", result.ErrorCode),
+                    result.ErrorCode);
+            }
+            catch (MoodleApiException ex)
+            {
+                result = Failed(started, lastSuccess, "MOODLE_ERROR", $"Moodle respondió con el error '{ex.ErrorCode}'.");
+                await TryFinishAuditAsync(
+                    new SyncAuditRecord(syncId, courseId, userId, started, null, "failed", result.ErrorCode),
+                    result.ErrorCode);
+            }
+            catch (CourseNotFoundInMoodleException ex)
+            {
+                result = Failed(started, lastSuccess, "COURSE_NOT_IN_MOODLE", ex.Message);
+                await TryFinishAuditAsync(
+                    new SyncAuditRecord(syncId, courseId, userId, started, null, "failed", result.ErrorCode),
+                    result.ErrorCode);
         }
         catch (Exception ex)
         {
             log.LogError(ex, "Error inesperado al sincronizar el curso {CourseId}", courseId);
             result = Failed(started, lastSuccess, "UNEXPECTED", "Error inesperado al sincronizar.");
-        }
+                await TryFinishAuditAsync(
+                    new SyncAuditRecord(syncId, courseId, userId, started, null, "failed", result.ErrorCode),
+                    result.ErrorCode);
+            }
 
-        try
-        {
             await store.SaveStatusAsync(courseId, result);
         }
         finally
