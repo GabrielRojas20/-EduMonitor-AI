@@ -107,6 +107,26 @@ class Tokens(unittest.TestCase):
         self.assertEqual(alterado.split(".")[:2], ["aaa", "bbb"])
 
 
+class FechasYCifras(unittest.TestCase):
+    def cuerpo(self, texto):
+        return {"meta": {"status": "ok"}, "answer": {"facts": [{"text": texto}], "unavailable": [], "inferences": [], "recommendations": []}}
+
+    def test_una_fecha_de_sincronizacion_no_cuenta_como_cifra_cuando_se_pide_ignorarla(self):
+        esperado = {"estado": "ok", "cifras_permitidas": [1, 2], "ignorar_fechas": True}
+        fallos, _, _ = ejecutar.comprobar(esperado, 200, self.cuerpo("PRUEBA01: 2 estudiantes; sincronizado el 17/11/2026."), 1.0)
+        self.assertEqual(fallos, [])
+
+    def test_sin_ignorar_fechas_la_fecha_se_trata_como_cifras(self):
+        esperado = {"estado": "ok", "cifras_permitidas": [1, 2]}
+        fallos, _, _ = ejecutar.comprobar(esperado, 200, self.cuerpo("PRUEBA01: 2 estudiantes; sincronizado el 17/11/2026."), 1.0)
+        self.assertTrue(any("cifras sin fuente" in f for f in fallos))
+
+    def test_una_cifra_inventada_se_detecta_aunque_se_ignoren_las_fechas(self):
+        esperado = {"estado": "ok", "cifras_permitidas": [1, 2], "ignorar_fechas": True}
+        fallos, _, _ = ejecutar.comprobar(esperado, 200, self.cuerpo("PRUEBA01: 7 estudiantes; sincronizado el 17/11/2026."), 1.0)
+        self.assertTrue(any("cifras sin fuente" in f and "7.0" in f for f in fallos))
+
+
 class Escenarios(unittest.TestCase):
     def test_ids_unicos_y_categorias_validas(self):
         datos = json.loads((Path(__file__).parent / "escenarios.json").read_text(encoding="utf-8"))["escenarios"]
@@ -115,6 +135,15 @@ class Escenarios(unittest.TestCase):
         validas = {"consulta_simple", "falla_herramienta", "alertas", "seguridad", "informe"}
         self.assertTrue(all(e["categoria"] in validas for e in datos))
         self.assertTrue(all(e["usuario"] in ejecutar.USUARIOS for e in datos))
+
+    def test_escenarios_reales_son_validos_y_distintos_de_los_del_servidor_de_pruebas(self):
+        datos = json.loads((Path(__file__).parent / "escenarios-reales.json").read_text(encoding="utf-8"))["escenarios"]
+        ids = [e["id"] for e in datos]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual(len(ids), 19)
+        self.assertNotIn("S03", ids)
+        self.assertTrue(all(e["usuario"] in ejecutar.USUARIOS for e in datos))
+        self.assertTrue(all(e["esperado"].get("http", 200) in (200, 401) for e in datos))
 
 
 if __name__ == "__main__":
