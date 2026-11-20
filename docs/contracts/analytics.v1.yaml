@@ -405,6 +405,17 @@ components:
           enum: [averageScore10, submissionRate, gradingRate, completionRate, pendingGradingRate]
         text:
           type: string
+        observedValue:
+          type: number
+          nullable: true
+        threshold:
+          type: number
+          nullable: true
+        sourceIds:
+          type: array
+          nullable: true
+          items:
+            type: string
     Problem:
       type: object
       required: [title, status, code]

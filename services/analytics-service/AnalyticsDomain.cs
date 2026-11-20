@@ -27,6 +27,28 @@ public sealed record Metric(decimal? Value, string Unit, string Status, string? 
 public sealed record Counts(int GradedCount, int PendingGradingCount, int NotSubmittedCount, int DraftCount);
 public sealed record CalculatedIndicators(Metric AverageScore10, Metric SubmissionRate, Metric GradingRate, Metric CompletionRate, Metric PendingGradingRate, Counts Counts);
 
+public static class AlertRuleEvaluator
+{
+    public static bool Matches(decimal value, string op, decimal threshold) => op.Trim().ToLowerInvariant() switch
+    {
+        "lt" or "<" => value < threshold,
+        "lte" or "<=" => value <= threshold,
+        "gt" or ">" => value > threshold,
+        "gte" or ">=" => value >= threshold,
+        "eq" or "=" => value == threshold,
+        _ => false
+    };
+}
+
+public static class ReportPeriod
+{
+    public static (DateTime? Start, DateTime? End) From(IEnumerable<DateTime> timestamps)
+    {
+        var values = timestamps.ToArray();
+        return values.Length == 0 ? (null, null) : (values.Min(), values.Max());
+    }
+}
+
 public static class AnalyticsCalculator
 {
     public static CalculatedIndicators Calculate(IEnumerable<GradeObservation> grades, IEnumerable<CompletionObservation> completions)
