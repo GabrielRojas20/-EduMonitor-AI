@@ -17,6 +17,8 @@ Lee Moodle (solo lectura), traduce los datos al formato de EduMonitor y los entr
 
 Si el curso nunca se sincronizó, las lecturas responden 503 `DATA_NOT_AVAILABLE`.
 
+El historial de auditoría solo puede consultarlo, a través del `api-gateway`, un docente cuyo JWT tenga acceso autorizado al curso. El `api-gateway` comprueba ese acceso antes de reenviar la petición. El acceso del rol administrador al historial queda pendiente de la decisión del Product Owner y no se concede de forma adicional en esta versión.
+
 ## Reglas de traducción
 
 - **Nota:** con nota (incluido 0) = `graded`; entregó y sin nota = `pending_grading`; borrador o sin entrega = `not_submitted`. Una nota nula nunca es 0.

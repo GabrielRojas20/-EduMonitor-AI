@@ -80,7 +80,7 @@ paths:
       operationId: getSyncHistory
       tags:
       - sync
-      summary: Historial de auditoría de las sincronizaciones
+      summary: Historial de auditoría de las sincronizaciones del docente autorizado
       parameters:
       - $ref: '#/components/parameters/courseId'
       - $ref: '#/components/parameters/requestId'
