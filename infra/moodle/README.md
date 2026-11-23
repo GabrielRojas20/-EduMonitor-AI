@@ -38,6 +38,8 @@ El primer arranque instala Moodle y tarda unos minutos. Cuando los registros dej
 
 Todo se hace desde la web de Moodle, entrando como `admin`.
 
+Para cargar el dataset opcional de la demostración masiva, consulta [`docs/demo/README-DEMO-MASIVO.md`](../../docs/demo/README-DEMO-MASIVO.md).
+
 ### 4.1 Curso y usuarios
 
 1. Crea el curso: nombre `Curso de Prueba EduMonitor`, nombre corto **`PRUEBA01`** (el CSV usa ese nombre corto).

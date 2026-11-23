@@ -71,7 +71,8 @@ using (var scope = app.Services.CreateScope())
     if (db.Database.IsInMemory()) db.Database.EnsureCreated();
     var seedPassword = app.Configuration["AUTH_SEED_PASSWORD"];
     if (!string.IsNullOrEmpty(seedPassword))
-        Seed.Run(db, scope.ServiceProvider.GetRequiredService<PasswordService>(), seedPassword);
+        Seed.Run(db, scope.ServiceProvider.GetRequiredService<PasswordService>(), seedPassword,
+            app.Configuration["AUTH_SEED_DATASET"] ?? "minimal");
 }
 
 app.UseAuthentication();

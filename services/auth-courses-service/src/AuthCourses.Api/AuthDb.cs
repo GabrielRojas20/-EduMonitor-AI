@@ -43,9 +43,15 @@ public class AuthDb(DbContextOptions<AuthDb> options) : DbContext(options)
 // Datos de prueba ficticios. La contraseña viene de AUTH_SEED_PASSWORD (nunca del código).
 public static class Seed
 {
-    public static void Run(AuthDb db, PasswordService passwords, string password)
+    public static void Run(AuthDb db, PasswordService passwords, string password, string dataset = "minimal")
     {
         if (db.Users.Any()) return;
+
+        if (string.Equals(dataset, "massive", StringComparison.OrdinalIgnoreCase))
+        {
+            RunMassive(db, passwords, password);
+            return;
+        }
 
         if (!db.Courses.Any())
         {
@@ -64,6 +70,54 @@ public static class Seed
         db.TeacherCourses.AddRange(
             new TeacherCourse { UserId = docente1.Id, CourseId = 2 },
             new TeacherCourse { UserId = docente2.Id, CourseId = 3 });
+        db.SaveChanges();
+    }
+
+    private static void RunMassive(AuthDb db, PasswordService passwords, string password)
+    {
+        var courses = Enumerable.Range(0, 25)
+            .Select(i => new CourseEntity
+            {
+                Id = 201 + i,
+                ShortName = $"DEMO-{i / 5 + 1:00}-{i % 5 + 1:00}",
+                FullName = $"Curso demo {i / 5 + 1}, grupo {i % 5 + 1}"
+            })
+            .ToArray();
+        db.Courses.AddRange(courses);
+
+        var teachers = Enumerable.Range(1, 5)
+            .Select(i => new AppUser
+            {
+                Email = $"docente{i}@edumonitor.test",
+                Name = $"Docente Demo {i}",
+                Role = "teacher",
+                PasswordHash = passwords.Hash(password)
+            })
+            .ToArray();
+        var admin = new AppUser
+        {
+            Email = "admin@edumonitor.test",
+            Name = "Administrador Técnico",
+            Role = "admin",
+            PasswordHash = passwords.Hash(password)
+        };
+        db.Users.AddRange(teachers);
+        db.Users.Add(admin);
+        db.SaveChanges();
+
+        var links = new List<TeacherCourse>();
+        for (var teacher = 0; teacher < teachers.Length; teacher++)
+        {
+            for (var course = 0; course < 5; course++)
+            {
+                links.Add(new TeacherCourse
+                {
+                    UserId = teachers[teacher].Id,
+                    CourseId = courses[teacher * 5 + course].Id
+                });
+            }
+        }
+        db.TeacherCourses.AddRange(links);
         db.SaveChanges();
     }
 }

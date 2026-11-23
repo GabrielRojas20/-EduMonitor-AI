@@ -25,10 +25,17 @@ services:
         condition: service_healthy
     environment:
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      DEMO_DATASET: ${DEMO_DATASET:-minimal}
     volumes:
       - ./services/analytics-service/database.sql:/scripts/database.sql:ro
+      - ./database/seed/002-demo-masivo.sql:/scripts/002-demo-masivo.sql:ro
     entrypoint: ["/bin/bash", "-c"]
-    command: ["/opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -i /scripts/database.sql"]
+    command:
+      - |
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P "$${MSSQL_SA_PASSWORD}" -C -i /scripts/database.sql
+        if [ "$${DEMO_DATASET}" = "massive" ]; then
+          /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P "$${MSSQL_SA_PASSWORD}" -C -i /scripts/002-demo-masivo.sql
+        fi
 
 
   moodle-db:
@@ -180,6 +187,7 @@ services:
       - JWT_AUDIENCE=${JWT_AUDIENCE}
       - JWT_EXPIRES_MINUTES=${JWT_EXPIRES_MINUTES}
       - AUTH_SEED_PASSWORD=${AUTH_SEED_PASSWORD}
+      - AUTH_SEED_DATASET=${AUTH_SEED_DATASET:-minimal}
     depends_on:
       sqlserver:
         condition: service_healthy

@@ -1,0 +1,26 @@
+shortname,fullname,category_id,idnumber
+DEMO-01-01,"Curso demo 1, grupo 1",1,DEMO-01-01
+DEMO-01-02,"Curso demo 1, grupo 2",1,DEMO-01-02
+DEMO-01-03,"Curso demo 1, grupo 3",1,DEMO-01-03
+DEMO-01-04,"Curso demo 1, grupo 4",1,DEMO-01-04
+DEMO-01-05,"Curso demo 1, grupo 5",1,DEMO-01-05
+DEMO-02-01,"Curso demo 2, grupo 1",1,DEMO-02-01
+DEMO-02-02,"Curso demo 2, grupo 2",1,DEMO-02-02
+DEMO-02-03,"Curso demo 2, grupo 3",1,DEMO-02-03
+DEMO-02-04,"Curso demo 2, grupo 4",1,DEMO-02-04
+DEMO-02-05,"Curso demo 2, grupo 5",1,DEMO-02-05
+DEMO-03-01,"Curso demo 3, grupo 1",1,DEMO-03-01
+DEMO-03-02,"Curso demo 3, grupo 2",1,DEMO-03-02
+DEMO-03-03,"Curso demo 3, grupo 3",1,DEMO-03-03
+DEMO-03-04,"Curso demo 3, grupo 4",1,DEMO-03-04
+DEMO-03-05,"Curso demo 3, grupo 5",1,DEMO-03-05
+DEMO-04-01,"Curso demo 4, grupo 1",1,DEMO-04-01
+DEMO-04-02,"Curso demo 4, grupo 2",1,DEMO-04-02
+DEMO-04-03,"Curso demo 4, grupo 3",1,DEMO-04-03
+DEMO-04-04,"Curso demo 4, grupo 4",1,DEMO-04-04
+DEMO-04-05,"Curso demo 4, grupo 5",1,DEMO-04-05
+DEMO-05-01,"Curso demo 5, grupo 1",1,DEMO-05-01
+DEMO-05-02,"Curso demo 5, grupo 2",1,DEMO-05-02
+DEMO-05-03,"Curso demo 5, grupo 3",1,DEMO-05-03
+DEMO-05-04,"Curso demo 5, grupo 4",1,DEMO-05-04
+DEMO-05-05,"Curso demo 5, grupo 5",1,DEMO-05-05
