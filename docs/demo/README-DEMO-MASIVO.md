@@ -120,7 +120,7 @@ Los CSV de Moodle no pueden crear actividades académicas ni calificaciones. Par
 Después de cargar los cursos y usuarios, ejecuten desde la raíz del repositorio:
 
 ```powershell
-docker compose exec -T moodle php /opt/bitnami/moodle/local/edumonitor_seed_massive.php
+docker compose exec -T moodle php /tmp/edumonitor_seed_massive.php
 ```
 
 El script es idempotente para esta demo. Busca los cursos `DEMO-*`, crea dos actividades por curso y genera entregas, calificaciones y estados de finalización ficticios para los estudiantes inscritos. No contiene contraseñas, tokens ni datos reales.

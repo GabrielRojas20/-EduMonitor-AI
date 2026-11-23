@@ -3,7 +3,7 @@
  * Seed académico ficticio para la demo masiva de EduMonitor.
  *
  * Ejecutar dentro del contenedor Moodle, después de cargar los CSV:
- *   php /opt/bitnami/moodle/local/edumonitor_seed_massive.php
+ *   php /tmp/edumonitor_seed_massive.php
  *
  * El script usa las APIs internas de Moodle y solo trabaja con cursos DEMO-*.
  * No contiene contraseñas, tokens ni datos reales.
