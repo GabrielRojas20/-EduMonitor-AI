@@ -35,6 +35,7 @@ if ($config === null) {
 require_once($config);
 require_once($CFG->libdir . '/clilib.php');
 require_once($CFG->dirroot . '/course/lib.php');
+require_once($CFG->dirroot . '/course/modlib.php');
 require_once($CFG->dirroot . '/mod/assign/lib.php');
 require_once($CFG->libdir . '/gradelib.php');
 
