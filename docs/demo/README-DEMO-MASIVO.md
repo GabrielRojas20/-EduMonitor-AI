@@ -112,16 +112,42 @@ El seed de Auth y Analytics no crea cursos dentro de Moodle. Moodle asigna sus p
 
 El CSV de usuarios es una plantilla y no contiene contraseñas reales. No suban la copia modificada con contraseñas al repositorio.
 
-## Si quieren sincronizar Moodle
+## Sincronizar Moodle con el programa final
 
-Moodle puede asignar IDs diferentes a `201` a `225`. Antes de sincronizar un curso:
+Después de cargar los cursos y usuarios, no es necesario editar los IDs de Moodle en SQL. Moodle puede asignar, por ejemplo, el ID `7` al curso `DEMO-01-01`, mientras Auth usa el ID canónico `201`.
 
-1. Obtengan el ID real desde la URL de Moodle.
-2. Registren ese mismo ID y nombre corto en Auth Courses.
-3. Usen el ID real en `POST /courses/{id}/sync`.
-4. Comprueben el resultado con `GET /courses/{id}/sync`.
+`moodle-sync` resuelve automáticamente estos casos por el nombre corto:
 
-Para la demostración de Analytics no es obligatorio sincronizar los 25 cursos de Moodle: el dataset masivo de SQL ya deja disponibles los 25 cursos y sus 25 estudiantes por curso. Moodle se carga aparte cuando se quiera demostrar el flujo de sincronización real.
+```text
+Auth/EduMonitor: 201 → DEMO-01-01
+Moodle:          7   → DEMO-01-01
+```
+
+Desde la aplicación o desde el Gateway, el docente debe sincronizar usando el ID que muestra EduMonitor, por ejemplo:
+
+```powershell
+$login = Invoke-RestMethod -Method Post `
+  -Uri http://localhost:5000/api/v1/auth/login `
+  -ContentType 'application/json' `
+  -Body (@{ email = 'docente1@edumonitor.test'; password = $env:AUTH_SEED_PASSWORD } | ConvertTo-Json)
+
+$headers = @{ Authorization = "Bearer $($login.accessToken)" }
+Invoke-RestMethod -Method Post `
+  -Uri http://localhost:5000/api/v1/courses/201/sync `
+  -Headers $headers
+```
+
+La respuesta inicial debe ser `202 Accepted`. Luego consulten el estado hasta que sea `succeeded`:
+
+```powershell
+Invoke-RestMethod -Method Get `
+  -Uri http://localhost:5000/api/v1/courses/201/sync `
+  -Headers $headers
+```
+
+El mismo procedimiento se repite con los cursos `202` a `225`. Cada docente solo puede sincronizar sus cinco cursos autorizados. Después de una sincronización exitosa, Analytics lee los datos guardados en el esquema `sync`, que ahora provienen de Moodle.
+
+El programa conserva el ID canónico de EduMonitor en sus respuestas, pero usa internamente el ID real de Moodle para consultar estudiantes, actividades, notas y progreso. Por eso no deben cambiar manualmente los IDs ni borrar el seed SQL.
 
 ## Volver a la demo mínima
 
