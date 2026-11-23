@@ -149,6 +149,51 @@ public class AnalyticsCalculatorTests
         Assert.Null(period.End);
     }
 
+    [Fact]
+    public void DosSincronizacionesUsanSoloLaUltimaYNoDuplicanLosConteos()
+    {
+        var oldSync = new[]
+        {
+            new SyncObservation("sync-anterior", new DateTime(2026, 11, 17, 10, 0, 0, DateTimeKind.Utc)),
+        };
+        var newSync = new[]
+        {
+            new SyncObservation("sync-actual", new DateTime(2026, 11, 23, 18, 0, 0, DateTimeKind.Utc)),
+        };
+
+        var latest = AnalyticsSnapshotSelector.LatestSyncId(oldSync.Concat(newSync));
+        var rows = new[]
+        {
+            (SyncId: "sync-anterior", Grade: Grade(GradeStatus.Graded, SubmissionStatus.Submitted, 2, 10)),
+            (SyncId: "sync-actual", Grade: Grade(GradeStatus.Graded, SubmissionStatus.Submitted, 8, 10)),
+            (SyncId: "sync-actual", Grade: Grade(GradeStatus.PendingGrading, SubmissionStatus.Submitted, null, 10)),
+            (SyncId: "sync-actual", Grade: Grade(GradeStatus.NotSubmitted, SubmissionStatus.Draft, null, 10)),
+        };
+
+        Assert.Equal("sync-actual", latest);
+        var result = AnalyticsCalculator.Calculate(
+            rows.Where(x => x.SyncId == latest).Select(x => x.Grade),
+            Array.Empty<CompletionObservation>());
+
+        Assert.Equal(3, rows.Length - 1);
+        Assert.Equal(1, result.Counts.GradedCount);
+        Assert.Equal(1, result.Counts.PendingGradingCount);
+        Assert.Equal(1, result.Counts.NotSubmittedCount);
+        Assert.Equal(50m, result.SubmissionRate.Value);
+    }
+
+    [Fact]
+    public void ElSelectorDesempataPorSyncIdDeFormaDeterminista()
+    {
+        var latest = AnalyticsSnapshotSelector.LatestSyncId(new[]
+        {
+            new SyncObservation("sync-b", new DateTime(2026, 11, 23, 18, 0, 0, DateTimeKind.Utc)),
+            new SyncObservation("sync-a", new DateTime(2026, 11, 23, 18, 0, 0, DateTimeKind.Utc)),
+        });
+
+        Assert.Equal("sync-b", latest);
+    }
+
     private static GradeObservation Grade(GradeStatus status, SubmissionStatus submission, decimal? score, decimal maxScore) => new()
     {
         Status = status,
