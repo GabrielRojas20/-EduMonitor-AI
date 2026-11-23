@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import type { PropsWithChildren } from 'react'
-import { AuthProvider, useAuth } from './hooks/useAuth'
+import { useAuth } from './hooks/useAuth'
+import { AuthProvider } from './hooks/AuthProvider'
 import { Shell } from './components/Shell'
 import { LoginPage } from './pages/LoginPage'
 import { CoursesPage } from './pages/CoursesPage'

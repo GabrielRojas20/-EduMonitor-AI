@@ -28,6 +28,7 @@ export function DashboardPage() {
   const [syncing, setSyncing] = useState(false)
   const [success, setSuccess] = useState('')
   const load = useCallback(async () => {
+    setLoading(true)
     if (!Number.isInteger(courseId) || courseId <= 0) { setError('Identificador de curso inválido.'); setLoading(false); return }
     setError(''); setWarnings([])
     const calls = await Promise.allSettled([
@@ -49,7 +50,10 @@ export function DashboardPage() {
     setWarnings([...new Set(missingMsgs)])
     setLoading(false)
   }, [courseId])
-  useEffect(() => { setCourse(null); setAnalytics(null); setStudents([]); setGrades([]); setAlerts([]); setPage(1); setLoading(true); void load() }, [load])
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load() }, 0)
+    return () => window.clearTimeout(timer)
+  }, [load])
   useEffect(() => {
     if (syncStatus?.state !== 'running') return
     const timer = window.setInterval(async () => {
