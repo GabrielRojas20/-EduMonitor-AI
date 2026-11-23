@@ -83,7 +83,7 @@ Lista los cursos a los que el docente tiene acceso.
 }
 ```
 
-- **Datos que el gateway puede no enviar:** si un curso llega sin `studentCount` o sin `lastSyncAt`, la herramienta consulta `GET /api/v1/courses/{courseId}/sync` y `GET /api/v1/courses/{courseId}/students?page=1&pageSize=1` (hasta 10 cursos) y agrega `syncState`. Si no puede consultarlos, lo dice; no afirma que el curso no se sincronizó.
+- **Fechas y conteos:** el gateway entrega `studentCount` y `lastSyncAt` de cada curso a partir de los datos sincronizados. La herramienta los usa tal cual y no hace consultas adicionales. Un curso sin `lastSyncAt` no tiene una sincronización completada: el agente dice que aún no se sincronizó y que el número de estudiantes no está disponible.
 
 ### 3.2 `obtener_calificaciones`
 
@@ -240,7 +240,9 @@ Obtiene los datos calculados para el informe del curso. No calcula nada: `analyt
 ```
 
 - **Salida (`data`):** `CourseReportData` del contrato: `snapshot`, `periodStart` y `periodEnd` (pueden ser nulos), `metrics` (mapa de `Metric`), `findings` (lista de `ReportFinding`: cada uno con `text` y, si existen, `alertId`, `ruleCode`, `studentId` y `metric`, para poder citar su origen) y `activeAlertCount`. Para el informe completo el agente combina esta salida con `identificar_alertas` si el docente pide el detalle de las alertas.
-- **Pendiente:** el contenido y el formato exacto del informe dependen de la pregunta 2 al Product Owner (secciones, período y formato). Por ahora el informe se redacta con los campos que entrega el contrato y con la fecha del snapshot.
+- **Hechos del informe:** el código redacta los hechos. Cada hallazgo de alerta se escribe con el nombre del estudiante (de `GET /courses/{id}/students`; si falta, «Estudiante» y su id), la regla, el texto de analytics y su evidencia: «valor observado» y «umbral» con su unidad (`ReportFinding.observedValue` y `threshold`). Un hallazgo sin valor ni umbral conserva el texto de analytics. Los hallazgos del curso sin alerta se citan tal cual.
+- **Período:** `periodStart` y `periodEnd` son las fechas de la primera y la última observación sincronizada, no un período académico. El agente lo dice así: «observaciones sincronizadas del … al …».
+- **Pendiente:** con el Product Owner, el formato definitivo del informe (secciones y período académico).
 
 ### 3.6 Datos no disponibles, paginación y límites
 
