@@ -9,6 +9,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { StudentPage } from './pages/StudentPage'
 import { AlertsPage } from './pages/AlertsPage'
 import { ChatPage } from './pages/ChatPage'
+import { ReportPage } from './pages/ReportPage'
 
 function Private({ children }: PropsWithChildren) {
   const { token } = useAuth()
@@ -21,6 +22,7 @@ function AppRoutes() { return <Routes>
   <Route path="/login" element={<LoginRoute/>}/>
   <Route path="/cursos" element={<Private><CoursesPage/></Private>}/>
   <Route path="/cursos/:id" element={<Private><DashboardPage/></Private>}/>
+  <Route path="/cursos/:id/informe" element={<Private><ReportPage/></Private>}/>
   <Route path="/cursos/:id/estudiantes/:sid" element={<Private><StudentPage/></Private>}/>
   <Route path="/alertas" element={<Private><AlertsPage/></Private>}/>
   <Route path="/chat" element={<Private><ChatPage/></Private>}/>

@@ -27,3 +27,24 @@ export interface AgentInference { text: string; basedOn: number[] }
 export interface AgentRecommendation { text: string; relatedFinding?: number | null }
 export interface AgentAnswer { facts: AgentFact[]; inferences: AgentInference[]; recommendations: AgentRecommendation[]; unavailable: string[]; message?: string | null }
 export interface ChatResponse { traceId: string; answer: AgentAnswer; meta: { courseId?: number | null; lastSyncAt?: string | null; status: 'ok' | 'partial' | 'refused' | 'error' } }
+
+
+export interface CourseReportFinding {
+  alertId?: string | null
+  ruleCode?: string | null
+  studentId?: number | null
+  metric?: string | null
+  text: string
+  observedValue?: number | null
+  threshold?: number | null
+  sourceIds?: string[] | null
+}
+export interface CourseReportData {
+  courseId: number
+  snapshot: Snapshot
+  periodStart?: string | null
+  periodEnd?: string | null
+  metrics: Record<string, Metric>
+  findings: CourseReportFinding[]
+  activeAlertCount?: number
+}

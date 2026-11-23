@@ -1,5 +1,5 @@
 import { get, post } from './api'
-import type { AcademicAlert, AlertSeverity, AlertStatus, Analytics, ChatResponse, Course, Grade, LoginResponse, Paginated, Student, StudentDetail, SyncAccepted, SyncStatus, User } from '../types/api'
+import type { AcademicAlert, AlertSeverity, AlertStatus, Analytics, ChatResponse, Course, CourseReportData, Grade, LoginResponse, Paginated, Student, StudentDetail, SyncAccepted, SyncStatus, User } from '../types/api'
 
 const base = '/api/v1'
 export const login = (email: string, password: string) => post<LoginResponse>(`${base}/auth/login`, { email, password }, { authenticated: false })
@@ -9,6 +9,7 @@ export const getCourse = (id: number) => get<Course>(`${base}/courses/${id}`)
 export const getSyncStatus = (id: number) => get<SyncStatus>(`${base}/courses/${id}/sync`)
 export const startSync = (id: number) => post<SyncAccepted>(`${base}/courses/${id}/sync`, {})
 export const getAnalytics = (id: number) => get<Analytics>(`${base}/courses/${id}/analytics`)
+export const getCourseReport = (id: number) => get<CourseReportData>(`${base}/courses/${id}/analytics/report`)
 export const getStudentAnalytics = (id: number, studentId: number) => get<Analytics>(`${base}/courses/${id}/analytics/students/${studentId}`)
 export const getStudentDetail = (id: number, studentId: number) => get<StudentDetail>(`${base}/courses/${id}/students/${studentId}`)
 export const getStudents = (id: number, page = 1, pageSize = 50) => get<Paginated<Student>>(`${base}/courses/${id}/students?page=${page}&pageSize=${pageSize}`)
