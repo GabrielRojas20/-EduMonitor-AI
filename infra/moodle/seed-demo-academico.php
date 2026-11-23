@@ -125,7 +125,13 @@ function get_or_create_assignment(stdClass $course, string $name, int $maxgrade,
         'availability' => null,
         'tags' => [],
     ];
-    $created = add_moduleinfo($moduleinfo, $course);
+    try {
+        $created = add_moduleinfo($moduleinfo, $course);
+    } catch (Throwable $exception) {
+        fwrite(STDERR, "Error creando la actividad '{$name}' en el curso '{$course->shortname}': {$exception->getMessage()}\n");
+        fwrite(STDERR, $exception->getTraceAsString() . "\n");
+        throw $exception;
+    }
     $cm = $DB->get_record('course_modules', ['id' => $created->coursemodule], '*', MUST_EXIST);
     return [(int)$created->instance, (int)$cm->id, true];
 }
