@@ -79,6 +79,7 @@ services:
     volumes:
       - moodle-data:/bitnami/moodle
       - moodledata-data:/bitnami/moodledata
+      - ./infra/moodle/seed-demo-academico.php:/opt/bitnami/moodle/local/edumonitor_seed_massive.php:ro
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8080'"]
       interval: 15s

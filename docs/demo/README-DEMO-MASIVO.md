@@ -105,12 +105,39 @@ El seed de Auth y Analytics no crea cursos dentro de Moodle. Moodle asigna sus p
 5. Seleccionen la opción para crear cursos nuevos y confirmen la categoría.
 6. Verifiquen que aparezcan los 25 cursos `DEMO-01-01` a `DEMO-05-05`.
 7. Copien `infra/moodle/usuarios-demo-masivo.csv.example` como `usuarios-demo-masivo.csv`.
-8. Reemplacen `CAMBIAR-CLAVE` por una contraseña fuerte.
+8. Reemplacen `CAMBIAR-CLAVE` por una contraseña fuerte ficticia.
 9. En `Site administration > Users > Accounts > Upload users`, suban el CSV.
 10. Seleccionen `Add new only, skip existing users`, contraseña obligatoria desde el archivo y sin cambio obligatorio de contraseña.
 11. Comprueben que cada curso tenga un docente y 25 estudiantes.
+12. Comprueben también que exista el usuario `edumonitor_sync`, inscrito en los 25 cursos con el rol `teacher`.
 
 El CSV de usuarios es una plantilla y no contiene contraseñas reales. No suban la copia modificada con contraseñas al repositorio.
+
+## Crear actividades, entregas, notas y progreso en Moodle
+
+Los CSV de Moodle no pueden crear actividades académicas ni calificaciones. Para que la demostración completa tenga datos reales dentro de Moodle, el compose monta el script `infra/moodle/seed-demo-academico.php` dentro del contenedor.
+
+Después de cargar los cursos y usuarios, ejecuten desde la raíz del repositorio:
+
+```powershell
+docker compose exec -T moodle php /opt/bitnami/moodle/local/edumonitor_seed_massive.php
+```
+
+El script es idempotente para esta demo. Busca los cursos `DEMO-*`, crea dos actividades por curso y genera entregas, calificaciones y estados de finalización ficticios para los estudiantes inscritos. No contiene contraseñas, tokens ni datos reales.
+
+El resultado esperado son dos actividades por curso, con casos de nota cero, nota pendiente, borrador, entrega y finalización incompleta o completa. Si el comando indica que no encontró cursos `DEMO-*`, primero deben cargar el CSV de cursos y usuarios.
+
+## Usuario técnico para la sincronización
+
+No usen el token de `docente1` en `MOODLE_WS_TOKEN`. El sincronizador utiliza un único token por ejecución y necesita leer los 25 cursos. El CSV crea el usuario técnico ficticio `edumonitor_sync` y lo inscribe en los 25 cursos.
+
+En Moodle creen un token para `edumonitor_sync` dentro del servicio web `EduMonitor`. El servicio debe tener únicamente las funciones de lectura documentadas en `infra/moodle/README.md`. Después guarden el token solo en `.env`:
+
+```dotenv
+MOODLE_WS_TOKEN=TOKEN_DEL_USUARIO_EDUMONITOR_SYNC
+```
+
+El usuario técnico se usa únicamente para leer Moodle durante la sincronización. Los docentes siguen siendo los usuarios que inician sesión en EduMonitor y conservan sus cinco cursos autorizados en Auth.
 
 ## Sincronizar Moodle con el programa final
 

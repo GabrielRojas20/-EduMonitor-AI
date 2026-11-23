@@ -81,8 +81,8 @@ Deja a los estudiantes en estas situaciones (en **View all submissions** el doce
    - `core_completion_get_activities_completion_status`
    - `mod_assign_get_assignments`
    - `mod_assign_get_submissions`
-6. En **Authorised users** del servicio agrega a `docente1`.
-7. **Manage tokens → Create token**: usuario `docente1`, servicio `EduMonitor`. Copia el token en el momento: Moodle no lo vuelve a mostrar.
+6. En **Authorised users** del servicio agrega a `edumonitor_sync`, no a `docente1`, para que una sola sincronización pueda leer los 25 cursos.
+7. **Manage tokens → Create token**: usuario `edumonitor_sync`, servicio `EduMonitor`. Copia el token en el momento: Moodle no lo vuelve a mostrar.
 
 **El token es un secreto.** Guárdalo en un archivo fuera del repositorio o en tu `.env` local; nunca en el código, en capturas ni en la evidencia. Todos los servicios son de solo lectura: ninguna función de la lista modifica datos de Moodle.
 
@@ -98,7 +98,7 @@ curl -s -X POST http://localhost:8080/webservice/rest/server.php \
   -d moodlewsrestformat=json
 ```
 
-La respuesta debe incluir `"username":"docente1"` y la versión de Moodle (`release`). Si responde `accessexception`, revisa el permiso del paso 5.3 y que `docente1` esté autorizado en el servicio.
+La respuesta debe incluir `"username":"edumonitor_sync"` y la versión de Moodle (`release`). Si responde `accessexception`, revisa el permiso del paso 5.3 y que `edumonitor_sync` esté autorizado en el servicio.
 
 ## 7. Apagar, reanudar y borrar
 
