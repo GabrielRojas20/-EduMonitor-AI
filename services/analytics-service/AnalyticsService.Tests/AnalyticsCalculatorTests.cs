@@ -169,6 +169,7 @@ public class AnalyticsCalculatorTests
             (SyncId: "sync-actual", Grade: Grade(GradeStatus.Graded, SubmissionStatus.Submitted, 8, 10)),
             (SyncId: "sync-actual", Grade: Grade(GradeStatus.PendingGrading, SubmissionStatus.Submitted, null, 10)),
             (SyncId: "sync-actual", Grade: Grade(GradeStatus.NotSubmitted, SubmissionStatus.Draft, null, 10)),
+            (SyncId: "sync-actual", Grade: Grade(GradeStatus.NotSubmitted, SubmissionStatus.None, null, 10)),
         };
 
         Assert.Equal("sync-actual", latest);
@@ -176,10 +177,10 @@ public class AnalyticsCalculatorTests
             rows.Where(x => x.SyncId == latest).Select(x => x.Grade),
             Array.Empty<CompletionObservation>());
 
-        Assert.Equal(3, rows.Length - 1);
+        Assert.Equal(4, rows.Length - 1);
         Assert.Equal(1, result.Counts.GradedCount);
         Assert.Equal(1, result.Counts.PendingGradingCount);
-        Assert.Equal(1, result.Counts.NotSubmittedCount);
+        Assert.Equal(2, result.Counts.NotSubmittedCount);
         Assert.Equal(50m, result.SubmissionRate.Value);
     }
 
