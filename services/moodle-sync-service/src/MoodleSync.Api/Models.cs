@@ -18,6 +18,11 @@ public record SyncStatusDto(string State, DateTimeOffset? StartedAt, DateTimeOff
 
 public record SyncAcceptedDto(string SyncId, string State);
 
+public record SyncAuditRecord(string SyncId, int CourseId, string UserId, DateTimeOffset StartedAt,
+    DateTimeOffset? FinishedAt, string State, string? ErrorCode);
+
+public record SyncAuditPage(IReadOnlyList<SyncAuditRecord> Items, int CourseId, int Limit);
+
 public record PageDto<T>(IReadOnlyList<T> Items, int Page, int PageSize, int Total);
 
 public record ProblemDto(string Title, int Status, string Code,

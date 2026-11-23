@@ -1,9 +1,12 @@
 using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using Microsoft.IdentityModel.Tokens;
 using Xunit;
 
 namespace MoodleSync.Tests;
@@ -24,6 +27,16 @@ public class SyncTests
         Assert.Equal("application/problem+json", r.Content.Headers.ContentType?.MediaType);
         var body = await r.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(code, body.GetProperty("code").GetString());
+    }
+
+    private static string TokenWithoutSub()
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestEnv.Secret));
+        var claims = new[] { new Claim("role", "teacher") };
+        var jwt = new JwtSecurityToken("edumonitor", "edumonitor-api", claims,
+            DateTime.UtcNow, DateTime.UtcNow.AddHours(1),
+            new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
+        return new JwtSecurityTokenHandler().WriteToken(jwt);
     }
 
     [Fact]
@@ -189,8 +202,23 @@ public class SyncTests
         Assert.Equal("failed", status.GetProperty("state").GetString());
         Assert.Equal("MOODLE_ERROR", status.GetProperty("errorCode").GetString());
 
+        var history = await env.JsonAsync("/courses/2/sync/history?limit=10");
+        var audit = history.GetProperty("items")[0];
+        Assert.Equal("failed", audit.GetProperty("state").GetString());
+        Assert.Equal("MOODLE_ERROR", audit.GetProperty("errorCode").GetString());
+
         // No se guardó nada a medias: sigue sin datos.
         await AssertProblem(await env.Http.GetAsync("/courses/2/students"), HttpStatusCode.ServiceUnavailable, "DATA_NOT_AVAILABLE");
+    }
+
+    [Fact]
+    public async Task Token_sin_sub_devuelve_401_TOKEN_INVALID()
+    {
+        using var env = new TestEnv();
+        using var client = env.Anonymous();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TokenWithoutSub());
+
+        await AssertProblem(await client.PostAsync("/courses/2/sync", null), HttpStatusCode.Unauthorized, "TOKEN_INVALID");
     }
 
     [Fact]
@@ -200,5 +228,26 @@ public class SyncTests
         var status = await env.SyncAndWaitAsync(77);
         Assert.Equal("failed", status.GetProperty("state").GetString());
         Assert.Equal("COURSE_NOT_IN_MOODLE", status.GetProperty("errorCode").GetString());
+    }
+
+    [Fact]
+    public async Task Dos_sincronizaciones_quedan_auditadas_con_usuario_y_resultado()
+    {
+        using var env = new TestEnv();
+        await env.SyncAndWaitAsync(2);
+        await env.SyncAndWaitAsync(2);
+
+        var history = await env.JsonAsync("/courses/2/sync/history?limit=10");
+        var items = history.GetProperty("items").EnumerateArray().ToArray();
+        Assert.Equal(2, items.Length);
+        Assert.All(items, item =>
+        {
+            Assert.Equal(2, item.GetProperty("courseId").GetInt32());
+            Assert.Equal("1", item.GetProperty("userId").GetString());
+            Assert.Equal("succeeded", item.GetProperty("state").GetString());
+            Assert.NotEqual(JsonValueKind.Null, item.GetProperty("startedAt").ValueKind);
+            Assert.NotEqual(JsonValueKind.Null, item.GetProperty("finishedAt").ValueKind);
+        });
+        Assert.NotEqual(items[0].GetProperty("syncId").GetString(), items[1].GetProperty("syncId").GetString());
     }
 }

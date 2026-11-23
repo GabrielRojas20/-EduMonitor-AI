@@ -74,13 +74,22 @@ static IResult NotSynced(HttpContext ctx)
 
 app.MapPost("/courses/{courseId:int}/sync", async Task<IResult> (int courseId, SyncService sync, HttpContext ctx) =>
 {
-    var r = await sync.StartAsync(courseId);
+    var userId = ctx.User.FindFirst("sub")?.Value;
+    if (string.IsNullOrWhiteSpace(userId)) return Problems.Result(ctx, 401, "TOKEN_INVALID", "El token no contiene el usuario");
+    var r = await sync.StartAsync(courseId, userId);
     return r.Outcome switch
     {
         "accepted" => Results.Json(new SyncAcceptedDto(r.SyncId!, "running"), statusCode: 202),
         "conflict" => Problems.Result(ctx, 409, "SYNC_IN_PROGRESS", "Ya hay una sincronización en curso"),
         _ => Problems.Result(ctx, 503, "MOODLE_UNAVAILABLE", "Moodle no está disponible", r.Detail),
     };
+}).RequireAuthorization();
+
+app.MapGet("/courses/{courseId:int}/sync/history", async Task<IResult> (int courseId, int? limit, ISyncStore store) =>
+{
+    var take = Math.Clamp(limit ?? 50, 1, 200);
+    var items = await store.GetAuditHistoryAsync(courseId, take);
+    return Results.Ok(new SyncAuditPage(items, courseId, take));
 }).RequireAuthorization();
 
 app.MapGet("/courses/{courseId:int}/sync", async Task<IResult> (int courseId, ISyncStore store) =>
