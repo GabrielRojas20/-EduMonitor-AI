@@ -28,6 +28,7 @@ export function DashboardPage() {
   const [syncing, setSyncing] = useState(false)
   const [success, setSuccess] = useState('')
   const load = useCallback(async () => {
+    setLoading(true)
     if (!Number.isInteger(courseId) || courseId <= 0) { setError('Identificador de curso inválido.'); setLoading(false); return }
     setError(''); setWarnings([])
     const calls = await Promise.allSettled([
@@ -49,7 +50,10 @@ export function DashboardPage() {
     setWarnings([...new Set(missingMsgs)])
     setLoading(false)
   }, [courseId])
-  useEffect(() => { setCourse(null); setAnalytics(null); setStudents([]); setGrades([]); setAlerts([]); setPage(1); setLoading(true); void load() }, [load])
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load() }, 0)
+    return () => window.clearTimeout(timer)
+  }, [load])
   useEffect(() => {
     if (syncStatus?.state !== 'running') return
     const timer = window.setInterval(async () => {
@@ -97,7 +101,7 @@ export function DashboardPage() {
   }, [alerts, grades, students])
   if (loading) return <><Link className="back-link" to="/cursos" viewTransition><ArrowLeft size={17}/> Mis cursos</Link>{hint?.name && <section className="dash-head"><div><div className="eyebrow">{`Curso · ${hint.code || ''}`}</div><h1 style={{ viewTransitionName: `course-title-${courseId}` }}>{hint.name}</h1></div></section>}<StateView kind="loading" title="Preparando el dashboard" detail="Consultando indicadores, estudiantes, actividades y alertas…"/></>
   if (!course) return <><Link className="back-link" to="/cursos" viewTransition><ArrowLeft size={17}/> Volver a cursos</Link><StateView kind="error" detail={error || 'El curso no existe o no tienes permiso.'} onRetry={()=>{setLoading(true);void load()}}/></>
-  return <><Link className="back-link" to="/cursos" viewTransition><ArrowLeft size={17}/> Mis cursos</Link><section className="dash-head"><div><div className="eyebrow">{`Curso · ${course.shortName}`}</div><h1 style={{ viewTransitionName: `course-title-${courseId}` }}>{course.fullName}</h1><p>Información de rendimiento académico del curso, basada en la fuente sincronizada.</p></div><div className="button-group"><Badge tone={syncStatus?.state==='succeeded'?'success':syncStatus?.state==='running'?'info':'neutral'}>{statusText(syncStatus?.state)}</Badge><Button variant="secondary" icon={<RefreshCw size={16}/>} onClick={()=>{setLoading(true);void load()}}>Actualizar</Button><Button icon={<RefreshCw size={16}/>} loading={syncing || syncStatus?.state==='running'} disabled={syncStatus?.state==='running'} onClick={()=>void sync()}>Sincronizar</Button></div></section>
+  return <><Link className="back-link" to="/cursos" viewTransition><ArrowLeft size={17}/> Mis cursos</Link><section className="dash-head"><div><div className="eyebrow">{`Curso · ${course.shortName}`}</div><h1 style={{ viewTransitionName: `course-title-${courseId}` }}>{course.fullName}</h1><p>Información de rendimiento académico del curso, basada en la fuente sincronizada.</p></div><div className="button-group"><Badge tone={syncStatus?.state==='succeeded'?'success':syncStatus?.state==='running'?'info':'neutral'}>{statusText(syncStatus?.state)}</Badge><Button variant="secondary" icon={<RefreshCw size={16}/>} onClick={()=>{setLoading(true);void load()}}>Actualizar</Button><Button icon={<RefreshCw size={16}/>} loading={syncing || syncStatus?.state==='running'} disabled={syncStatus?.state==='running'} onClick={()=>void sync()}>Sincronizar</Button><Link className="btn btn-secondary" to={`/cursos/${courseId}/informe`}><ClipboardList size={16}/> Ver informe</Link></div></section>
   {error && <Notice tone="danger">{error}</Notice>}{success && <Notice tone="success">{success}</Notice>}{warnings.map((w,i)=><Notice tone="warning" key={i}>{w}</Notice>)}
   {analytics?.snapshot.dataQuality !== 'complete' && <Notice tone="warning">{analytics ? 'Los indicadores contienen información parcial o no disponible. Los valores ausentes no se sustituyen por cero.' : 'No hay indicadores disponibles. Sincroniza el curso o comprueba analytics-service.'}</Notice>}
   <div className="info-row"><span><BookOpen size={16}/> {course.shortName}</span><span>Última sincronización exitosa: <strong>{dateLabel(syncStatus?.lastSuccessAt || course.lastSyncAt)}</strong></span><span>Indicadores calculados: <strong>{dateLabel(analytics?.snapshot.calculatedAt)}</strong></span></div>

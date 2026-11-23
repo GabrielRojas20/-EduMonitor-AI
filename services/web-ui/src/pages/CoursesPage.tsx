@@ -45,7 +45,10 @@ export function CoursesPage() {
     } catch (e) { setError(friendlyError(e)) }
     finally { setLoading(false) }
   }, [])
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load() }, 0)
+    return () => window.clearTimeout(timer)
+  }, [load])
   useEffect(() => {
     if (!Object.values(statuses).some(s => s.state === 'running')) return
     const timer = window.setInterval(async () => {

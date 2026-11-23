@@ -33,7 +33,10 @@ export function AlertsPage() {
       setPartial(results.some(r=>r.truncated))
     } catch(e){setAlerts([]);setError(friendlyError(e))} finally {setLoading(false)}
   },[courseId,severity,status,studentId])
-  useEffect(()=>{void load()},[load])
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load() }, 0)
+    return () => window.clearTimeout(timer)
+  }, [load])
   const filtered = useMemo(()=>alerts.filter(a=>`${a.ruleCode} ${a.alertId} ${a.studentId || ''} ${a.evidence.map(e=>e.explanation).join(' ')}`.toLowerCase().includes(search.toLowerCase())),[alerts,search])
   const chosen = filtered.find(a=>a.alertId===selected) || filtered[0]
   const changeCourse = (v:string) => {setCourseId(v); const next=new URLSearchParams(params);next.set('curso',v);next.delete('estudiante');setParams(next)}

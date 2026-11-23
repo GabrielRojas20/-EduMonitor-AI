@@ -707,3 +707,27 @@ button.card-alert { font: inherit; cursor: pointer; touch-action: manipulation; 
   .rot-dot { animation: none; }
   ::view-transition-group(*) { animation-duration: 1ms; }
 }
+
+/* HU-06: informe académico — mantiene las variables del rediseño del Sprint 3 */
+.academic-report { display: grid; gap: 24px; }
+.report-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 24px; }
+.report-meta > div { display: grid; align-content: start; gap: 8px; min-width: 0; }
+.report-meta svg { color: var(--n-900); }
+.report-meta span { font-size: 13px; color: var(--ink-3); }
+.report-meta strong { color: var(--ink); font-size: 15px; overflow-wrap: anywhere; }
+.report-section { display: grid; gap: 18px; }
+.report-section-heading h2 { font-family: var(--font-display); font-size: clamp(22px, 3vw, 29px); letter-spacing: -0.035em; }
+.report-section-heading p { color: var(--ink-3); margin-top: 3px; }
+.report-findings { padding: 26px; }
+.report-findings-list { padding: 0; margin: 18px 0 0; list-style: none; display: grid; gap: 16px; }
+.report-findings-list li { display: flex; align-items: flex-start; gap: 15px; padding: 18px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg); }
+.report-finding-icon { border-radius: 12px; padding: 12px; color: var(--n-900); background: var(--ok-bg); }
+.report-finding-content { flex: 1; min-width: 0; display: grid; gap: 10px; }
+.report-finding-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.report-finding-content p { color: var(--ink-2); }
+.report-evidence { display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: 13px; }
+.report-sources { font-size: 12px; color: var(--ink-3); overflow-wrap: anywhere; }
+.report-note { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--ink-3); }
+@media (max-width: 900px) { .report-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) { .report-meta { grid-template-columns: 1fr; } .report-findings { padding: 16px; } .report-findings-list li { padding: 14px; } }
+@media (prefers-reduced-motion: reduce) { .academic-report .stagger > * { animation: none !important; transition: none !important; } }

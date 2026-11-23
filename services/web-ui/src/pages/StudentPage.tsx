@@ -30,7 +30,10 @@ export function StudentPage() {
     if (a.status==='fulfilled' && a.value.truncated) others.push('La lista de alertas de este estudiante está incompleta.')
     setWarnings(others);setLoading(false)
   },[courseId,studentId])
-  useEffect(()=>{setCourse(null);setDetail(null);setMetrics(null);setAlerts([]);void load()},[load])
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load() }, 0)
+    return () => window.clearTimeout(timer)
+  }, [load])
   if (loading) return <StateView kind="loading" title="Cargando ficha individual"/>
   if (!detail) return <><Link viewTransition className="back-link" to={`/cursos/${courseId}`}><ArrowLeft size={17}/> Volver al curso</Link><StateView kind="error" detail={error || 'No hay datos para este estudiante.'} onRetry={()=>void load()}/></>
   const {student,grades,activities}=detail
