@@ -14,6 +14,8 @@ if (PHP_SAPI !== 'cli') {
     exit("Este archivo solo se puede ejecutar por CLI.\n");
 }
 
+define('CLI_SCRIPT', true);
+
 $configCandidates = [
     __DIR__ . '/../../config.php',
     '/opt/bitnami/moodle/config.php',
