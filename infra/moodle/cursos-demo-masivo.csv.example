@@ -1,26 +1,26 @@
 shortname,fullname,category_id,idnumber
-DEMO-01-01,"Curso demo 1, grupo 1",1,DEMO-01-01
-DEMO-01-02,"Curso demo 1, grupo 2",1,DEMO-01-02
-DEMO-01-03,"Curso demo 1, grupo 3",1,DEMO-01-03
-DEMO-01-04,"Curso demo 1, grupo 4",1,DEMO-01-04
-DEMO-01-05,"Curso demo 1, grupo 5",1,DEMO-01-05
-DEMO-02-01,"Curso demo 2, grupo 1",1,DEMO-02-01
-DEMO-02-02,"Curso demo 2, grupo 2",1,DEMO-02-02
-DEMO-02-03,"Curso demo 2, grupo 3",1,DEMO-02-03
-DEMO-02-04,"Curso demo 2, grupo 4",1,DEMO-02-04
-DEMO-02-05,"Curso demo 2, grupo 5",1,DEMO-02-05
-DEMO-03-01,"Curso demo 3, grupo 1",1,DEMO-03-01
-DEMO-03-02,"Curso demo 3, grupo 2",1,DEMO-03-02
-DEMO-03-03,"Curso demo 3, grupo 3",1,DEMO-03-03
-DEMO-03-04,"Curso demo 3, grupo 4",1,DEMO-03-04
-DEMO-03-05,"Curso demo 3, grupo 5",1,DEMO-03-05
-DEMO-04-01,"Curso demo 4, grupo 1",1,DEMO-04-01
-DEMO-04-02,"Curso demo 4, grupo 2",1,DEMO-04-02
-DEMO-04-03,"Curso demo 4, grupo 3",1,DEMO-04-03
-DEMO-04-04,"Curso demo 4, grupo 4",1,DEMO-04-04
-DEMO-04-05,"Curso demo 4, grupo 5",1,DEMO-04-05
-DEMO-05-01,"Curso demo 5, grupo 1",1,DEMO-05-01
-DEMO-05-02,"Curso demo 5, grupo 2",1,DEMO-05-02
-DEMO-05-03,"Curso demo 5, grupo 3",1,DEMO-05-03
-DEMO-05-04,"Curso demo 5, grupo 4",1,DEMO-05-04
-DEMO-05-05,"Curso demo 5, grupo 5",1,DEMO-05-05
+DEMO-01-01,"08080113 - Física",1,DEMO-01-01
+DEMO-01-02,"08080114 - Álgebra Lineal",1,DEMO-01-02
+DEMO-01-03,"08080115 - Cálculo Diferencial",1,DEMO-01-03
+DEMO-01-04,"08080116 - Algoritmos y Lógica de Programación",1,DEMO-01-04
+DEMO-01-05,"08080117 - Lógica Matemática",1,DEMO-01-05
+DEMO-02-01,"08080201 - Fundamentos de Ingeniería de Software",1,DEMO-02-01
+DEMO-02-02,"08080202 - Programación Orientada a Objetos",1,DEMO-02-02
+DEMO-02-03,"08080203 - Sistemas Operativos",1,DEMO-02-03
+DEMO-02-04,"08080204 - Metodología de la Investigación",1,DEMO-02-04
+DEMO-02-05,"08080205 - Métodos Numéricos",1,DEMO-02-05
+DEMO-03-01,"08080206 - Estructura de Datos",1,DEMO-03-01
+DEMO-03-02,"08080207 - Probabilidad y Estadística",1,DEMO-03-02
+DEMO-03-03,"08080208 - Modelamiento y Diseño de Software",1,DEMO-03-03
+DEMO-03-04,"08080209 - Introducción a Redes",1,DEMO-03-04
+DEMO-03-05,"08080210 - Metodologías Ágiles",1,DEMO-03-05
+DEMO-04-01,"08080211 - Redes",1,DEMO-04-01
+DEMO-04-02,"08080212 - Base de Datos",1,DEMO-04-02
+DEMO-04-03,"08080213 - Investigación Operativa",1,DEMO-04-03
+DEMO-04-04,"08080214 - Patrones de Software",1,DEMO-04-04
+DEMO-04-05,"08080215 - Calidad de Software",1,DEMO-04-05
+DEMO-05-01,"08080216 - Ingeniería de Requisitos",1,DEMO-05-01
+DEMO-05-02,"08080217 - Arquitectura de Software",1,DEMO-05-02
+DEMO-05-03,"08080218 - Seguridad Informática",1,DEMO-05-03
+DEMO-05-04,"08080219 - Desarrollo Web",1,DEMO-05-04
+DEMO-05-05,"08080220 - Gestión de Proyectos",1,DEMO-05-05

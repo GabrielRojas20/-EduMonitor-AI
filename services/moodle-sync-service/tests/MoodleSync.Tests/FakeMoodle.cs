@@ -54,7 +54,7 @@ public sealed class FakeMoodle : IDisposable
     {
         "core_webservice_get_site_info" => new { userid = 3, username = "docente1", release = "5.2.4 (Build: 20261005)" },
         "core_enrol_get_users_courses" => MassiveMode
-            ? new[] { new { id = 7, shortname = "DEMO-01-01", fullname = "Curso demo 1, grupo 1" } }
+            ? new[] { new { id = 7, shortname = "DEMO-01-01", fullname = "08080113 - Física" } }
             : new[] { new { id = 2, shortname = "PRUEBA01", fullname = "Curso de Prueba EduMonitor" } },
         "core_enrol_get_enrolled_users" => Users(),
         "mod_assign_get_assignments" => new

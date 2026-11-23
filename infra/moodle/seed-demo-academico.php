@@ -69,6 +69,17 @@ function enrolled_students(int $courseid): array {
     }));
 }
 
+function assignment_names(stdClass $course): array {
+    $names = [
+        'DEMO-01-01' => ['Laboratorio de movimiento', 'Ejercicios de cinemática'], 'DEMO-01-02' => ['Operaciones con matrices', 'Resolución de sistemas lineales'], 'DEMO-01-03' => ['Límites y continuidad', 'Aplicaciones de la derivada'], 'DEMO-01-04' => ['Diagramas de flujo', 'Implementación de algoritmos básicos'], 'DEMO-01-05' => ['Proposiciones y tablas de verdad', 'Demostraciones lógicas'],
+        'DEMO-02-01' => ['Ciclo de vida del software', 'Especificación de un sistema'], 'DEMO-02-02' => ['Clases y encapsulamiento', 'Herencia y polimorfismo'], 'DEMO-02-03' => ['Procesos e hilos', 'Gestión de memoria'], 'DEMO-02-04' => ['Planteamiento del problema', 'Diseño del protocolo de investigación'], 'DEMO-02-05' => ['Métodos de interpolación', 'Aproximación de raíces'],
+        'DEMO-03-01' => ['Listas y árboles', 'Implementación de grafos'], 'DEMO-03-02' => ['Distribuciones de probabilidad', 'Análisis estadístico de datos'], 'DEMO-03-03' => ['Diagrama de clases', 'Diseño de arquitectura'], 'DEMO-03-04' => ['Modelo OSI y TCP/IP', 'Direccionamiento IPv4'], 'DEMO-03-05' => ['Historias de usuario', 'Planificación de un sprint'],
+        'DEMO-04-01' => ['Diseño de red local', 'Configuración de servicios de red'], 'DEMO-04-02' => ['Modelo entidad relación', 'Consultas SQL académicas'], 'DEMO-04-03' => ['Programación lineal', 'Modelo de transporte'], 'DEMO-04-04' => ['Patrones creacionales', 'Patrones estructurales'], 'DEMO-04-05' => ['Plan de pruebas', 'Métricas de calidad'],
+        'DEMO-05-01' => ['Levantamiento de requisitos', 'Especificación de requisitos'], 'DEMO-05-02' => ['Arquitectura en capas', 'Evaluación de estilos arquitectónicos'], 'DEMO-05-03' => ['Análisis de vulnerabilidades', 'Controles de seguridad'], 'DEMO-05-04' => ['Maquetación responsive', 'API web y consumo de datos'], 'DEMO-05-05' => ['Cronograma del proyecto', 'Matriz de riesgos'],
+    ];
+    return $names[$course->shortname] ?? ['Actividad práctica 1', 'Actividad práctica 2'];
+}
+
 function get_or_create_assignment(stdClass $course, string $name, int $maxgrade, int $now): array {
     global $DB;
     $module = $DB->get_record('modules', ['name' => 'assign'], '*', MUST_EXIST);
@@ -182,8 +193,9 @@ if (!$courses) {
 }
 
 foreach ($courses as $course) {
-    [$assignment1, $cm1, $created1] = get_or_create_assignment($course, 'Actividad demo 1', 10, $now);
-    [$assignment2, $cm2, $created2] = get_or_create_assignment($course, 'Actividad demo 2', 10, $now);
+    [$activity1, $activity2] = assignment_names($course);
+    [$assignment1, $cm1, $created1] = get_or_create_assignment($course, $activity1, 10, $now);
+    [$assignment2, $cm2, $created2] = get_or_create_assignment($course, $activity2, 10, $now);
     $createdAssignments += (int)$created1 + (int)$created2;
 
     $students = enrolled_students((int)$course->id);
