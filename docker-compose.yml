@@ -181,8 +181,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5001
-      - ConnectionStrings__Auth=${ConnectionStrings__Auth}
-      - ConnectionStrings__EduMonitor=${ConnectionStrings__EduMonitor}
+      - ConnectionStrings__Auth=Server=sqlserver,1433;Database=EduMonitorAuth;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      - ConnectionStrings__EduMonitor=Server=sqlserver,1433;Database=EduMonitor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
       - JWT_SECRET=${JWT_SECRET}
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
