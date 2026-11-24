@@ -117,6 +117,17 @@ def fallback_arguments(message: str) -> dict:
     return {"course_name": code.group()} if code else {}
 
 
+# Palabras que el docente usa para hablar de todo el curso o de todos los estudiantes: nunca son el nombre de un curso, de un
+# estudiante ni de una actividad. Un modelo pequeño las toma por un nombre («¿Qué alertas tiene el curso?» -> student_name='curso').
+GENERIC_NAMES = {"curso", "el curso", "este curso", "cursos", "mis cursos", "clase", "la clase", "grupo", "el grupo", "estudiante",
+                 "estudiantes", "los estudiantes", "mis estudiantes", "alumno", "alumnos", "los alumnos", "mis alumnos", "todos",
+                 "todo", "todos los estudiantes", "todo el curso", "todos los alumnos"}
+
+
+def is_generic_name(value: str) -> bool:
+    return normalize(value).strip(" .,;:¿?¡!\"'«»") in GENERIC_NAMES
+
+
 def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
     """Corrige lo que un modelo pequeño suele equivocar: el código de curso del mensaje (PRUEBA01) se usa como curso y se quita de
     cualquier otro campo (puso «PRUEBA01» como actividad), y el estado pedido se deduce del texto en vez de confiar en el modelo."""
@@ -125,7 +136,7 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
     for key in WRITTEN_ARGS:  # un nombre solo vale si el docente lo escribió; si no, el código lo descarta (también el del curso)
         value = args.get(key)
         if isinstance(value, str):
-            if not written_in(value, message):
+            if not written_in(value, message) or is_generic_name(value):
                 args.pop(key)
             elif key == "activity_name" and any(re.search(p, normalize(value)) for p, _ in STATUS_HINTS):
                 args.pop(key)  # «pendientes de calificar» es un estado, no una actividad

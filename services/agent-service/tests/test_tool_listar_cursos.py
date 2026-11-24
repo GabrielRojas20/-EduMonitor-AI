@@ -354,6 +354,12 @@ def test_course_code_put_in_the_wrong_field_is_moved_to_the_course():
     ("identificar_alertas", {"student_name": "prueba01"}, "Alertas de PRUEBA01", {"course_name": "PRUEBA01"}),
     ("listar_cursos", {}, "¿Qué cursos tengo en PRUEBA01?", {}),                                          # sin parámetro de curso
     ("obtener_progreso", {}, "¿Cómo van mis estudiantes?", {}),                                           # sin código: no se inventa
+    # el fallo visto el 24 de noviembre: «el curso» no es el nombre de un estudiante, y «mis estudiantes» tampoco el de un curso
+    ("identificar_alertas", {"student_name": "curso"}, "¿Qué alertas tiene el curso y qué me recomiendas?", {}),
+    ("identificar_alertas", {"student_name": "el curso"}, "¿Qué alertas tiene este curso?", {}),
+    ("obtener_progreso", {"course_name": "mis estudiantes"}, "¿Cuál es el progreso de mis estudiantes?", {}),
+    ("obtener_calificaciones", {"student_name": "estudiantes"}, "¿Qué calificaciones tienen los estudiantes?", {}),
+    ("identificar_alertas", {"student_name": "Ana Pérez"}, "¿Qué alertas tiene Ana Pérez?", {"student_name": "Ana Pérez"}),   # un nombre real se conserva
 ])
 def test_fix_arguments(tool, given, message, expected):
     from app.graph import fix_arguments
