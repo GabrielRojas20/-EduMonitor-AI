@@ -518,3 +518,12 @@ def test_a_course_without_a_sync_date_never_gets_a_student_count_invented():
     from app.catalog.listar_cursos import facts as f
     data = {"courses": [{"id": 3, "shortName": "X", "fullName": "Sin datos", "studentCount": 9, "lastSyncAt": None}], "total": 1}
     assert "aún no se sincronizó" in f(data)[1]
+
+
+def test_a_student_name_the_model_put_as_course_is_kept_as_student():
+    """Con curso elegido, «¿Cómo va Elena Escobar León?» -> course_name='Elena Escobar León' ya no pierde al estudiante."""
+    from app.graph import with_reference_course
+    assert with_reference_course({"course_name": "Elena Escobar León"}, 201, "¿Cómo va Elena Escobar León?", True) \
+        == {"course_id": 201, "student_name": "Elena Escobar León"}
+    assert with_reference_course({"course_name": "Elena Escobar León"}, 201, "¿Cómo va Elena?", False) == {"course_id": 201}
+    assert with_reference_course({"course_name": "el curso"}, 201, "¿Cómo va el curso?", True) == {"course_id": 201}

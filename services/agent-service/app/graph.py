@@ -152,7 +152,7 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
     return args
 
 
-def with_reference_course(arguments: dict, reference: int, message: str) -> dict:
+def with_reference_course(arguments: dict, reference: int, message: str, student_capable: bool = False) -> dict:
     """Aplica el curso de referencia que el docente eligió en la interfaz, sin dejar `course_id` y `course_name` a la vez.
 
     Si en la pregunta escribió un curso (PRUEBA01), lo escrito gana al selector. En otro caso manda el curso elegido, y se
@@ -161,7 +161,11 @@ def with_reference_course(arguments: dict, reference: int, message: str) -> dict
     if args.get("course_name") and COURSE_CODE.search(message):
         args.pop("course_id", None)
     else:
-        args.pop("course_name", None)
+        named = args.pop("course_name", None)
+        # Con el curso ya elegido, un nombre que el modelo puso como curso es casi siempre el de un estudiante
+        # («¿Cómo va Elena Escobar León?» -> course_name='Elena Escobar León'): se usa como estudiante en vez de perderlo.
+        if named and student_capable and not args.get("student_name") and not args.get("student_id") and not is_generic_name(named):
+            args["student_name"] = named
         args["course_id"] = reference
     return args
 
@@ -392,7 +396,8 @@ class Agent:
                 call["arguments"] = {k: v for k, v in call["arguments"].items() if k not in tool.hidden}
             call["arguments"] = fix_arguments(call["name"], call["arguments"], state["message"])
             if state.get("course_id") and tool is not None and "course_id" in tool.input_model.model_fields:
-                call["arguments"] = with_reference_course(call["arguments"], state["course_id"], state["message"])
+                call["arguments"] = with_reference_course(call["arguments"], state["course_id"], state["message"],
+                                                           "student_name" in tool.input_model.model_fields)
         fallback = None
         if not plan:
             fallback = fallback_tool(state["message"], self.tools.names())
