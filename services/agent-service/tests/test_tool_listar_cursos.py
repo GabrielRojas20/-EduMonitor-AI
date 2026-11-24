@@ -414,7 +414,7 @@ def grades_gateway_by_id(request):
 @pytest.mark.parametrize("given,message,expected", [
     ({"activity_name": "2"}, "¿Qué actividades están pendientes de calificar?", {"status": "pending_grading"}),     # el número del selector
     ({"activity_name": "pendientes de calificar"}, "¿Qué actividades están pendientes de calificar?", {"status": "pending_grading"}),
-    ({"student_name": "Ana Pérez"}, "¿Cómo va Ana?", {}),                                                            # no escribió «Pérez»
+    ({"student_name": "Ana Pérez"}, "¿Cómo va Ana?", {"student_name": "Ana"}),                                                            # no escribió «Pérez»
     ({"student_name": "Estudiante Dos"}, "¿Cómo va Estudiante Dos?", {"student_name": "Estudiante Dos"}),
     ({"activity_name": "Tarea 2"}, "Notas de la Tarea 2", {"activity_name": "Tarea 2"}),
     ({"activity_name": "tarea 2"}, "Notas de la TAREA 2", {"activity_name": "tarea 2"}),                              # sin distinguir mayúsculas
@@ -527,3 +527,43 @@ def test_a_student_name_the_model_put_as_course_is_kept_as_student():
         == {"course_id": 201, "student_name": "Elena Escobar León"}
     assert with_reference_course({"course_name": "Elena Escobar León"}, 201, "¿Cómo va Elena?", False) == {"course_id": 201}
     assert with_reference_course({"course_name": "el curso"}, 201, "¿Cómo va el curso?", True) == {"course_id": 201}
+
+
+@pytest.mark.parametrize("message,expected", [
+    ("¿Qué notas tiene Bruno Benítez Paredes?", "Bruno Benítez Paredes"),
+    ("¿Qué notas tiene Bruno?", "Bruno"),
+    ("¿Cómo va Elena Escobar León?", "Elena Escobar León"),
+    ("Notas de Tarea 2 en PRUEBA01", None),
+    ("¿Qué falta por calificar?", None),
+    ("¿Qué alertas tiene el curso?", None),
+])
+def test_student_in_message(message, expected):
+    from app.graph import student_in_message
+    assert student_in_message(message) == expected
+
+
+def test_a_written_student_name_is_added_when_the_model_omits_it():
+    from app.graph import fix_arguments
+    assert fix_arguments("obtener_calificaciones", {}, "¿Qué notas tiene Bruno Benítez Paredes?") == {"student_name": "Bruno Benítez Paredes"}
+
+
+def test_praise_is_dropped_when_the_average_is_low():
+    from app.graph import drop_unfounded_praise
+    answer = {"facts": [{"text": "Promedio de notas (escala de 0 a 10): 5."}],
+              "inferences": [{"text": "Su rendimiento es excelente.", "basedOn": [0]}, {"text": "El promedio es bajo.", "basedOn": [0]}],
+              "recommendations": [{"text": "Mantener el buen desempeño.", "relatedFinding": 0}], "unavailable": []}
+    fixed, removed = drop_unfounded_praise(answer)
+    assert removed == 2 and [i["text"] for i in fixed["inferences"]] == ["El promedio es bajo."] and fixed["recommendations"] == []
+    answer["facts"] = [{"text": "Promedio de notas (escala de 0 a 10): 8,5."}]
+    assert drop_unfounded_praise(answer)[1] == 0
+
+
+def test_validar_salida_returns_the_answer_without_praise():
+    from app.graph import Agent
+    from types import SimpleNamespace
+    answer = {"facts": [{"text": "Promedio de notas (escala de 0 a 10): 5.", "tool": "obtener_progreso", "stepN": 1}],
+              "inferences": [{"text": "Su rendimiento es excelente.", "basedOn": [0]}], "recommendations": [], "unavailable": []}
+    state = {"answer": answer, "message": "¿Cómo va Elena?", "course_id": 201,
+             "tool_results": [{"output": {"data": {"averageScore10": 5, "scale": [0, 10]}}}]}
+    out = Agent.validar_salida(SimpleNamespace(settings=None), state)
+    assert out["answer"]["inferences"] == [] and "valoración" in out["answer"]["unavailable"][0]
