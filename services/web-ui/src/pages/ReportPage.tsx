@@ -77,13 +77,13 @@ export function ReportPage() {
     />
     {hasPartial && <Notice tone="warning">Los indicadores incluyen datos parciales o no disponibles. No se sustituyen por cero.</Notice>}
     <Card className="report-meta">
-      <div><CalendarDays size={19} /><span>Inicio del período</span><strong>{dateLabel(report.periodStart)}</strong></div>
-      <div><CalendarDays size={19} /><span>Fin del período</span><strong>{dateLabel(report.periodEnd)}</strong></div>
+      <div><CalendarDays size={19} /><span>Primera observación</span><strong>{dateLabel(report.periodStart)}</strong></div>
+      <div><CalendarDays size={19} /><span>Última observación</span><strong>{dateLabel(report.periodEnd)}</strong></div>
       <div><ShieldCheck size={19} /><span>Corte de indicadores</span><strong>{dateLabel(report.snapshot?.calculatedAt)}</strong></div>
       <div><ClipboardList size={19} /><span>Alertas activas</span><strong>{typeof report.activeAlertCount === 'number' ? numberLabel(report.activeAlertCount, 0) : 'No disponible'}</strong></div>
     </Card>
     <section aria-labelledby="report-metrics-title" className="report-section">
-      <div className="report-section-heading"><h2 id="report-metrics-title">Indicadores del período</h2><p>Calculados por analytics-service sobre los datos sincronizados.</p></div>
+      <div className="report-section-heading"><h2 id="report-metrics-title">Indicadores del curso</h2><p>Calculados por analytics-service sobre los datos sincronizados.</p></div>
       {entries.length ? <div className="metrics-grid stagger">{entries.map(([key, metric]) => <MetricCard key={key} title={metricTitle(key)} metric={metric} />)}</div>
         : <StateView kind="empty" title="Todavía no hay indicadores" detail="Sincroniza el curso y vuelve a consultar el informe." />}
     </section>
@@ -99,7 +99,7 @@ export function ReportPage() {
             {finding.sourceIds?.length ? <div className="report-sources">Fuentes: {finding.sourceIds.join(' · ')}</div> : <div className="report-sources">Identificadores de fuente no disponibles</div>}
             {finding.alertId && <Link className="table-link" to={`/alertas?curso=${courseId}`}>Consultar alerta y evidencia</Link>}
           </div>
-        </li>)}</ol> : <StateView kind="empty" title="Sin hallazgos registrados" detail="El servicio no devolvió hallazgos para este período. Comprueba el estado de los datos si esperabas alguno." />}
+        </li>)}</ol> : <StateView kind="empty" title="Sin hallazgos registrados" detail="El servicio no devolvió hallazgos para este corte de datos. Comprueba el estado de los datos si esperabas alguno." />}
       </Card>
     </section>
     <div className="report-note"><ShieldCheck size={17} /> Informe de consulta académica basado en el contrato de analytics-service. Las recomendaciones pedagógicas del agente se consultan en el chat.</div>

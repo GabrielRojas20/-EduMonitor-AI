@@ -25,6 +25,13 @@ describe('Indicadores y estados de pantalla', () => {
     expect(screen.getByText('Intenta sincronizar el curso.')).toBeInTheDocument()
   })
 
+  it('incluye una ilustración contextual en los estados vacíos', () => {
+    render(<StateView kind="empty" title="Sin cursos disponibles" />)
+    expect(screen.getByTestId('empty-illustration')).toBeInTheDocument()
+    expect(screen.getByText('Sin cursos disponibles')).toBeInTheDocument()
+    expect(screen.getByTestId('empty-illustration')).toHaveAttribute('aria-hidden', 'true')
+  })
+
   it('ofrece reintentar ante un fallo de conexión', () => {
     const retry = vi.fn()
     render(<StateView kind="error" title="Sin conexión" onRetry={retry} />)
