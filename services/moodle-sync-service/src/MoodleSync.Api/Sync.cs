@@ -81,9 +81,9 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
         var handedOff = false;
         try
         {
-        try
-        {
-            await store.StartAuditAsync(audit);
+            try
+            {
+                await store.StartAuditAsync(audit);
             }
             catch (Exception ex)
             {
@@ -147,12 +147,12 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
         SyncStatusDto result;
         try
         {
-        try
-        {
-            var snapshot = await FetchAsync(courseId, CancellationToken.None);
-            await store.SaveSnapshotAsync(snapshot, syncId);
-            var finished = DateTimeOffset.UtcNow;
-            result = new SyncStatusDto("succeeded", started, finished, finished, null, null);
+            try
+            {
+                var snapshot = await FetchAsync(courseId, CancellationToken.None);
+                await store.SaveSnapshotAsync(snapshot, syncId);
+                var finished = DateTimeOffset.UtcNow;
+                result = new SyncStatusDto("succeeded", started, finished, finished, null, null);
                 await TryFinishAuditAsync(
                     new SyncAuditRecord(syncId, courseId, userId, started, finished, "succeeded", null), null);
             }
@@ -176,11 +176,11 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
                 await TryFinishAuditAsync(
                     new SyncAuditRecord(syncId, courseId, userId, started, null, "failed", result.ErrorCode),
                     result.ErrorCode);
-        }
-        catch (Exception ex)
-        {
-            log.LogError(ex, "Error inesperado al sincronizar el curso {CourseId}", courseId);
-            result = Failed(started, lastSuccess, "UNEXPECTED", "Error inesperado al sincronizar.");
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "Error inesperado al sincronizar el curso {CourseId}", courseId);
+                result = Failed(started, lastSuccess, "UNEXPECTED", "Error inesperado al sincronizar.");
                 await TryFinishAuditAsync(
                     new SyncAuditRecord(syncId, courseId, userId, started, null, "failed", result.ErrorCode),
                     result.ErrorCode);
