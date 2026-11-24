@@ -140,7 +140,7 @@ class Escenarios(unittest.TestCase):
         datos = json.loads((Path(__file__).parent / "escenarios-reales.json").read_text(encoding="utf-8"))["escenarios"]
         ids = [e["id"] for e in datos]
         self.assertEqual(len(ids), len(set(ids)))
-        self.assertEqual(len(ids), 19)
+        self.assertEqual(len(ids), 20)
         self.assertNotIn("S03", ids)
         self.assertTrue(all(e["usuario"] in ejecutar.USUARIOS for e in datos))
         self.assertTrue(all(e["esperado"].get("http", 200) in (200, 401) for e in datos))

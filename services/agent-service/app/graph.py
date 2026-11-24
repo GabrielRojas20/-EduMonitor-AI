@@ -37,7 +37,7 @@ GREETING = r"^\s*(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|gracia
 REPORT = r"\b(informe|reporte|resumen)\b"
 # El docente pide interpretación o consejo (no solo un dato): ahí sí interviene el modelo
 INTERPRETATION = (r"\b(que hago|que debo|que puedo hacer|como puedo|recomiend\w*|aconsej\w*|sugier\w*|analiz\w*|"
-                  r"interpret\w*|por que|riesgo|preocup\w*|mejor\w*|explic\w*|evalu\w*|conviene)\b")
+                  r"interpret\w*|por que|riesgo|preocup\w*|mejor\w*|explic\w*|evalu\w*|conviene|progreso|como (?:va|van))\b")
 
 
 def needs_interpretation(message: str) -> bool:
@@ -117,6 +117,36 @@ def fallback_arguments(message: str) -> dict:
     return {"course_name": code.group()} if code else {}
 
 
+# Palabras que el docente usa para hablar de todo el curso o de todos los estudiantes: nunca son el nombre de un curso, de un
+# estudiante ni de una actividad. Un modelo pequeño las toma por un nombre («¿Qué alertas tiene el curso?» -> student_name='curso').
+GENERIC_NAMES = {"curso", "el curso", "este curso", "cursos", "mis cursos", "clase", "la clase", "grupo", "el grupo", "estudiante",
+                 "estudiantes", "los estudiantes", "mis estudiantes", "alumno", "alumnos", "los alumnos", "mis alumnos", "todos",
+                 "todo", "todos los estudiantes", "todo el curso", "todos los alumnos"}
+
+
+def is_generic_name(value: str) -> bool:
+    return normalize(value).strip(" .,;:¿?¡!\"'«»") in GENERIC_NAMES
+
+
+STUDENT_TOOLS = {"obtener_calificaciones", "obtener_progreso", "identificar_alertas"}
+NOT_A_NAME = {"tarea", "tareas", "laboratorio", "examen", "quiz", "unidad", "actividad", "curso", "estudiante", "estudiantes", "alumno",
+              "alumnos", "moodle", "ia", "agente", "edumonitor"}
+NAME_AFTER = re.compile(r"\b(?:de|del|tiene|tienen|para|va|a|sobre|con)\s+((?:[A-ZÁÉÍÓÚÑ][\wáéíóúñ]+)(?:\s+(?:de |del |la |los )?[A-ZÁÉÍÓÚÑ][\wáéíóúñ]+)*)")
+
+
+def student_in_message(message: str) -> str | None:
+    """Nombre de estudiante escrito con mayúscula en la pregunta («¿Qué notas tiene Bruno Benítez?»). El modelo pequeño a veces no lo
+    pasa como parámetro, y sin él la respuesta mezclaría a todo el curso. La herramienta lo busca entre los estudiantes del curso."""
+    for found in NAME_AFTER.finditer(message):
+        if re.search(r"(?:curso|materia|asignatura|clase)\s+(?:de\s+)?$", normalize(message[:found.start(1)])):
+            continue  # «el curso de Química» es un curso, no un estudiante
+        words = [w for w in found.group(1).split() if w[0].isupper()]
+        words = [w for w in words if normalize(w) not in NOT_A_NAME and not re.search(r"\d", w) and not w.isupper()]
+        if words:
+            return " ".join(words)
+    return None
+
+
 def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
     """Corrige lo que un modelo pequeño suele equivocar: el código de curso del mensaje (PRUEBA01) se usa como curso y se quita de
     cualquier otro campo (puso «PRUEBA01» como actividad), y el estado pedido se deduce del texto en vez de confiar en el modelo."""
@@ -125,7 +155,7 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
     for key in WRITTEN_ARGS:  # un nombre solo vale si el docente lo escribió; si no, el código lo descarta (también el del curso)
         value = args.get(key)
         if isinstance(value, str):
-            if not written_in(value, message):
+            if not written_in(value, message) or is_generic_name(value):
                 args.pop(key)
             elif key == "activity_name" and any(re.search(p, normalize(value)) for p, _ in STATUS_HINTS):
                 args.pop(key)  # «pendientes de calificar» es un estado, no una actividad
@@ -137,11 +167,16 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
         if not args.get("course_name"):  # el código escrito por el docente gana a cualquier id y a un nombre que él no escribió
             args["course_name"] = code.group()
             args.pop("course_id", None)
+    if tool in STUDENT_TOOLS and not args.get("student_name") and not args.get("student_id") and not args.get("activity_name") \
+            and not args.get("course_name"):
+        name = student_in_message(message)
+        if name:
+            args["student_name"] = name
     args.update(hint_arguments(tool, message))
     return args
 
 
-def with_reference_course(arguments: dict, reference: int, message: str) -> dict:
+def with_reference_course(arguments: dict, reference: int, message: str, student_capable: bool = False) -> dict:
     """Aplica el curso de referencia que el docente eligió en la interfaz, sin dejar `course_id` y `course_name` a la vez.
 
     Si en la pregunta escribió un curso (PRUEBA01), lo escrito gana al selector. En otro caso manda el curso elegido, y se
@@ -150,7 +185,11 @@ def with_reference_course(arguments: dict, reference: int, message: str) -> dict
     if args.get("course_name") and COURSE_CODE.search(message):
         args.pop("course_id", None)
     else:
-        args.pop("course_name", None)
+        named = args.pop("course_name", None)
+        # Con el curso ya elegido, un nombre que el modelo puso como curso es casi siempre el de un estudiante
+        # («¿Cómo va Elena Escobar León?» -> course_name='Elena Escobar León'): se usa como estudiante en vez de perderlo.
+        if named and student_capable and not args.get("student_name") and not args.get("student_id") and not is_generic_name(named):
+            args["student_name"] = named
         args["course_id"] = reference
     return args
 
@@ -283,6 +322,24 @@ def log_trace(trace: dict) -> None:
     log.info(json.dumps(trace, ensure_ascii=False))
 
 
+PRAISE = re.compile(r"\b(?:excelente|perfect[oa]|destacad[oa]|sobresaliente|buen(?:o|a)? (?:desempe|rendimiento)|desempe\w+ (?:bueno|excelente)|"
+                    r"mantenga el buen|rendimiento (?:bueno|excelente))", re.IGNORECASE)
+AVERAGE_FACT = re.compile(r"Promedio de notas \(escala de 0 a 10\): (\d+(?:,\d+)?)")
+PASSING_AVERAGE = 6.0
+
+
+def drop_unfounded_praise(answer: dict) -> tuple[dict, int]:
+    """El modelo pequeño elogia («rendimiento excelente») por una tasa de entrega alta aunque el promedio sea bajo. Si algún hecho
+    muestra un promedio menor a 6 sobre 10, se descartan las inferencias y recomendaciones que elogian el desempeño."""
+    low = any(float(m.group(1).replace(",", ".")) < PASSING_AVERAGE for f in answer["facts"] if (m := AVERAGE_FACT.search(f["text"])))
+    if not low:
+        return answer, 0
+    inferences = [i for i in answer["inferences"] if not PRAISE.search(i["text"])]
+    recommendations = [r for r in answer["recommendations"] if not PRAISE.search(r["text"])]
+    removed = (len(answer["inferences"]) - len(inferences)) + (len(answer["recommendations"]) - len(recommendations))
+    return ({**answer, "inferences": inferences, "recommendations": recommendations}, removed) if removed else (answer, 0)
+
+
 class Agent:
     def __init__(self, settings: Settings, llm: OllamaClient, tools: ToolRegistry | None = None,
                  trace_sink: Callable[[dict], None] | None = None, tool_transport=None):
@@ -381,7 +438,8 @@ class Agent:
                 call["arguments"] = {k: v for k, v in call["arguments"].items() if k not in tool.hidden}
             call["arguments"] = fix_arguments(call["name"], call["arguments"], state["message"])
             if state.get("course_id") and tool is not None and "course_id" in tool.input_model.model_fields:
-                call["arguments"] = with_reference_course(call["arguments"], state["course_id"], state["message"])
+                call["arguments"] = with_reference_course(call["arguments"], state["course_id"], state["message"],
+                                                           "student_name" in tool.input_model.model_fields)
         fallback = None
         if not plan:
             fallback = fallback_tool(state["message"], self.tools.names())
@@ -389,6 +447,8 @@ class Agent:
                 tool = self.tools.get(fallback)
                 args = fallback_arguments(state["message"]) if "course_name" in tool.input_model.model_fields else {}
                 args.update(hint_arguments(fallback, state["message"]))
+                if fallback in STUDENT_TOOLS and student_in_message(state["message"]):
+                    args["student_name"] = student_in_message(state["message"])
                 if state.get("course_id") and "course_id" in tool.input_model.model_fields:
                     args = with_reference_course(args, state["course_id"], state["message"])
                 plan.append({"name": fallback, "arguments": args})
@@ -531,6 +591,10 @@ class Agent:
         answer = state["answer"]
         if not answer["facts"]:
             return {"retry": False}
+        answer, praised = drop_unfounded_praise(answer)
+        if praised:
+            state = {**state, "answer": {**answer, "unavailable": answer["unavailable"] + ["Se omitió una valoración del desempeño que no coincide con el promedio."]}}
+            answer = state["answer"]
         allowed = numbers_in(json.dumps([r["output"].get("data") for r in state["tool_results"]], ensure_ascii=False))
         allowed |= numbers_in(state["message"]) | ({float(state["course_id"])} if state.get("course_id") else set())
         # Las inferencias y recomendaciones tampoco pueden traer cifras sin fuente (no se reintentan: se descartan)
@@ -545,7 +609,7 @@ class Agent:
         if not bad:
             if trimmed:
                 return {"retry": False, "validated": False, "answer": answer, "unsourced_removed": trimmed}
-            return {"retry": False, "validated": True}
+            return {"retry": False, "validated": True, **({"answer": answer} if praised else {})}
         # Un reintento solo si cabe en el tiempo máximo del mensaje (diseño, sección 2): redactar de nuevo cuesta
         # casi lo mismo que la primera vez, y pasarse de 60 s es peor que omitir la cifra.
         elapsed = time.monotonic() - state["started_mono"]

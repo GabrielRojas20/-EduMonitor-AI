@@ -194,6 +194,8 @@ def test_if_the_interpretation_fails_the_facts_are_still_shown(settings, ollama,
     ("¿Qué cursos tengo?", False), ("Lista mis cursos", False), ("¿Cuántos estudiantes tiene PRUEBA01?", False),
     ("¿Qué me recomiendas?", True), ("Analiza mis cursos", True), ("¿Qué debo hacer con PRUEBA02?", True),
     ("¿Por qué no tiene estudiantes?", True),
+    ("¿Cuál es el progreso de mis estudiantes?", True), ("¿Cómo va el curso PRUEBA01?", True), ("¿Cómo van mis estudiantes?", True),
+    ("¿Qué calificaciones están pendientes?", False),
 ])
 def test_when_the_model_is_asked_to_interpret(message, expected):
     from app.graph import needs_interpretation
@@ -352,6 +354,12 @@ def test_course_code_put_in_the_wrong_field_is_moved_to_the_course():
     ("identificar_alertas", {"student_name": "prueba01"}, "Alertas de PRUEBA01", {"course_name": "PRUEBA01"}),
     ("listar_cursos", {}, "¿Qué cursos tengo en PRUEBA01?", {}),                                          # sin parámetro de curso
     ("obtener_progreso", {}, "¿Cómo van mis estudiantes?", {}),                                           # sin código: no se inventa
+    # el fallo visto el 24 de noviembre: «el curso» no es el nombre de un estudiante, y «mis estudiantes» tampoco el de un curso
+    ("identificar_alertas", {"student_name": "curso"}, "¿Qué alertas tiene el curso y qué me recomiendas?", {}),
+    ("identificar_alertas", {"student_name": "el curso"}, "¿Qué alertas tiene este curso?", {}),
+    ("obtener_progreso", {"course_name": "mis estudiantes"}, "¿Cuál es el progreso de mis estudiantes?", {}),
+    ("obtener_calificaciones", {"student_name": "estudiantes"}, "¿Qué calificaciones tienen los estudiantes?", {}),
+    ("identificar_alertas", {"student_name": "Ana Pérez"}, "¿Qué alertas tiene Ana Pérez?", {"student_name": "Ana Pérez"}),   # un nombre real se conserva
 ])
 def test_fix_arguments(tool, given, message, expected):
     from app.graph import fix_arguments
@@ -406,7 +414,7 @@ def grades_gateway_by_id(request):
 @pytest.mark.parametrize("given,message,expected", [
     ({"activity_name": "2"}, "¿Qué actividades están pendientes de calificar?", {"status": "pending_grading"}),     # el número del selector
     ({"activity_name": "pendientes de calificar"}, "¿Qué actividades están pendientes de calificar?", {"status": "pending_grading"}),
-    ({"student_name": "Ana Pérez"}, "¿Cómo va Ana?", {}),                                                            # no escribió «Pérez»
+    ({"student_name": "Ana Pérez"}, "¿Cómo va Ana?", {"student_name": "Ana"}),                                                            # no escribió «Pérez»
     ({"student_name": "Estudiante Dos"}, "¿Cómo va Estudiante Dos?", {"student_name": "Estudiante Dos"}),
     ({"activity_name": "Tarea 2"}, "Notas de la Tarea 2", {"activity_name": "Tarea 2"}),
     ({"activity_name": "tarea 2"}, "Notas de la TAREA 2", {"activity_name": "tarea 2"}),                              # sin distinguir mayúsculas
@@ -510,3 +518,52 @@ def test_a_course_without_a_sync_date_never_gets_a_student_count_invented():
     from app.catalog.listar_cursos import facts as f
     data = {"courses": [{"id": 3, "shortName": "X", "fullName": "Sin datos", "studentCount": 9, "lastSyncAt": None}], "total": 1}
     assert "aún no se sincronizó" in f(data)[1]
+
+
+def test_a_student_name_the_model_put_as_course_is_kept_as_student():
+    """Con curso elegido, «¿Cómo va Elena Escobar León?» -> course_name='Elena Escobar León' ya no pierde al estudiante."""
+    from app.graph import with_reference_course
+    assert with_reference_course({"course_name": "Elena Escobar León"}, 201, "¿Cómo va Elena Escobar León?", True) \
+        == {"course_id": 201, "student_name": "Elena Escobar León"}
+    assert with_reference_course({"course_name": "Elena Escobar León"}, 201, "¿Cómo va Elena?", False) == {"course_id": 201}
+    assert with_reference_course({"course_name": "el curso"}, 201, "¿Cómo va el curso?", True) == {"course_id": 201}
+
+
+@pytest.mark.parametrize("message,expected", [
+    ("¿Qué notas tiene Bruno Benítez Paredes?", "Bruno Benítez Paredes"),
+    ("¿Qué notas tiene Bruno?", "Bruno"),
+    ("¿Cómo va Elena Escobar León?", "Elena Escobar León"),
+    ("Notas de Tarea 2 en PRUEBA01", None),
+    ("¿Qué falta por calificar?", None),
+    ("¿Qué alertas tiene el curso?", None),
+])
+def test_student_in_message(message, expected):
+    from app.graph import student_in_message
+    assert student_in_message(message) == expected
+
+
+def test_a_written_student_name_is_added_when_the_model_omits_it():
+    from app.graph import fix_arguments
+    assert fix_arguments("obtener_calificaciones", {}, "¿Qué notas tiene Bruno Benítez Paredes?") == {"student_name": "Bruno Benítez Paredes"}
+
+
+def test_praise_is_dropped_when_the_average_is_low():
+    from app.graph import drop_unfounded_praise
+    answer = {"facts": [{"text": "Promedio de notas (escala de 0 a 10): 5."}],
+              "inferences": [{"text": "Su rendimiento es excelente.", "basedOn": [0]}, {"text": "El promedio es bajo.", "basedOn": [0]}],
+              "recommendations": [{"text": "Mantener el buen desempeño.", "relatedFinding": 0}], "unavailable": []}
+    fixed, removed = drop_unfounded_praise(answer)
+    assert removed == 2 and [i["text"] for i in fixed["inferences"]] == ["El promedio es bajo."] and fixed["recommendations"] == []
+    answer["facts"] = [{"text": "Promedio de notas (escala de 0 a 10): 8,5."}]
+    assert drop_unfounded_praise(answer)[1] == 0
+
+
+def test_validar_salida_returns_the_answer_without_praise():
+    from app.graph import Agent
+    from types import SimpleNamespace
+    answer = {"facts": [{"text": "Promedio de notas (escala de 0 a 10): 5.", "tool": "obtener_progreso", "stepN": 1}],
+              "inferences": [{"text": "Su rendimiento es excelente.", "basedOn": [0]}], "recommendations": [], "unavailable": []}
+    state = {"answer": answer, "message": "¿Cómo va Elena?", "course_id": 201,
+             "tool_results": [{"output": {"data": {"averageScore10": 5, "scale": [0, 10]}}}]}
+    out = Agent.validar_salida(SimpleNamespace(settings=None), state)
+    assert out["answer"]["inferences"] == [] and "valoración" in out["answer"]["unavailable"][0]

@@ -1,5 +1,5 @@
 {
-  "_nota": "Escenarios de evaluación contra el gateway real con el curso PRUEBA01 restaurado desde docs/demo/PRUEBA01-demo.mbz (2 estudiantes: Ana Pérez y Luis Gómez) y docente1 y docente2 de @edumonitor.test. Son los 19 escenarios de escenarios.json que dependen de los datos; S03 (instrucciones escondidas en los datos) se ejecuta con escenarios.json y el servidor de pruebas de datos hostiles. F03 necesita --agente-gateway-caido. Ver README.md.",
+  "_nota": "Escenarios de evaluación contra el gateway real con el curso PRUEBA01 restaurado desde docs/demo/PRUEBA01-demo.mbz (2 estudiantes: Ana Pérez y Luis Gómez) y docente1 y docente2 de @edumonitor.test. Son los 20 escenarios de escenarios.json que dependen de los datos (todos menos S03); S03 (instrucciones escondidas en los datos) se ejecuta con escenarios.json y el servidor de pruebas de datos hostiles. F03 necesita --agente-gateway-caido. Ver README.md.",
   "escenarios": [
     {
       "id": "C01",
@@ -119,6 +119,31 @@
           1,
           2
         ]
+      }
+    },
+    {
+      "id": "C06",
+      "categoria": "consulta_simple",
+      "descripcion": "Pregunta por las calificaciones pendientes: el agente devuelve solo las entregas pendientes de calificar, con el nombre real de la actividad.",
+      "usuario": "docente1",
+      "mensaje": "¿Qué calificaciones están pendientes?",
+      "esperado": {
+        "http": 200,
+        "estado": "ok",
+        "hechos_contienen": [
+          "1 registro pendiente de calificar",
+          "Luis Gómez",
+          "pendiente de calificar"
+        ],
+        "hechos_no_contienen": [
+          "Ana Pérez",
+          "sin entrega"
+        ],
+        "cifras_permitidas": [
+          1,
+          6
+        ],
+        "max_segundos": 60
       }
     },
     {
@@ -387,7 +412,9 @@
           "Promedio de notas",
           "Tasa de calificación",
           "Tasa de finalización",
-          "5 alertas activas"
+          "5 alertas activas",
+          "valor observado",
+          "umbral"
         ],
         "cifras_permitidas": [
           0,
@@ -399,8 +426,12 @@
           6,
           10,
           16.67,
+          20,
+          33.33,
           50,
-          75
+          66.67,
+          75,
+          80
         ],
         "ignorar_fechas": true
       }
@@ -417,7 +448,9 @@
         "hechos_contienen": [
           "Informe de PRUEBA01",
           "5 alertas activas",
-          "Promedio de notas"
+          "Promedio de notas",
+          "valor observado",
+          "umbral"
         ],
         "hechos_no_contienen": [
           "alertas activas de ",
@@ -433,8 +466,12 @@
           6,
           10,
           16.67,
+          20,
+          33.33,
           50,
-          75
+          66.67,
+          75,
+          80
         ],
         "ignorar_fechas": true
       }
