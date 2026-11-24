@@ -6,8 +6,7 @@ import pytest
 
 from app.graph import Agent
 from app.tools import ToolContext
-from app.catalog.common import NoArgs
-from app.catalog.listar_cursos import TOOL as LISTAR_CURSOS
+from app.catalog.listar_cursos import TOOL as LISTAR_CURSOS, ListarCursosArgs
 from app.toolset import default_registry
 from conftest import make_token
 
@@ -37,7 +36,7 @@ def ctx(handler, token=TOKEN):
 
 
 def run(handler, token=TOKEN):
-    return LISTAR_CURSOS.run(ctx(handler, token), NoArgs())
+    return LISTAR_CURSOS.run(ctx(handler, token), ListarCursosArgs())
 
 
 def problem(status, code=None, **extra):
@@ -497,7 +496,7 @@ REAL_LIST = [{"id": 2, "shortName": "PRUEBA01", "fullName": "Curso de Prueba Edu
 
 
 def real_run(handler):
-    return LISTAR_CURSOS.run(ctx(handler), NoArgs())
+    return LISTAR_CURSOS.run(ctx(handler), ListarCursosArgs())
 
 
 def test_the_list_from_the_real_gateway_is_used_as_it_comes_without_extra_requests():
@@ -567,3 +566,25 @@ def test_validar_salida_returns_the_answer_without_praise():
              "tool_results": [{"output": {"data": {"averageScore10": 5, "scale": [0, 10]}}}]}
     out = Agent.validar_salida(SimpleNamespace(settings=None), state)
     assert out["answer"]["inferences"] == [] and "valoración" in out["answer"]["unavailable"][0]
+
+
+def test_inside_a_course_the_student_count_is_only_about_that_course():
+    from app.catalog.listar_cursos import facts
+    out = LISTAR_CURSOS.run(ctx(courses_gw), ListarCursosArgs(course_id=2))
+    assert out["data"]["scoped"] is True and out["data"]["total"] == 1
+    assert facts(out["data"]) == ["PRUEBA01 (Curso de Prueba EduMonitor): 5 estudiantes; última sincronización con Moodle el 22/10/2026."]
+    missing = LISTAR_CURSOS.run(ctx(courses_gw), ListarCursosArgs(course_id=99))
+    assert facts(missing["data"]) == ["No encontré ese curso entre los que tienes autorizados."]
+
+
+def test_asking_for_all_courses_ignores_the_current_course():
+    from app.graph import asks_for_all_courses
+    assert asks_for_all_courses("listar_cursos", "¿Qué cursos tengo?")
+    assert not asks_for_all_courses("listar_cursos", "¿Cuántos estudiantes tengo?")
+    assert not asks_for_all_courses("obtener_progreso", "¿Qué cursos tengo?")
+
+
+@pytest.mark.parametrize("message", ["¿Cuántos estudiantes tengo?", "Cuántos alumnos hay", "¿Cuál es el número de estudiantes?"])
+def test_student_count_questions_fall_back_to_the_course_list(message):
+    from app.graph import fallback_tool
+    assert fallback_tool(message, ["listar_cursos", "obtener_progreso"]) == "listar_cursos"

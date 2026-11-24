@@ -66,6 +66,7 @@ def classify(message: str) -> tuple[str, str | None]:
 # por palabras clave (en orden: lo más específico primero). Sin argumentos: cada herramienta resuelve el curso por su cuenta
 # o pide que el docente indique cuál.
 FALLBACK_TOOLS = [
+    (r"cuant[oa]s (estudiantes|alumnos)|(numero|cantidad|total) de (estudiantes|alumnos)", "listar_cursos"),  # el conteo está en la lista de cursos
     (r"informe|reporte|resumen", "generar_resumen"),
     (r"alert|riesgo|preocup|atencion", "identificar_alertas"),
     (r"nota|calific|entreg|pendiente", "obtener_calificaciones"),
@@ -174,6 +175,11 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
             args["student_name"] = name
     args.update(hint_arguments(tool, message))
     return args
+
+
+def asks_for_all_courses(tool: str, message: str) -> bool:
+    """«¿Qué cursos tengo?» habla de todos los cursos aunque el docente esté dentro de uno; «¿cuántos estudiantes tengo?» habla del actual."""
+    return tool == "listar_cursos" and bool(re.search(r"\bcursos\b", normalize(message)))
 
 
 def with_reference_course(arguments: dict, reference: int, message: str, student_capable: bool = False) -> dict:
@@ -437,7 +443,8 @@ class Agent:
             if tool is not None and isinstance(call["arguments"], dict):  # los parámetros ocultos (ids) los pone el código
                 call["arguments"] = {k: v for k, v in call["arguments"].items() if k not in tool.hidden}
             call["arguments"] = fix_arguments(call["name"], call["arguments"], state["message"])
-            if state.get("course_id") and tool is not None and "course_id" in tool.input_model.model_fields:
+            if state.get("course_id") and tool is not None and "course_id" in tool.input_model.model_fields \
+                    and not asks_for_all_courses(call["name"], state["message"]):
                 call["arguments"] = with_reference_course(call["arguments"], state["course_id"], state["message"],
                                                            "student_name" in tool.input_model.model_fields)
         fallback = None
@@ -449,7 +456,8 @@ class Agent:
                 args.update(hint_arguments(fallback, state["message"]))
                 if fallback in STUDENT_TOOLS and student_in_message(state["message"]):
                     args["student_name"] = student_in_message(state["message"])
-                if state.get("course_id") and "course_id" in tool.input_model.model_fields:
+                if state.get("course_id") and "course_id" in tool.input_model.model_fields \
+                        and not asks_for_all_courses(fallback, state["message"]):
                     args = with_reference_course(args, state["course_id"], state["message"])
                 plan.append({"name": fallback, "arguments": args})
         steps = state["steps"] + [{"n": len(state["steps"]) + 1, "node": "planificar_herramientas", "tool": None, "ok": True,
