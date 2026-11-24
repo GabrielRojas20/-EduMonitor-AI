@@ -417,7 +417,7 @@ Reglas del formato:
 ## 8. Pruebas previstas
 
 - **Unitarias (pytest):** cada herramienta con respuestas simuladas del gateway, validación de esquemas, manejo de cada código de error y `validar_salida`.
-- **Evaluación:** los 20 escenarios del plan (5 consulta simple, 5 falla de herramienta, 5 alertas con evidencia, 3 seguridad, 2 informe), que se ejecutan con `evaluation/agent-scenarios/ejecutar.py` contra el servidor mock del gateway al final de cada sprint. Metas: 100 % de accesos no autorizados rechazados, ningún dato inventado en fallas y al menos 90 % de cifras que coinciden con la fuente.
+- **Evaluación:** los 21 escenarios del plan (6 consulta simple, 5 falla de herramienta, 5 alertas con evidencia, 3 seguridad, 2 informe), que se ejecutan con `evaluation/agent-scenarios/ejecutar.py` contra el servidor mock del gateway al final de cada sprint. Metas: 100 % de accesos no autorizados rechazados, ningún dato inventado en fallas y al menos 90 % de cifras que coinciden con la fuente.
 - **Seguridad:** escenarios con instrucciones escondidas en nombres de actividades y comentarios.
 
 ## 9. Dependencias y puntos por acordar
