@@ -1,5 +1,6 @@
 # Secretos y datos locales: nunca al repositorio
 .env
 usuarios.csv
+usuarios-demo-masivo.csv
 token.txt
 *.token

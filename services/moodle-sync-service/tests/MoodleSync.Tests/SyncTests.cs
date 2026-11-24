@@ -231,6 +231,20 @@ public class SyncTests
     }
 
     [Fact]
+    public async Task El_dataset_masivo_resuelve_el_curso_por_shortname_si_Moodle_tiene_otro_ID()
+    {
+        using var env = new TestEnv();
+        env.Moodle.MassiveMode = true;
+        var status = await env.SyncAndWaitAsync(201);
+        Assert.Equal("succeeded", status.GetProperty("state").GetString());
+
+        var students = await env.JsonAsync("/courses/201/students");
+        Assert.Equal(5, students.GetProperty("total").GetInt32());
+        var grades = await env.JsonAsync("/courses/201/grades?pageSize=200");
+        Assert.Equal(10, grades.GetProperty("total").GetInt32());
+    }
+
+    [Fact]
     public async Task Dos_sincronizaciones_quedan_auditadas_con_usuario_y_resultado()
     {
         using var env = new TestEnv();
