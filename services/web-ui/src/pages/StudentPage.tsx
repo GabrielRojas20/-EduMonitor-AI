@@ -3,9 +3,10 @@ import { ArrowLeft, ArrowRight, Bell, BookOpen, MessageSquareText } from 'lucide
 import { Link, useParams } from 'react-router-dom'
 import { Badge, Card, MetricCard, Notice, PageHeader, SectionTitle, StateView } from '../components/UI'
 import { friendlyError } from '../services/api'
-import { fetchAll, getAlerts, getCourse, getStudentAnalytics, getStudentDetail } from '../services/edumonitor'
+import { fetchAll, getAlerts, getCourse, getStudentAnalytics, getStudentDetail, getStudents } from '../services/edumonitor'
 import type { AcademicAlert, Analytics, Course, StudentDetail } from '../types/api'
-import { completionLabel, dateLabel, gradeLabel, ruleLabels, submissionLabel } from '../utils/display'
+import { completionLabel, dateLabel, gradeLabel, numberStudents, ruleLabels, submissionLabel } from '../utils/display'
+import type { StudentNumbering } from '../utils/display'
 
 export function StudentPage() {
   const { id, sid } = useParams()
@@ -14,14 +15,16 @@ export function StudentPage() {
   const [detail, setDetail] = useState<StudentDetail | null>(null)
   const [metrics, setMetrics] = useState<Analytics | null>(null)
   const [alerts, setAlerts] = useState<AcademicAlert[]>([])
+  const [numbering, setNumbering] = useState<StudentNumbering>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [warnings, setWarnings] = useState<string[]>([])
   const load = useCallback(async () => {
     setLoading(true); setError(''); setWarnings([])
-    const [c, d, m, a] = await Promise.allSettled([
-      getCourse(courseId), getStudentDetail(courseId,studentId), getStudentAnalytics(courseId,studentId), fetchAll((p,s)=>getAlerts(courseId,{studentId,page:p,pageSize:s})),
+    const [c, d, m, a, l] = await Promise.allSettled([
+      getCourse(courseId), getStudentDetail(courseId,studentId), getStudentAnalytics(courseId,studentId), fetchAll((p,s)=>getAlerts(courseId,{studentId,page:p,pageSize:s})), fetchAll((p,s)=>getStudents(courseId,p,s)),
     ] as const)
+    setNumbering(l.status==='fulfilled' ? numberStudents(l.value.items) : new Map())
     if (c.status==='fulfilled') setCourse(c.value); else setCourse(null)
     if (d.status==='fulfilled') setDetail(d.value); else {setDetail(null);setError(friendlyError(d.reason))}
     if (m.status==='fulfilled') setMetrics(m.value); else setMetrics(null)
@@ -38,7 +41,7 @@ export function StudentPage() {
   if (!detail) return <><Link viewTransition className="back-link" to={`/cursos/${courseId}`}><ArrowLeft size={17}/> Volver al curso</Link><StateView kind="error" detail={error || 'No hay datos para este estudiante.'} onRetry={()=>void load()}/></>
   const {student,grades,activities}=detail
   const progress = new Map(activities.map(item=>[item.activityId,item.completionState]))
-  return <><Link viewTransition className="back-link" to={`/cursos/${courseId}`}><ArrowLeft size={17}/> Volver al dashboard</Link><PageHeader eyebrow={`FICHA INDIVIDUAL · ID MOODLE ${student.id}`} title={student.fullName} subtitle={`Curso: ${course?.fullName || `#${courseId}`}`} action={<div className="button-group"><Link className="btn btn-secondary" to={`/alertas?curso=${courseId}&estudiante=${studentId}`}><Bell size={16}/> Ver alertas</Link><Link className="btn btn-primary" to={`/cursos/${courseId}?estudiante=${studentId}#agente`}><MessageSquareText size={16}/> Consultar al agente</Link></div>}/>
+  return <><Link viewTransition className="back-link" to={`/cursos/${courseId}`}><ArrowLeft size={17}/> Volver al dashboard</Link><PageHeader eyebrow={numbering.get(student.id) ? `FICHA INDIVIDUAL · N.º ${numbering.get(student.id)?.n} DE ${numbering.get(student.id)?.total}` : 'FICHA INDIVIDUAL'} title={student.fullName} subtitle={`Curso: ${course?.fullName || `#${courseId}`}`} action={<div className="button-group"><Link className="btn btn-secondary" to={`/alertas?curso=${courseId}&estudiante=${studentId}`}><Bell size={16}/> Ver alertas</Link><Link className="btn btn-primary" to={`/cursos/${courseId}?estudiante=${studentId}#agente`}><MessageSquareText size={16}/> Consultar al agente</Link></div>}/>
   {warnings.map((w,i)=><Notice key={i} tone="warning">{w}</Notice>)}{metrics && metrics.snapshot.dataQuality!=='complete' && <Notice tone="warning">Datos parciales: algunas actividades no tienen información de finalización. La ausencia de información no se interpreta como cero.</Notice>}{!metrics && <Notice tone="warning">No fue posible consultar los indicadores individuales; las actividades se muestran con la información disponible del gateway.</Notice>}
   <Card className="student-info"><span className="student-avatar" aria-hidden="true">{student.fullName.slice(0,1).toUpperCase()}</span><div><h2>{student.fullName}</h2><p><BookOpen size={15}/> {course?.fullName || `Curso #${courseId}`}</p></div><div className="student-info-date">Indicadores calculados<br/><strong>{dateLabel(metrics?.snapshot.calculatedAt)}</strong></div></Card>
   <div className="metrics-grid student-metrics stagger"><MetricCard title="Promedio individual" metric={metrics?.averageScore10}/><MetricCard title="Tasa de entrega" metric={metrics?.submissionRate}/><MetricCard title="Finalización" metric={metrics?.completionRate}/><MetricCard title="Por calificar" metric={metrics?.pendingGradingRate}/></div>
