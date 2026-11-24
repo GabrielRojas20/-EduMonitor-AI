@@ -194,6 +194,8 @@ def test_if_the_interpretation_fails_the_facts_are_still_shown(settings, ollama,
     ("¿Qué cursos tengo?", False), ("Lista mis cursos", False), ("¿Cuántos estudiantes tiene PRUEBA01?", False),
     ("¿Qué me recomiendas?", True), ("Analiza mis cursos", True), ("¿Qué debo hacer con PRUEBA02?", True),
     ("¿Por qué no tiene estudiantes?", True),
+    ("¿Cuál es el progreso de mis estudiantes?", True), ("¿Cómo va el curso PRUEBA01?", True), ("¿Cómo van mis estudiantes?", True),
+    ("¿Qué calificaciones están pendientes?", False),
 ])
 def test_when_the_model_is_asked_to_interpret(message, expected):
     from app.graph import needs_interpretation

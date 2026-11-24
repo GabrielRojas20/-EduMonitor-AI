@@ -37,7 +37,7 @@ GREETING = r"^\s*(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|gracia
 REPORT = r"\b(informe|reporte|resumen)\b"
 # El docente pide interpretación o consejo (no solo un dato): ahí sí interviene el modelo
 INTERPRETATION = (r"\b(que hago|que debo|que puedo hacer|como puedo|recomiend\w*|aconsej\w*|sugier\w*|analiz\w*|"
-                  r"interpret\w*|por que|riesgo|preocup\w*|mejor\w*|explic\w*|evalu\w*|conviene)\b")
+                  r"interpret\w*|por que|riesgo|preocup\w*|mejor\w*|explic\w*|evalu\w*|conviene|progreso|como (?:va|van))\b")
 
 
 def needs_interpretation(message: str) -> bool:
