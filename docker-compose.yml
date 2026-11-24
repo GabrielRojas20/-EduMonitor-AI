@@ -25,10 +25,17 @@ services:
         condition: service_healthy
     environment:
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      DEMO_DATASET: ${DEMO_DATASET:-minimal}
     volumes:
       - ./services/analytics-service/database.sql:/scripts/database.sql:ro
+      - ./database/seed/002-demo-masivo.sql:/scripts/002-demo-masivo.sql:ro
     entrypoint: ["/bin/bash", "-c"]
-    command: ["/opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -i /scripts/database.sql"]
+    command:
+      - |
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P "$${MSSQL_SA_PASSWORD}" -C -i /scripts/database.sql
+        if [ "$${DEMO_DATASET}" = "massive" ]; then
+          /opt/mssql-tools18/bin/sqlcmd -S sqlserver,1433 -U sa -P "$${MSSQL_SA_PASSWORD}" -C -i /scripts/002-demo-masivo.sql
+        fi
 
 
   moodle-db:
@@ -72,6 +79,7 @@ services:
     volumes:
       - moodle-data:/bitnami/moodle
       - moodledata-data:/bitnami/moodledata
+      - ./infra/moodle/seed-demo-academico.php:/tmp/edumonitor_seed_massive.php:ro
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8080'"]
       interval: 15s
@@ -173,13 +181,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5001
-      - ConnectionStrings__Auth=${ConnectionStrings__Auth}
-      - ConnectionStrings__EduMonitor=${ConnectionStrings__EduMonitor}
+      - ConnectionStrings__Auth=Server=sqlserver,1433;Database=EduMonitorAuth;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      - ConnectionStrings__EduMonitor=Server=sqlserver,1433;Database=EduMonitor;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
       - JWT_SECRET=${JWT_SECRET}
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
       - JWT_EXPIRES_MINUTES=${JWT_EXPIRES_MINUTES}
       - AUTH_SEED_PASSWORD=${AUTH_SEED_PASSWORD}
+      - AUTH_SEED_DATASET=${AUTH_SEED_DATASET:-minimal}
     depends_on:
       sqlserver:
         condition: service_healthy

@@ -49,8 +49,23 @@ app.Run();
 
 static async Task<(List<GradeRow> grades, List<CompletionRow> completions)?> LoadCourse(int courseId, AnalyticsDbContext db, CancellationToken ct)
 {
-    var grades = await db.Grades.AsNoTracking().Where(x => x.CourseId == courseId).ToListAsync(ct);
-    var completions = await db.Completions.AsNoTracking().Where(x => x.CourseId == courseId).ToListAsync(ct);
+    var gradeStamps = await db.Grades.AsNoTracking()
+        .Where(x => x.CourseId == courseId)
+        .Select(x => new SyncObservation(x.SyncId, x.SyncedAt))
+        .ToListAsync(ct);
+    var completionStamps = await db.Completions.AsNoTracking()
+        .Where(x => x.CourseId == courseId)
+        .Select(x => new SyncObservation(x.SyncId, x.ObservedAt))
+        .ToListAsync(ct);
+    var syncId = AnalyticsSnapshotSelector.LatestSyncId(gradeStamps.Concat(completionStamps));
+    if (syncId is null) return null;
+
+    var grades = await db.Grades.AsNoTracking()
+        .Where(x => x.CourseId == courseId && x.SyncId == syncId)
+        .ToListAsync(ct);
+    var completions = await db.Completions.AsNoTracking()
+        .Where(x => x.CourseId == courseId && x.SyncId == syncId)
+        .ToListAsync(ct);
     return grades.Count == 0 && completions.Count == 0 ? null : (grades, completions);
 }
 static async Task<Dictionary<string, AlertRuleRow>> LoadRules(AnalyticsDbContext db, CancellationToken ct) => await db.AlertRules.AsNoTracking().Where(x => x.Enabled).ToDictionaryAsync(x => x.RuleCode, StringComparer.OrdinalIgnoreCase, ct);
@@ -61,8 +76,9 @@ static async Task<IResult> Summary(int courseId, AnalyticsDbContext db, Cancella
 }
 static async Task<IResult> Student(int courseId, int studentId, AnalyticsDbContext db, CancellationToken ct)
 {
-    var grades = await db.Grades.AsNoTracking().Where(x => x.CourseId == courseId && x.StudentId == studentId).ToListAsync(ct);
-    var completions = await db.Completions.AsNoTracking().Where(x => x.CourseId == courseId && x.StudentId == studentId).ToListAsync(ct);
+    var data = await LoadCourse(courseId, db, ct);
+    var grades = data?.grades.Where(x => x.StudentId == studentId).ToList() ?? new List<GradeRow>();
+    var completions = data?.completions.Where(x => x.StudentId == studentId).ToList() ?? new List<CompletionRow>();
     return grades.Count == 0 && completions.Count == 0 ? Results.NotFound(new Problem("Estudiante no encontrado", 404, "STUDENT_NOT_FOUND", "No existen observaciones para el estudiante en el curso.")) : Results.Ok(ToStudent(courseId, studentId, grades, completions));
 }
 static List<AlertResponse> BuildAlerts(int courseId, List<GradeRow> grades, List<CompletionRow> completions, IReadOnlyDictionary<string, AlertRuleRow> rules)

@@ -19,6 +19,7 @@ public sealed class FakeMoodle : IDisposable
 
     // Configuración de cada prueba
     public TimeSpan Delay { get; set; } = TimeSpan.Zero;          // retraso en core_enrol_get_enrolled_users
+    public bool MassiveMode { get; set; }                         // DEMO-01-01 con un ID interno distinto
     public HashSet<string> Failing { get; } = new();              // funciones que responden con un error de Moodle
     public List<string> Queries { get; } = new();                 // query string de cada petición (debe estar vacío)
     public int RequestsWithoutToken;                              // peticiones sin wstoken en el cuerpo
@@ -49,10 +50,12 @@ public sealed class FakeMoodle : IDisposable
 
     private static IResult Json(object data) => Results.Text(JsonSerializer.Serialize(data), "application/json");
 
-    private static object Respond(string fn, IFormCollection form) => fn switch
+    private object Respond(string fn, IFormCollection form) => fn switch
     {
         "core_webservice_get_site_info" => new { userid = 3, username = "docente1", release = "5.2.4 (Build: 20261005)" },
-        "core_enrol_get_users_courses" => new[] { new { id = 2, shortname = "PRUEBA01", fullname = "Curso de Prueba EduMonitor" } },
+        "core_enrol_get_users_courses" => MassiveMode
+            ? new[] { new { id = 7, shortname = "DEMO-01-01", fullname = "08080113 - Física" } }
+            : new[] { new { id = 2, shortname = "PRUEBA01", fullname = "Curso de Prueba EduMonitor" } },
         "core_enrol_get_enrolled_users" => Users(),
         "mod_assign_get_assignments" => new
         {

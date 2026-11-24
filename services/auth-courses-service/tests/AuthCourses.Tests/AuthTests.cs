@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -237,5 +238,28 @@ public class AuthTests : IClassFixture<AuthFactory>
         var body = await r.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Empty(body.EnumerateArray());
         await AssertProblem(await GetAsync("/courses/2", token), HttpStatusCode.Forbidden, "COURSE_NOT_AUTHORIZED");
+    }
+}
+
+public class MassiveSeedTests
+{
+    [Fact]
+    public void El_dataset_masivo_crea_cinco_docentes_y_veinticinco_cursos()
+    {
+        var options = new DbContextOptionsBuilder<AuthDb>()
+            .UseInMemoryDatabase($"massive-seed-{Guid.NewGuid()}")
+            .Options;
+        using var db = new AuthDb(options);
+        db.Database.EnsureCreated();
+
+        Seed.Run(db, new PasswordService(), "Demo-123!", "massive");
+
+        Assert.Equal(6, db.Users.Count());
+        Assert.Equal(25, db.Courses.Count());
+        var teachers = db.Users.Where(u => u.Role == "teacher").ToArray();
+        Assert.Equal(5, teachers.Length);
+        Assert.All(teachers, teacher =>
+            Assert.Equal(5, db.TeacherCourses.Count(link => link.UserId == teacher.Id)));
+        Assert.Equal(25, db.TeacherCourses.Count());
     }
 }

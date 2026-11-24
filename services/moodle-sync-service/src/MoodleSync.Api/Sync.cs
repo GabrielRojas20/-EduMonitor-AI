@@ -81,9 +81,9 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
         var handedOff = false;
         try
         {
-        try
-        {
-            await store.StartAuditAsync(audit);
+            try
+            {
+                await store.StartAuditAsync(audit);
             }
             catch (Exception ex)
             {
@@ -147,12 +147,12 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
         SyncStatusDto result;
         try
         {
-        try
-        {
-            var snapshot = await FetchAsync(courseId, CancellationToken.None);
-            await store.SaveSnapshotAsync(snapshot, syncId);
-            var finished = DateTimeOffset.UtcNow;
-            result = new SyncStatusDto("succeeded", started, finished, finished, null, null);
+            try
+            {
+                var snapshot = await FetchAsync(courseId, CancellationToken.None);
+                await store.SaveSnapshotAsync(snapshot, syncId);
+                var finished = DateTimeOffset.UtcNow;
+                result = new SyncStatusDto("succeeded", started, finished, finished, null, null);
                 await TryFinishAuditAsync(
                     new SyncAuditRecord(syncId, courseId, userId, started, finished, "succeeded", null), null);
             }
@@ -176,11 +176,11 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
                 await TryFinishAuditAsync(
                     new SyncAuditRecord(syncId, courseId, userId, started, null, "failed", result.ErrorCode),
                     result.ErrorCode);
-        }
-        catch (Exception ex)
-        {
-            log.LogError(ex, "Error inesperado al sincronizar el curso {CourseId}", courseId);
-            result = Failed(started, lastSuccess, "UNEXPECTED", "Error inesperado al sincronizar.");
+            }
+            catch (Exception ex)
+            {
+                log.LogError(ex, "Error inesperado al sincronizar el curso {CourseId}", courseId);
+                result = Failed(started, lastSuccess, "UNEXPECTED", "Error inesperado al sincronizar.");
                 await TryFinishAuditAsync(
                     new SyncAuditRecord(syncId, courseId, userId, started, null, "failed", result.ErrorCode),
                     result.ErrorCode);
@@ -199,17 +199,24 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
 
     private async Task<CourseSnapshot> FetchAsync(int courseId, CancellationToken ct)
     {
-        var cid = courseId.ToString();
-
         var info = await moodle.CallAsync("core_webservice_get_site_info", ct);
         var userId = J.Int(info, "userid") ?? throw new MoodleApiException("invalid_response", "Moodle no devolvió el usuario del servicio.");
 
         var courses = await moodle.CallAsync("core_enrol_get_users_courses", ct, ("userid", userId.ToString()));
-        var course = courses.ValueKind == System.Text.Json.JsonValueKind.Array
-            ? courses.EnumerateArray().FirstOrDefault(c => J.Int(c, "id") == courseId)
-            : default;
+        var availableCourses = courses.ValueKind == System.Text.Json.JsonValueKind.Array
+            ? courses.EnumerateArray().ToArray()
+            : Array.Empty<System.Text.Json.JsonElement>();
+        var course = availableCourses.FirstOrDefault(c => J.Int(c, "id") == courseId);
+        if (course.ValueKind != System.Text.Json.JsonValueKind.Object
+            && CourseIdentity.MoodleShortName(courseId) is string expectedShortName)
+        {
+            course = availableCourses.FirstOrDefault(c =>
+                string.Equals(J.Str(c, "shortname"), expectedShortName, StringComparison.OrdinalIgnoreCase));
+        }
         if (course.ValueKind != System.Text.Json.JsonValueKind.Object) throw new CourseNotFoundInMoodleException(courseId);
 
+        var moodleCourseId = J.Int(course, "id") ?? throw new MoodleApiException("invalid_response", "Moodle no devolvió el ID del curso.");
+        var cid = moodleCourseId.ToString();
         var students = Normalizer.ParseStudents(await moodle.CallAsync("core_enrol_get_enrolled_users", ct, ("courseid", cid)));
         var assignments = Normalizer.ParseAssignments(await moodle.CallAsync("mod_assign_get_assignments", ct, ("courseids[0]", cid)));
         var grades = Normalizer.ParseGrades(await moodle.CallAsync("gradereport_user_get_grade_items", ct, ("courseid", cid)));
@@ -245,4 +252,19 @@ public sealed class SyncService(MoodleClient moodle, ISyncStore store, ILogger<S
         return new CourseSnapshot(courseId, J.Str(course, "shortname") ?? "", J.Str(course, "fullname") ?? "",
             DateTimeOffset.UtcNow, students, allGrades, progress);
     }
+}
+
+// Los IDs 201-225 pertenecen al seed masivo de Auth/Analytics. Moodle asigna
+// sus propios IDs al importar el CSV, por lo que la sincronización usa el
+// shortname estable para encontrar el curso real y conserva el ID de Auth en
+// el snapshot guardado.
+internal static class CourseIdentity
+{
+    public static string? MoodleShortName(int courseId) => courseId switch
+    {
+        2 => "PRUEBA01",
+        3 => "PRUEBA02",
+        >= 201 and <= 225 => $"DEMO-{(courseId - 201) / 5 + 1:00}-{(courseId - 201) % 5 + 1:00}",
+        _ => null,
+    };
 }
