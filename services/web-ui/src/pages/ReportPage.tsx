@@ -42,11 +42,14 @@ export function ReportPage() {
       return
     }
     try {
-      const [nextCourse, nextReport] = await Promise.all([getCourse(courseId), getCourseReport(courseId)])
+      const [nextCourse, nextReport, students] = await Promise.all([
+        getCourse(courseId), getCourseReport(courseId),
+        fetchAll((page, size) => getStudents(courseId, page, size)).catch(() => null), // sin la lista se muestran los ids
+      ])
       setCourse(nextCourse)
       setReport(nextReport)
       // Cada estudiante se numera dentro de su curso (1 a N); el id de Moodle no sirve para eso.
-      try { setNumbering(numberStudents((await fetchAll((page, size) => getStudents(courseId, page, size))).items)) } catch { setNumbering(new Map()) }
+      setNumbering(students ? numberStudents(students.items) : new Map())
     } catch (e) {
       setCourse(null)
       setReport(null)

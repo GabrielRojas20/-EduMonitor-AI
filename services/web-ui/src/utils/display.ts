@@ -63,5 +63,7 @@ export function numberStudents(students: { id: number; fullName: string }[]): St
 }
 export const studentLabel = (numbering: StudentNumbering, id: number) => {
   const st = numbering.get(id)
-  return st ? `N.º ${st.n} · ${st.name}` : 'Estudiante de otro curso'
+  if (st) return `N.º ${st.n} · ${st.name}`
+  // Sin la lista del curso (falló la carga) no se puede numerar: se muestra el id en vez de decir que es de otro curso.
+  return numbering.size ? 'Estudiante de otro curso' : `Estudiante (ID ${id})`
 }

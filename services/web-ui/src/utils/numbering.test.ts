@@ -17,3 +17,9 @@ describe('Numeración de estudiantes de un curso', () => {
     expect(studentLabel(numbering, 999)).toBe('Estudiante de otro curso')
   })
 })
+
+describe('Sin la lista de estudiantes del curso', () => {
+  it('muestra el id en vez de decir que es de otro curso', () => {
+    expect(studentLabel(new Map(), 307)).toBe('Estudiante (ID 307)')
+  })
+})
