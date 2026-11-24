@@ -51,7 +51,7 @@ def test_success_returns_the_common_output():
     assert out["source"]["endpoint"] == "GET /api/v1/courses" and out["source"]["requestId"] == "req-42"
     assert out["data"]["total"] == 2
     assert out["data"]["courses"][0] == {"id": 2, "shortName": "PRUEBA01", "fullName": "Curso de Prueba EduMonitor",
-                                         "studentCount": 5, "lastSyncAt": "2026-10-22T15:04:05Z", "syncState": "succeeded"}
+                                         "studentCount": 5, "lastSyncAt": "2026-10-22T15:04:05Z"}
     assert out["data"]["courses"][1]["studentCount"] is None  # un curso sin sincronizar no tiene conteo
 
 
@@ -482,87 +482,31 @@ def test_an_invented_existing_course_is_not_queried_end_to_end(settings, ollama,
     assert "/api/v1/courses/3" not in seen and "/api/v1/courses/3/analytics" not in seen
 
 
-# ---- gateway REAL: la lista de cursos trae studentCount y lastSyncAt en null aunque el curso esté sincronizado
-REAL_LIST = [{"id": 2, "shortName": "PRUEBA01", "fullName": "Curso de Prueba EduMonitor", "studentCount": None, "lastSyncAt": None},
+# ---- gateway REAL: la lista de cursos ya trae studentCount y lastSyncAt desde los datos sincronizados
+REAL_LIST = [{"id": 2, "shortName": "PRUEBA01", "fullName": "Curso de Prueba EduMonitor", "studentCount": 2,
+              "lastSyncAt": "2026-11-17T13:20:59.2233333+00:00"},
              {"id": 3, "shortName": "PRUEBA02", "fullName": "Curso sin sincronizar", "studentCount": None, "lastSyncAt": None}]
-
-
-def real_gateway(syncs, total=2, seen=None):
-    def handler(request: httpx.Request):
-        path = request.url.path
-        if seen is not None:
-            seen.append((path, dict(request.url.params)))
-        if path == "/api/v1/courses":
-            return httpx.Response(200, json=REAL_LIST)
-        for cid, status in syncs.items():
-            if path == f"/api/v1/courses/{cid}/sync":
-                return status if isinstance(status, httpx.Response) else httpx.Response(200, json=status)
-            if path == f"/api/v1/courses/{cid}/students":
-                return httpx.Response(200, json={"items": [], "page": 1, "pageSize": 1, "total": total})
-        return httpx.Response(404, json={"status": 404})
-    return handler
 
 
 def real_run(handler):
     return LISTAR_CURSOS.run(ctx(handler), NoArgs())
 
 
-def test_null_sync_data_from_the_real_gateway_is_asked_for_not_assumed_to_mean_never_synced():
-    """El fallo visto en la demostración: el chat decía «aún no se sincronizó» de un curso que el dashboard mostraba actualizado."""
+def test_the_list_from_the_real_gateway_is_used_as_it_comes_without_extra_requests():
     from app.catalog.listar_cursos import facts as f
-    ok = {"state": "succeeded", "lastSuccessAt": "2026-11-12T17:01:00Z", "finishedAt": "2026-11-12T17:01:05Z"}
-    out = real_run(real_gateway({2: ok, 3: {"state": "never"}}))
-    c = out["data"]["courses"]
-    assert (c[0]["studentCount"], c[0]["lastSyncAt"], c[0]["syncState"]) == (2, "2026-11-12T17:01:00Z", "succeeded")
-    assert c[1]["syncState"] == "never" and c[1]["lastSyncAt"] is None
-    assert f(out["data"]) == ["Tienes acceso a 2 cursos.",
-                              "PRUEBA01 (Curso de Prueba EduMonitor): 2 estudiantes; última sincronización con Moodle el 12/11/2026.",
-                              "PRUEBA02 (Curso sin sincronizar): aún no se sincronizó con Moodle, por lo que el número de estudiantes no está disponible."]
-
-
-@pytest.mark.parametrize("state,fragment", [("running", "se está sincronizando"), ("failed", "falló")])
-def test_running_and_failed_syncs_are_described_as_such(state, fragment):
-    from app.catalog.listar_cursos import facts as f
-    out = real_run(real_gateway({2: {"state": "succeeded", "lastSuccessAt": "2026-11-12T17:01:00Z"}, 3: {"state": state}}))
-    assert fragment in f(out["data"])[2] and "aún no se sincronizó" not in f(out["data"])[2]
-
-
-def test_if_the_sync_status_cannot_be_read_nothing_is_claimed_about_it():
-    from app.catalog.listar_cursos import facts as f
-    out = real_run(real_gateway({2: problem(503, "MOODLE_UNAVAILABLE"), 3: "no soy un objeto"}))
-    assert out["ok"] and [c["syncState"] for c in out["data"]["courses"]] == ["unknown", "unknown"]
-    assert all("no se pudo consultar su estado de sincronización" in line for line in f(out["data"])[1:])
-    assert all("aún no se sincronizó" not in line for line in f(out["data"]))
-
-
-def test_a_synced_course_with_failing_student_list_keeps_the_date_without_inventing_a_count():
-    from app.catalog.listar_cursos import facts as f
-    handler = real_gateway({2: {"state": "succeeded", "lastSuccessAt": "2026-11-12T17:01:00Z"}, 3: {"state": "never"}})
-
-    def with_students_down(request):
-        return problem(503, "DATA_NOT_AVAILABLE") if request.url.path.endswith("/students") else handler(request)
-    line = f(real_run(with_students_down)["data"])[1]
-    assert line == "PRUEBA01 (Curso de Prueba EduMonitor): última sincronización con Moodle el 12/11/2026; el número de estudiantes no está disponible."
-
-
-def test_no_extra_requests_when_the_list_already_has_the_data():
     seen = []
 
     def handler(request):
         seen.append(request.url.path)
-        return courses_gw(request)
-    real_run(handler)
-    assert seen[0] == "/api/v1/courses" and "/api/v1/courses/2/sync" not in seen     # el curso 2 ya traía fecha y conteo
-
-
-def test_the_sync_status_lookup_is_capped():
-    from app.catalog import listar_cursos
-    many = [{"id": i, "shortName": f"C{i}", "fullName": "x", "studentCount": None, "lastSyncAt": None} for i in range(1, 16)]
-    calls = []
-
-    def handler(request):
-        calls.append(request.url.path)
-        return httpx.Response(200, json=many) if request.url.path == "/api/v1/courses" else httpx.Response(200, json={"state": "never"})
+        return httpx.Response(200, json=REAL_LIST)
     out = real_run(handler)
-    assert sum(1 for c in calls if c.endswith("/sync")) == listar_cursos.MAX_ENRICHED
-    assert [c["syncState"] for c in out["data"]["courses"]].count("unknown") == 5
+    assert seen == ["/api/v1/courses"]                                    # ni estado de sincronización ni lista de estudiantes
+    assert f(out["data"]) == ["Tienes acceso a 2 cursos.",
+                              "PRUEBA01 (Curso de Prueba EduMonitor): 2 estudiantes; última sincronización con Moodle el 17/11/2026.",
+                              "PRUEBA02 (Curso sin sincronizar): aún no se sincronizó con Moodle, por lo que el número de estudiantes no está disponible."]
+
+
+def test_a_course_without_a_sync_date_never_gets_a_student_count_invented():
+    from app.catalog.listar_cursos import facts as f
+    data = {"courses": [{"id": 3, "shortName": "X", "fullName": "Sin datos", "studentCount": 9, "lastSyncAt": None}], "total": 1}
+    assert "aún no se sincronizó" in f(data)[1]

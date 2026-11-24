@@ -78,7 +78,7 @@ def test_errors(args, code):
 
 def test_facts_use_the_analytics_wording_and_add_only_the_metrics_without_a_finding():
     f = facts(run({"course_id": 2})["data"])
-    assert f[0] == "Informe de PRUEBA01: datos calculados el 22/10/2026; calidad de los datos parcial; período del 21/10/2026 al 21/10/2027."
+    assert f[0] == "Informe de PRUEBA01: datos calculados el 22/10/2026; calidad de los datos parcial; observaciones sincronizadas del 21/10/2026 al 21/10/2027."
     assert f[1:4] == ["El promedio del curso es 5,50 sobre 10 (4 calificaciones).", "Se recibieron 5 de 10 entregas esperadas (50,00 %).",
                       "Hay 1 actividad(es) pendiente(s) de calificar (10,00 %)."]
     # gradingRate y completionRate no tienen hallazgo propio: salen de las métricas
@@ -88,10 +88,60 @@ def test_facts_use_the_analytics_wording_and_add_only_the_metrics_without_a_find
     assert f[-2:] == ["1 alerta activa en el curso.", ALERT["text"]]
 
 
+REAL_ALERTS = [
+    {"alertId": "LOW_SUBMISSION-2-3", "ruleCode": "LOW_SUBMISSION", "studentId": 3, "metric": "submissionRate",
+     "text": "La tasa de entregas enviadas está por debajo del umbral configurado.", "observedValue": 66.67, "threshold": 80.0,
+     "sourceIds": ["3", "5", "6"]},
+    {"alertId": "LOW_AVERAGE-2-4", "ruleCode": "LOW_AVERAGE", "studentId": 4, "metric": "averageScore10",
+     "text": "El promedio normalizado está por debajo del umbral configurado.", "observedValue": 0.0, "threshold": 6.0, "sourceIds": ["4"]},
+    {"alertId": "NO_DATA-2-9", "ruleCode": "NO_DATA", "studentId": 9, "metric": "completionRate",
+     "text": "Moodle no entregó observaciones de seguimiento de finalización.", "observedValue": None, "threshold": None, "sourceIds": []},
+]
+
+
+def real_gateway(report):
+    base = gateway(report)
+
+    def handler(request):
+        if request.url.path == "/api/v1/courses/2/students":
+            return httpx.Response(200, json={"items": [{"id": 3, "fullName": "Ana Pérez"}, {"id": 4, "fullName": "Luis Gómez"}],
+                                             "page": 1, "pageSize": 200, "total": 2})
+        return base(request)
+    return handler
+
+
+def test_alert_findings_name_the_student_the_rule_and_the_evidence_from_analytics():
+    report = dict(REPORT, findings=REPORT["findings"][:3] + REAL_ALERTS, activeAlertCount=3)
+    f = facts(run({"course_id": 2}, real_gateway(report))["data"])
+    assert ("Ana Pérez, Entrega baja: La tasa de entregas enviadas está por debajo del umbral configurado. "
+            "(valor observado 66,67 %; umbral 80 %).") in f
+    assert ("Luis Gómez, Promedio bajo: El promedio normalizado está por debajo del umbral configurado. "
+            "(valor observado 0 sobre 10; umbral 6 sobre 10).") in f
+    # una alerta sin valor ni umbral (sin datos) conserva el texto de analytics tal cual
+    assert "Moodle no entregó observaciones de seguimiento de finalización." in f
+
+
+def test_a_student_missing_from_the_list_is_named_by_id_and_the_report_still_works():
+    report = dict(REPORT, findings=REPORT["findings"][:3] + REAL_ALERTS[:1], activeAlertCount=1)
+    handler = gateway(report)                                              # este gateway no tiene la lista de estudiantes (404)
+    out = run({"course_id": 2}, handler)
+    assert out["ok"] and any(x.startswith("Estudiante 3, Entrega baja:") for x in facts(out["data"]))
+
+
+def test_every_number_in_the_alert_facts_exists_in_the_tool_data():
+    """El validador de salida solo admite cifras que estén en los datos de la herramienta."""
+    import re
+    report = dict(REPORT, findings=REPORT["findings"][:3] + REAL_ALERTS, activeAlertCount=3)
+    data = run({"course_id": 2}, real_gateway(report))["data"]
+    en_datos = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", json.dumps(data))}
+    en_hechos = {float(n.replace(",", ".")) for line in facts(data) for n in re.findall(r"\d+(?:,\d+)?", line)}
+    assert en_hechos - en_datos == set()
+
+
 def test_without_period_or_alerts():
     report = dict(REPORT, periodStart=None, periodEnd=None, activeAlertCount=0, findings=REPORT["findings"][:3])
     f = facts(run({"course_id": 2}, gateway(report))["data"])
-    assert "período" not in f[0] and f[-1] == "No hay alertas activas en el curso."
+    assert "observaciones sincronizadas" not in f[0] and f[-1] == "No hay alertas activas en el curso."
 
 
 def test_many_alert_findings_are_capped_and_say_so():
