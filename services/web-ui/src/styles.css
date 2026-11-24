@@ -688,3 +688,12 @@ tbody tr:last-child td { border-bottom: 0; }
 .agent-quick button { padding: 8px 14px; font-size: 13.5px; }
 .agent-quick button:disabled { opacity: 0.55; cursor: not-allowed; }
 .agent-messages { max-height: 520px; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 22px; padding: 4px 2px 8px; }
+.agent-context { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 6px 8px 6px 12px; border-radius: 999px; background: var(--mist); font-size: 13.5px; }
+.agent-context button { display: grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 50%; background: transparent; color: var(--ink-3); touch-action: manipulation; }
+@media (hover: hover) and (pointer: fine) { .agent-context button:hover { background: rgb(0 0 0 / 0.08); color: var(--ink); } }
+.agent-history-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-3); }
+.agent-history-bar span { display: inline-flex; align-items: center; gap: 6px; }
+.agent-history-bar button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--ink-3); font-size: 12.5px; padding: 4px 6px; border-radius: 8px; touch-action: manipulation; }
+@media (hover: hover) and (pointer: fine) { .agent-history-bar button:hover { color: var(--ink); background: var(--mist); } }
+.agent-history-bar button:disabled { opacity: 0.5; }
+#agente { scroll-margin-top: 90px; }
