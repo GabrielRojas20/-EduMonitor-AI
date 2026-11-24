@@ -66,7 +66,7 @@ def run(args, handler=None):
 
 def test_course_progress_is_the_analytics_body_untouched():
     out = run({"course_name": "PRUEBA01"})
-    assert out["ok"] and out["data"]["analytics"] == COURSE_AN and out["data"]["courseName"] == "PRUEBA01"
+    assert out["ok"] and out["data"]["analytics"] == COURSE_AN and out["data"]["courseName"] == "Curso de Prueba EduMonitor"
     assert out["source"]["endpoint"] == "GET /api/v1/courses/2/analytics"
 
 
@@ -114,7 +114,7 @@ def test_a_course_without_synced_data_tells_the_teacher_to_sync_it():
 
 def test_course_facts_are_written_by_code_with_numerators_and_partial_notice():
     f = facts(run({"course_id": 2})["data"])
-    assert f[0] == "PRUEBA01: indicadores calculados el 22/10/2026; calidad de los datos parcial."
+    assert f[0] == "Curso de Prueba EduMonitor: indicadores calculados el 22/10/2026; calidad de los datos parcial."
     assert "Promedio de notas (escala de 0 a 10): 5,5." in f
     assert "Tasa de entrega: 50 % (5 de 10)." in f
     assert "Tasa de finalización: 44,44 % (4 de 9) (dato parcial). Una actividad sin seguimiento no entra al cálculo." in f
@@ -129,7 +129,7 @@ def test_unavailable_indicator_is_never_shown_as_zero():
 
 def test_student_facts_include_completion_by_activity():
     f = facts(run({"course_id": 2, "student_name": "Estudiante Dos"})["data"])
-    assert f[0].startswith("Estudiante Dos en PRUEBA01:")
+    assert f[0].startswith("Estudiante Dos en Curso de Prueba EduMonitor:")
     assert "Estudiante Dos, Tarea 1: completada." in f
     assert "Estudiante Dos, Tarea 2: sin dato de finalización en Moodle." in f
 

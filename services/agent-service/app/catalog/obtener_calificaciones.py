@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from ..gateway import gateway_get  # noqa: F401  (las pruebas lo reemplazan por un gateway simulado)
 from ..tools import Tool, ToolContext, error_output, ok_output
 from .common import num
-from ._resolve import course_students, fetch_all, norm, resolve_course, resolve_student
+from ._resolve import course_students, fetch_all, norm, resolve_course, resolve_student, course_label
 
 MAX_ROWS_AS_FACTS = 15  # por encima, los hechos resumen en lugar de listar cada registro
 
@@ -80,7 +80,7 @@ def run(ctx: ToolContext, args: Args) -> dict:
               "pendingGrading": sum(1 for r in items if r["status"] == "pending_grading"),
               "drafts": drafts,
               "notSubmitted": sum(1 for r in items if r["status"] == "not_submitted") - drafts}
-    data = {"courseId": cid, "courseName": course["shortName"], "items": items, "total": total, "truncated": truncated,
+    data = {"courseId": cid, "courseName": course_label(course), "items": items, "total": total, "truncated": truncated,
             "counts": counts, "analyzed": len(items), "shown": min(len(items), MAX_ROWS_AS_FACTS),
             "statusFilter": args.status, "matching": len(items)}
     return ok_output(data, endpoint, ctx.request_id)

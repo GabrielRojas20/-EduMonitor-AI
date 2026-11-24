@@ -407,7 +407,7 @@
         "estado": "ok",
         "max_segundos": 60,
         "hechos_contienen": [
-          "Informe de PRUEBA01",
+          "Informe de Curso de Prueba EduMonitor",
           "calidad de los datos parcial",
           "Promedio de notas",
           "Tasa de calificación",
@@ -446,7 +446,7 @@
         "http": 200,
         "max_segundos": 90,
         "hechos_contienen": [
-          "Informe de PRUEBA01",
+          "Informe de Curso de Prueba EduMonitor",
           "5 alertas activas",
           "Promedio de notas",
           "valor observado",

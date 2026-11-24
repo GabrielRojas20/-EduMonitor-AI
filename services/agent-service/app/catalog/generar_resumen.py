@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from ..gateway import gateway_get
 from ..tools import Tool, ToolContext, ok_output
-from ._resolve import course_students, resolve_course
+from ._resolve import course_students, resolve_course, course_label
 from .common import fecha, num, plural
 from .identificar_alertas import RULES
 from .obtener_progreso import QUALITY, metric_fact
@@ -45,7 +45,7 @@ def run(ctx: ToolContext, args: Args) -> dict:
     students, _error = course_students(ctx, cid)  # los nombres son un complemento: si faltan, el hecho nombra el id
     names = {s["id"]: s["fullName"] for s in students or []}
     # El número de hallazgos que se muestran va en los datos: el validador de salida solo admite cifras que existan en ellos
-    data = {"courseId": cid, "courseName": course["shortName"], "report": body, "studentNames": names,
+    data = {"courseId": cid, "courseName": course_label(course), "report": body, "studentNames": names,
             "alertFindings": len(alert_findings), "shown": min(len(alert_findings), MAX_ALERT_FINDINGS_AS_FACTS)}
     return ok_output(data, f"GET /api/v1/courses/{cid}/analytics/report", ctx.request_id)
 

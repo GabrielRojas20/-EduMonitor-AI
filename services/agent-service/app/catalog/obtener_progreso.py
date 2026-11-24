@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from ..gateway import gateway_get
 from ..tools import Tool, ToolContext, ok_output
-from ._resolve import course_students, resolve_course, resolve_student
+from ._resolve import course_students, resolve_course, resolve_student, course_label
 from .common import fecha, num, plural
 
 
@@ -34,7 +34,7 @@ def run(ctx: ToolContext, args: Args) -> dict:
         return error
     cid = course["id"]
     snapshot = {"snapshotId": args.snapshot_id} if args.snapshot_id else None
-    data = {"courseId": cid, "courseName": course["shortName"]}
+    data = {"courseId": cid, "courseName": course_label(course)}
 
     if args.student_id is None and not args.student_name:
         endpoint = f"GET /api/v1/courses/{cid}/analytics"

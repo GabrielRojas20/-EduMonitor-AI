@@ -320,7 +320,7 @@ def grades_gateway(request):
 def test_pending_question_returns_only_pending_whatever_the_model_sent(settings, ollama, traces, model_arguments):
     ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": model_arguments}}])
     res = agent(settings, ollama, traces, grades_gateway).run("¿Qué actividades están pendientes de calificar?", None, TOKEN, "3", "req-42")
-    assert [f.text for f in res.answer.facts] == ["PRUEBA01: 1 registro pendiente de calificar (de 2 registros del curso).",
+    assert [f.text for f in res.answer.facts] == ["Curso de Prueba EduMonitor: 1 registro pendiente de calificar (de 2 registros del curso).",
                                                   "Estudiante Dos, Tarea 1: entregada, pendiente de calificar."]
     assert res.meta.status == "ok" and res.answer.unavailable == []
 
@@ -334,7 +334,7 @@ def test_a_normal_grades_question_is_not_filtered(settings, ollama, traces):
 def test_pending_question_also_works_through_the_fallback(settings, ollama, traces):
     ollama.reply(tool_calls=[])
     res = agent(settings, ollama, traces, grades_gateway).run("¿Qué entregas están pendientes de calificar?", None, TOKEN, "3", "req-42")
-    assert res.answer.facts[0].text.startswith("PRUEBA01: 1 registro pendiente de calificar")
+    assert res.answer.facts[0].text.startswith("Curso de Prueba EduMonitor: 1 registro pendiente de calificar")
 
 
 # ---- argumentos que el código corrige al modelo
@@ -369,7 +369,7 @@ def test_a_course_code_in_the_wrong_field_still_gets_answered_end_to_end(setting
     ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": {"activity_name": "PRUEBA01"}}}])
     res = agent(settings, ollama, traces, grades_gateway).run("¿Qué actividades están pendientes de calificar en PRUEBA01?",
                                                               None, TOKEN, "3", "req-42")
-    assert res.answer.facts[0].text == "PRUEBA01: 1 registro pendiente de calificar (de 2 registros del curso)." and res.meta.status == "ok"
+    assert res.answer.facts[0].text == "Curso de Prueba EduMonitor: 1 registro pendiente de calificar (de 2 registros del curso)." and res.meta.status == "ok"
 
 
 # ---- curso de referencia elegido en la interfaz (courseId de POST /chat)
@@ -391,7 +391,7 @@ def test_selected_course_never_collides_with_a_name_the_model_added(settings, ol
     ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": model_arguments}}])
     res = agent(settings, ollama, traces, grades_gateway_by_id).run("¿Qué actividades están pendientes de calificar?", 2, TOKEN, "3", "req-42")
     assert res.meta.status == "ok" and res.answer.unavailable == []
-    assert res.answer.facts[0].text.startswith("PRUEBA01: 1 registro pendiente de calificar")
+    assert res.answer.facts[0].text.startswith("Curso de Prueba EduMonitor: 1 registro pendiente de calificar")
     assert traces[0]["steps"][1]["args"] == {"course_id": 2, "status": "pending_grading"}
 
 
@@ -427,7 +427,7 @@ def test_the_real_browser_failure_selected_course_plus_activity_name_2(settings,
     """Con el curso elegido, el modelo ponía el 2 del curso como nombre de actividad: filtraba la Tarea 2 y daba 0 pendientes."""
     ollama.reply(tool_calls=[{"function": {"name": "obtener_calificaciones", "arguments": {"activity_name": "2"}}}])
     res = agent(settings, ollama, traces, grades_gateway_by_id).run("¿Qué actividades están pendientes de calificar?", 2, TOKEN, "3", "req-42")
-    assert res.answer.facts[0].text == "PRUEBA01: 1 registro pendiente de calificar (de 2 registros del curso)."
+    assert res.answer.facts[0].text == "Curso de Prueba EduMonitor: 1 registro pendiente de calificar (de 2 registros del curso)."
     assert traces[0]["steps"][1]["args"] == {"course_id": 2, "status": "pending_grading"}
 
 
