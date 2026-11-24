@@ -382,7 +382,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .user-message > div { max-width: min(80%, 560px); padding: 13px 20px; border-radius: 24px 24px 6px 24px; background: var(--n-900); color: #fafaf9; box-shadow: 0 14px 26px -18px rgb(0 0 0 / 0.9); }
 .message-avatar { display: none; }
 .assistant-message { display: flex; align-items: flex-start; gap: 14px; }
-.assistant-message::before { content: ''; flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--n-900); }
+.assistant-message::before { content: 'E'; flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--n-900); color: #fff; font-family: var(--font-display); font-weight: 650; font-size: 16px; }
 .message-content { flex: 1; min-width: 0; padding: 20px 22px; border-radius: 6px 26px 26px 26px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow-2); }
 .message-content .notice { margin: 10px 0 0; }
 .message-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -683,7 +683,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .agent-head { display: flex; align-items: center; gap: 12px; }
 .agent-head h2 { font-size: 18px; letter-spacing: -0.02em; }
 .agent-head p { color: var(--ink-3); font-size: 13.5px; margin-top: 2px; }
-.agent-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: var(--mist); color: var(--ink); flex: none; }
+.agent-icon { font-family: var(--font-display); font-weight: 650; font-size: 18px; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: var(--mist); color: var(--ink); flex: none; }
 .agent-quick { justify-content: flex-start; margin-top: 0; }
 .agent-quick button { padding: 8px 14px; font-size: 13.5px; }
 .agent-quick button:disabled { opacity: 0.55; cursor: not-allowed; }

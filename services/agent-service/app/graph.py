@@ -27,9 +27,9 @@ log = logging.getLogger("agent.trace")
 # ---------------------------------------------------------------- intención (reglas deterministas)
 OUT_OF_SCOPE = [
     (r"\b(cambi\w*|modific\w*|edit\w*|actualiz\w*|corrig\w*|borr\w*|elimin\w*|pon(?:le|er|gas?)?)\b.*\b(nota|notas|calificacion\w*)\b",
-     "No puedo modificar calificaciones: el agente solo las consulta."),
+     "No puedo modificar calificaciones: yo solo las consulto, y esa decisión es tuya."),
     (r"\b(envi\w*|mand\w*|escrib\w*)\b.*\b(mensaje\w*|correo\w*|email\w*|mail\w*|whatsapp|notificacion\w*)\b",
-     "No puedo enviar mensajes a los estudiantes."),
+     "No puedo enviar mensajes a los estudiantes: eso lo haces tú."),
     (r"\b(predic\w*|diagnost\w*|depresi\w*|ansiedad|psicolog\w*|trastorno\w*|salud mental)\b",
      "No hago predicciones ni afirmaciones sobre el estado psicológico o personal de un estudiante."),
 ]
@@ -328,7 +328,7 @@ def log_trace(trace: dict) -> None:
     log.info(json.dumps(trace, ensure_ascii=False))
 
 
-PRAISE = re.compile(r"\b(?:excelente|perfect[oa]|destacad[oa]|sobresaliente|buen(?:o|a)? (?:desempe|rendimiento)|desempe\w+ (?:bueno|excelente)|"
+PRAISE = re.compile(r"\b(?:excelente|perfect[oa]|destacad[oa]|sobresaliente|buen(?:o|a)? (?:desempe|rendimiento|avance|nivel|progreso|resultado)|aceptable|satisfactori\w+|desempe\w+ (?:bueno|excelente)|"
                     r"mantenga el buen|rendimiento (?:bueno|excelente))", re.IGNORECASE)
 AVERAGE_FACT = re.compile(r"Promedio de notas \(escala de 0 a 10\): (\d+(?:,\d+)?)")
 PASSING_AVERAGE = 6.0
@@ -407,7 +407,7 @@ class Agent:
         return {"intent": intent, "refusal": refusal}
 
     def responder_rechazo(self, state: ChatState) -> dict:
-        text = f"{state['refusal']} Sí puedo consultar cursos, calificaciones, progreso y alertas."
+        text = f"{state['refusal']} Con gusto te ayudo con cursos, calificaciones, progreso y alertas."
         return {"status": "refused", "answer": Answer(unavailable=[text]).model_dump()}
 
     def responder_ayuda(self, state: ChatState) -> dict:
@@ -507,7 +507,7 @@ class Agent:
             if not len(self.tools):
                 notes.append("Aún no hay herramientas de consulta conectadas en esta versión del agente.")
             elif not state["plan"] and not state.get("model_failed"):
-                notes.append("No encontré una herramienta que responda esa pregunta. Pregúntame por tus cursos, "
+                notes.append("No encontré cómo responder eso con los datos de tus cursos. Pregúntame por tus cursos, "
                              "calificaciones, progreso o alertas.")
             has_error = state.get("model_failed") or any(not r["output"]["ok"] for r in state["tool_results"])
             return {"answer": Answer(unavailable=notes).model_dump(), "unavailable": notes,

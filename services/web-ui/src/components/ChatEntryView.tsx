@@ -9,7 +9,7 @@ export function ChatEntryView({ entry, onRetry }: { entry: ChatEntry; onRetry: (
         <div className="user-message"><div>{entry.question}</div></div>
         {entry.error ? <div className="assistant-message"><div className="message-content"><Notice tone="danger">{entry.error}</Notice><button type="button" className="text-button" onClick={() => onRetry(entry.question)}>Volver a escribir la pregunta</button></div></div>
           : entry.reply ? <div className="assistant-message"><div className="message-content">
-            <div className="message-meta"><strong>EduMonitor AI</strong><Badge tone={entry.reply.meta.status === 'ok' ? 'success' : entry.reply.meta.status === 'partial' ? 'warning' : 'danger'}>{entry.reply.meta.status === 'ok' ? 'Respuesta' : entry.reply.meta.status === 'partial' ? 'Parcial' : entry.reply.meta.status === 'refused' ? 'Rechazada' : 'Error'}</Badge></div>
+            <div className="message-meta"><strong>Edu</strong><Badge tone={entry.reply.meta.status === 'ok' ? 'success' : entry.reply.meta.status === 'partial' ? 'warning' : 'danger'}>{entry.reply.meta.status === 'ok' ? 'Respuesta' : entry.reply.meta.status === 'partial' ? 'Parcial' : entry.reply.meta.status === 'refused' ? 'Rechazada' : 'Error'}</Badge></div>
             {entry.reply.answer.message && <p>{entry.reply.answer.message}</p>}
             {entry.reply.meta.status === 'partial' && <Notice tone="warning">La respuesta es parcial; algunos datos no pudieron consultarse.</Notice>}
             {entry.reply.meta.status === 'refused' && <Notice tone="warning">El agente rechazó la consulta. No se mostraron datos no autorizados.</Notice>}

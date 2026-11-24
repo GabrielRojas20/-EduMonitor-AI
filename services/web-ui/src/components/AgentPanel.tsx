@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowUp, History, Sparkles, Trash2, UserRound, X } from 'lucide-react'
+import { ArrowUp, History, Trash2, UserRound, X } from 'lucide-react'
 import { Button, Card } from './UI'
 import { useAuth } from '../hooks/useAuth'
 import { friendlyError } from '../services/api'
@@ -67,7 +67,7 @@ export function AgentPanel({ courseId, courseName, student, onClearStudent, init
   const questions = student ? studentQuestions(student.name) : COURSE_QUESTIONS
   const submit = (e: FormEvent) => { e.preventDefault(); void ask(message) }
   return <div id="agente" ref={root}><Card className="agent-panel">
-    <div className="agent-head"><span className="agent-icon"><Sparkles size={18}/></span><div><h2>Agente de IA · {courseName}</h2><p>Consulta los datos de este curso. Cada pregunta se procesa de forma independiente.</p></div></div>
+    <div className="agent-head"><span className="agent-icon" aria-hidden="true">E</span><div><h2>Edu · {courseName}</h2><p>Hola, soy Edu, tu asistente de IA. Te ayudo a revisar los datos de este curso; cada pregunta la respondo por separado.</p></div></div>
     {student && <div className="agent-context"><UserRound size={15}/><span>Ficha individual: <strong>{student.name}</strong></span>{onClearStudent && <button type="button" onClick={onClearStudent} aria-label="Quitar el contexto del estudiante"><X size={14}/></button>}</div>}
     <div className="suggestions agent-quick" role="group" aria-label="Consultas establecidas">{questions.map(q => <button type="button" key={q} disabled={busy} onClick={() => void ask(q)}>{q}</button>)}</div>
     {entries.length > 0 && <>
@@ -76,7 +76,7 @@ export function AgentPanel({ courseId, courseName, student, onClearStudent, init
     </>}
     <form className="chat-composer" onSubmit={submit}>
       <label htmlFor="agent-panel-message" className="sr-only">Escribe tu pregunta sobre {courseName}</label>
-      <textarea id="agent-panel-message" rows={1} maxLength={2000} value={message} placeholder={student ? `Escribe tu pregunta sobre ${student.name}…` : `Escribe tu pregunta sobre ${courseName}…`} onChange={e => setMessage(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit() } }} disabled={busy}/>
+      <textarea id="agent-panel-message" rows={1} maxLength={2000} value={message} placeholder={student ? `Pregúntale a Edu sobre ${student.name}…` : `Pregúntale a Edu sobre ${courseName}…`} onChange={e => setMessage(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit() } }} disabled={busy}/>
       <Button type="submit" disabled={busy || !message.trim()} loading={busy} icon={<ArrowUp size={18}/>}>{busy ? 'Consultando…' : 'Enviar'}</Button>
     </form>
   </Card></div>

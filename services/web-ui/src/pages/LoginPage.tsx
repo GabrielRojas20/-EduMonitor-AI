@@ -61,12 +61,12 @@ export function LoginPage() {
     <main className="lg-center">
       <section className="lg-pitch" aria-label="Presentación de EduMonitor AI">
         <p className="pitch-title reveal" style={delay(1)}>El seguimiento académico, con <em>evidencia</em>.</p>
-        <p className="pitch-sub reveal" style={delay(2)}>Indicadores verificables, alertas que explican su causa y un asistente que interpreta los datos de tus cursos de Moodle sin inventar nada.</p>
+        <p className="pitch-sub reveal" style={delay(2)}>Indicadores verificables, alertas que explican su causa y Edu, un asistente que interpreta los datos de tus cursos de Moodle sin inventar nada.</p>
       </section>
       <section className={`lg-card${shake ? ' shake' : ''}`} aria-labelledby="login-title" onPointerMove={onCardMove}>
         <div className="lg-badge reveal" style={delay(2)}><Sparkles size={14}/> Plataforma para docentes</div>
         <h1 id="login-title" className="reveal" style={delay(3)}>{hello[0]} <em>{hello[1]}</em></h1>
-        <p className="reveal" style={delay(4)}>Inicia sesión para consultar tus cursos, alertas y al asistente académico.</p>
+        <p className="reveal" style={delay(4)}>Inicia sesión para consultar tus cursos, tus alertas y conversar con Edu.</p>
         {expired && <div><Notice tone="warning">Tu sesión terminó. Vuelve a iniciar sesión.</Notice><button className="text-button" onClick={clearExpired}>Entendido</button></div>}
         {error && <Notice tone="danger">{error}</Notice>}
         <form onSubmit={submit} noValidate>
