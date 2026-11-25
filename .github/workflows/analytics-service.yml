@@ -1,12 +1,9 @@
 name: Analytics and Moodle Sync
 
 on:
+  # En las pull requests se ejecuta siempre, para que el check aparezca y se pueda confirmar antes de aprobar.
   pull_request:
-    paths:
-      - 'services/analytics-service/**'
-      - 'services/moodle-sync-service/**'
-      - 'database/seed/**'
-      - '.github/workflows/analytics-service.yml'
+    branches: [main, develop]
   push:
     branches: [develop, main]
     paths:

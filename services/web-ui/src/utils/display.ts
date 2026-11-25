@@ -53,3 +53,17 @@ export function greeting(): [string, string] {
   const h = new Date().getHours()
   return h < 12 ? ['Buenos', 'días'] : h < 19 ? ['Buenas', 'tardes'] : ['Buenas', 'noches']
 }
+
+/** Numeración de los estudiantes de UN curso: 1, 2, 3… por orden alfabético. El id de Moodle es global (puede ser 307 en un curso de 25) y no sirve para contarlos. */
+export interface NumberedStudent { n: number; total: number; name: string }
+export type StudentNumbering = Map<number, NumberedStudent>
+export function numberStudents(students: { id: number; fullName: string }[]): StudentNumbering {
+  const sorted = [...students].sort((a, b) => a.fullName.localeCompare(b.fullName, 'es'))
+  return new Map(sorted.map((st, i) => [st.id, { n: i + 1, total: sorted.length, name: st.fullName }]))
+}
+export const studentLabel = (numbering: StudentNumbering, id: number) => {
+  const st = numbering.get(id)
+  if (st) return `N.º ${st.n} · ${st.name}`
+  // Sin la lista del curso (falló la carga) no se puede numerar: se muestra el id en vez de decir que es de otro curso.
+  return numbering.size ? 'Estudiante de otro curso' : `Estudiante (ID ${id})`
+}

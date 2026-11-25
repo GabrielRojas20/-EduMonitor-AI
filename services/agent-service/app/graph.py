@@ -27,9 +27,9 @@ log = logging.getLogger("agent.trace")
 # ---------------------------------------------------------------- intención (reglas deterministas)
 OUT_OF_SCOPE = [
     (r"\b(cambi\w*|modific\w*|edit\w*|actualiz\w*|corrig\w*|borr\w*|elimin\w*|pon(?:le|er|gas?)?)\b.*\b(nota|notas|calificacion\w*)\b",
-     "No puedo modificar calificaciones: el agente solo las consulta."),
+     "No puedo modificar calificaciones: yo solo las consulto, y esa decisión es tuya."),
     (r"\b(envi\w*|mand\w*|escrib\w*)\b.*\b(mensaje\w*|correo\w*|email\w*|mail\w*|whatsapp|notificacion\w*)\b",
-     "No puedo enviar mensajes a los estudiantes."),
+     "No puedo enviar mensajes a los estudiantes: eso lo haces tú."),
     (r"\b(predic\w*|diagnost\w*|depresi\w*|ansiedad|psicolog\w*|trastorno\w*|salud mental)\b",
      "No hago predicciones ni afirmaciones sobre el estado psicológico o personal de un estudiante."),
 ]
@@ -66,6 +66,7 @@ def classify(message: str) -> tuple[str, str | None]:
 # por palabras clave (en orden: lo más específico primero). Sin argumentos: cada herramienta resuelve el curso por su cuenta
 # o pide que el docente indique cuál.
 FALLBACK_TOOLS = [
+    (r"cuant[oa]s (estudiantes|alumnos)|(numero|cantidad|total) de (estudiantes|alumnos)", "listar_cursos"),  # el conteo está en la lista de cursos
     (r"informe|reporte|resumen", "generar_resumen"),
     (r"alert|riesgo|preocup|atencion", "identificar_alertas"),
     (r"nota|calific|entreg|pendiente", "obtener_calificaciones"),
@@ -174,6 +175,11 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
             args["student_name"] = name
     args.update(hint_arguments(tool, message))
     return args
+
+
+def asks_for_all_courses(tool: str, message: str) -> bool:
+    """«¿Qué cursos tengo?» habla de todos los cursos aunque el docente esté dentro de uno; «¿cuántos estudiantes tengo?» habla del actual."""
+    return tool == "listar_cursos" and bool(re.search(r"\bcursos\b", normalize(message)))
 
 
 def with_reference_course(arguments: dict, reference: int, message: str, student_capable: bool = False) -> dict:
@@ -322,7 +328,7 @@ def log_trace(trace: dict) -> None:
     log.info(json.dumps(trace, ensure_ascii=False))
 
 
-PRAISE = re.compile(r"\b(?:excelente|perfect[oa]|destacad[oa]|sobresaliente|buen(?:o|a)? (?:desempe|rendimiento)|desempe\w+ (?:bueno|excelente)|"
+PRAISE = re.compile(r"\b(?:excelente|perfect[oa]|destacad[oa]|sobresaliente|buen(?:o|a)? (?:desempe|rendimiento|avance|nivel|progreso|resultado)|aceptable|satisfactori\w+|desempe\w+ (?:bueno|excelente)|"
                     r"mantenga el buen|rendimiento (?:bueno|excelente))", re.IGNORECASE)
 AVERAGE_FACT = re.compile(r"Promedio de notas \(escala de 0 a 10\): (\d+(?:,\d+)?)")
 PASSING_AVERAGE = 6.0
@@ -401,7 +407,7 @@ class Agent:
         return {"intent": intent, "refusal": refusal}
 
     def responder_rechazo(self, state: ChatState) -> dict:
-        text = f"{state['refusal']} Sí puedo consultar cursos, calificaciones, progreso y alertas."
+        text = f"{state['refusal']} Con gusto te ayudo con cursos, calificaciones, progreso y alertas."
         return {"status": "refused", "answer": Answer(unavailable=[text]).model_dump()}
 
     def responder_ayuda(self, state: ChatState) -> dict:
@@ -437,7 +443,8 @@ class Agent:
             if tool is not None and isinstance(call["arguments"], dict):  # los parámetros ocultos (ids) los pone el código
                 call["arguments"] = {k: v for k, v in call["arguments"].items() if k not in tool.hidden}
             call["arguments"] = fix_arguments(call["name"], call["arguments"], state["message"])
-            if state.get("course_id") and tool is not None and "course_id" in tool.input_model.model_fields:
+            if state.get("course_id") and tool is not None and "course_id" in tool.input_model.model_fields \
+                    and not asks_for_all_courses(call["name"], state["message"]):
                 call["arguments"] = with_reference_course(call["arguments"], state["course_id"], state["message"],
                                                            "student_name" in tool.input_model.model_fields)
         fallback = None
@@ -449,7 +456,8 @@ class Agent:
                 args.update(hint_arguments(fallback, state["message"]))
                 if fallback in STUDENT_TOOLS and student_in_message(state["message"]):
                     args["student_name"] = student_in_message(state["message"])
-                if state.get("course_id") and "course_id" in tool.input_model.model_fields:
+                if state.get("course_id") and "course_id" in tool.input_model.model_fields \
+                        and not asks_for_all_courses(fallback, state["message"]):
                     args = with_reference_course(args, state["course_id"], state["message"])
                 plan.append({"name": fallback, "arguments": args})
         steps = state["steps"] + [{"n": len(state["steps"]) + 1, "node": "planificar_herramientas", "tool": None, "ok": True,
@@ -499,7 +507,7 @@ class Agent:
             if not len(self.tools):
                 notes.append("Aún no hay herramientas de consulta conectadas en esta versión del agente.")
             elif not state["plan"] and not state.get("model_failed"):
-                notes.append("No encontré una herramienta que responda esa pregunta. Pregúntame por tus cursos, "
+                notes.append("No encontré cómo responder eso con los datos de tus cursos. Pregúntame por tus cursos, "
                              "calificaciones, progreso o alertas.")
             has_error = state.get("model_failed") or any(not r["output"]["ok"] for r in state["tool_results"])
             return {"answer": Answer(unavailable=notes).model_dump(), "unavailable": notes,

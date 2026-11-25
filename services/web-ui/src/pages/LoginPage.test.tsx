@@ -9,7 +9,6 @@ vi.mock('../hooks/useAuth', () => ({
 }))
 vi.mock('../components/LoginArt', () => ({
   DotField: () => null,
-  PreviewCards: () => null,
   Rotator: () => null,
 }))
 

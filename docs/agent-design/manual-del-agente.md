@@ -2,6 +2,14 @@
 
 Este manual explica qué hace el agente, cómo se usa desde el chat, qué preguntas responde bien, cómo se prepara y se muestra en la demostración, y qué hacer si algo falla. Todo lo que dice se probó con el curso PRUEBA01 y el gateway real.
 
+## Edu, el asistente
+
+El agente de IA se presenta al docente con el nombre **Edu**. Es un colega cercano y sereno: tutea, habla en primera persona («te sugiero», «yo revisaría»), usa frases cortas y no hace elogios, exclamaciones ni bromas. Cuando un dato no está, lo dice con naturalidad y deja la decisión final al docente.
+
+La personalidad solo afecta a la voz de las inferencias, las recomendaciones y los mensajes de ayuda o de rechazo, y a los textos de la interfaz. **Los hechos y las cifras no cambian:** los redacta el código a partir de los datos de las herramientas, y la validación final sigue descartando toda cifra sin respaldo. Edu no finge sentimientos, no opina sobre la vida personal de un estudiante y no hace diagnósticos.
+
+Edu está en la página de cada curso, con el curso ya fijado, y guarda un historial de consultas por docente y curso en el navegador. En la documentación técnica se sigue llamando «agente de IA».
+
 ## 1. Qué es el agente
 
 El agente es un servicio aparte (`services/agent-service`) que conversa con el docente desde la pantalla «Agente IA» de la interfaz. Usa un modelo de lenguaje local (`qwen3:1.7b`, con Ollama), por lo que no envía datos de estudiantes a servicios externos.

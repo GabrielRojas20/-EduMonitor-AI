@@ -8,7 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ..tools import Tool, ToolContext, ok_output
-from ._resolve import course_students, fetch_all, norm, resolve_course, resolve_student
+from ._resolve import course_students, fetch_all, norm, resolve_course, resolve_student, course_label
 from .common import plural
 
 MAX_ALERTS_AS_FACTS = 15
@@ -75,7 +75,7 @@ def run(ctx: ToolContext, args: Args) -> dict:
               "detectedAt": a.get("detectedAt"), "evidence": a.get("evidence", [])} for a in rows]
     # Los conteos van en los datos: el validador de salida solo admite cifras que existan en lo que devolvió la herramienta
     counts = {sev: sum(1 for a in items if a["severity"] == sev) for sev in RANK}
-    data = {"courseId": cid, "courseName": course["shortName"], "status": args.status, "severity": args.severity,
+    data = {"courseId": cid, "courseName": course_label(course), "status": args.status, "severity": args.severity,
             "studentName": student["fullName"] if params.get("studentId") else None, "items": items, "total": total,
             "truncated": truncated, "counts": counts, "analyzed": len(items), "shown": min(len(items), MAX_ALERTS_AS_FACTS)}
     return ok_output(data, endpoint, ctx.request_id)

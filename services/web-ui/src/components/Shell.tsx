@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { PropsWithChildren } from 'react'
-import { Bell, BookOpen, LayoutDashboard, LogOut, MessageSquareText } from 'lucide-react'
+import { Bell, BookOpen, LayoutDashboard, LogOut } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
@@ -16,12 +16,11 @@ export function Shell({ children }: PropsWithChildren) {
   const path = location.pathname
   const isActiveItem = (label: string) => label === 'Mis cursos' ? path === '/cursos'
     : label === 'Dashboard' ? /^\/cursos\/\d+/.test(path)
-    : label === 'Alertas' ? path.startsWith('/alertas') : path.startsWith('/chat')
+    : path.startsWith('/alertas')
   const nav = [
     { to: '/cursos', label: 'Mis cursos', icon: <BookOpen size={18}/> },
     { to: activeCourse ? `/cursos/${activeCourse}` : '/cursos', label: 'Dashboard', icon: <LayoutDashboard size={18}/> },
     { to: `/alertas${activeCourse ? `?curso=${activeCourse}` : ''}`, label: 'Alertas', icon: <Bell size={18}/> },
-    { to: `/chat${activeCourse ? `?curso=${activeCourse}` : ''}`, label: 'Agente IA', icon: <MessageSquareText size={18}/> },
   ]
 
   // El indicador de la pestaña activa se desliza hasta su nueva posición.

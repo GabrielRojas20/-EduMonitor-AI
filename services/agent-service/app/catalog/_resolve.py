@@ -100,3 +100,8 @@ def resolve_student(ctx: ToolContext, course_id: int, students: list, student_id
         names = ", ".join(s["fullName"] for s in found)
         return None, _fail(ctx, "VALIDATION_ERROR", f"Hay varios estudiantes con ese nombre; indica cuál: {names}.", endpoint)
     return found[0], None
+
+
+def course_label(course: dict) -> str:
+    """Cómo se nombra el curso en las respuestas: su nombre completo (el docente lo reconoce); el código solo si no hay nombre."""
+    return course.get("fullName") or course.get("shortName") or str(course["id"])

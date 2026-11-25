@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { Button, Card, Badge, CountUp, Notice, PageHeader, Segmented, StateView } from '../components/UI'
 import { ApiError, friendlyError } from '../services/api'
-import { getAlerts, getAnalytics, getSyncStatus, listCourses, startSync } from '../services/edumonitor'
+import { fetchAll, getAlerts, getAnalytics, getStudents, getSyncStatus, listCourses, startSync } from '../services/edumonitor'
 import type { AcademicAlert, Course, Metric, SyncStatus } from '../types/api'
-import { dateLabel, ruleLabels, statusText } from '../utils/display'
+import { dateLabel, numberStudents, ruleLabels, statusText, studentLabel } from '../utils/display'
 
 const MAX_SUMMARY = 6
 const QUICK = ['¿Qué falta por calificar?', '¿Qué alertas tiene este curso?', '¿Cómo va el curso y qué me recomiendas?']
@@ -90,7 +90,25 @@ export function CoursesPage() {
   const totalAlerts = known.reduce((n, e) => n + (e.alerts || 0), 0)
   const totalPending = known.reduce((n, e) => n + (e.pending || 0), 0)
   const recent = known.flatMap(e => e.recent || []).sort((x, y) => y.detectedAt.localeCompare(x.detectedAt)).slice(0, 4)
-  const codeOf = (id: number) => courses.find(c => c.id === id)?.shortName || `#${id}`
+  const codeOf = (id: number) => courses.find(c => c.id === id)?.fullName || `#${id}`
+  // Las alertas recientes nombran al estudiante con su número dentro de su curso (no con el id global de Moodle).
+  const [who, setWho] = useState<Record<string, string>>({})
+  const recentKey = recent.map(a => `${a.courseId}:${a.studentId ?? ''}`).join('|')
+  useEffect(() => {
+    const ids = [...new Set(recent.filter(a => a.studentId != null).map(a => a.courseId))]
+    if (!ids.length) return
+    let cancelled = false
+    void Promise.all(ids.map(async id => {
+      try { return [id, numberStudents((await fetchAll((page, size) => getStudents(id, page, size))).items)] as const } catch { return null }
+    })).then(done => {
+      if (cancelled) return
+      const next: Record<string, string> = {}
+      for (const item of done) if (item) for (const a of recent) if (a.courseId === item[0] && a.studentId != null) next[`${a.courseId}:${a.studentId}`] = studentLabel(item[1], a.studentId)
+      setWho(next)
+    })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recentKey])
   const lastSync = courses.map(c => statuses[c.id]?.lastSuccessAt || c.lastSyncAt).filter(Boolean).sort().pop()
   const chatCourse = courses[0]?.id
   return <><PageHeader eyebrow="Espacio docente" title={`Hola, ${user?.name?.split(' ')[0] || 'docente'}`} subtitle="Consulta tus cursos autorizados y mantén su información sincronizada con Moodle." action={<Button variant="secondary" icon={<RefreshCw size={16}/>} onClick={() => { setLoading(true); void load() }}>Actualizar listado</Button>}/>
@@ -120,10 +138,10 @@ export function CoursesPage() {
       <aside className="today panel reveal" aria-label="Resumen de hoy">
         <h2>Resumen de hoy</h2>
         <section><h3><Bell size={15}/> Alertas recientes</h3>
-          {recent.length ? <ul className="today-alerts">{recent.map(a => <li key={a.alertId}><Link viewTransition to={`/alertas?curso=${a.courseId}${a.studentId != null ? `&estudiante=${a.studentId}` : ''}`}><i data-sev={a.severity}/><span><strong>{ruleLabels[a.ruleCode] || a.ruleCode}</strong><small>{codeOf(a.courseId)} · {a.studentId != null ? `Estudiante #${a.studentId}` : 'Alerta de curso'}</small></span><ArrowRight size={15}/></Link></li>)}</ul> : <p className="muted small">{summaryReady ? 'No hay alertas activas.' : 'Sin información de alertas por ahora.'}</p>}
+          {recent.length ? <ul className="today-alerts">{recent.map(a => <li key={a.alertId}><Link viewTransition to={`/alertas?curso=${a.courseId}${a.studentId != null ? `&estudiante=${a.studentId}` : ''}`}><i data-sev={a.severity}/><span><strong>{ruleLabels[a.ruleCode] || a.ruleCode}</strong><small>{codeOf(a.courseId)} · {a.studentId != null ? who[`${a.courseId}:${a.studentId}`] || 'Estudiante' : 'Alerta de curso'}</small></span><ArrowRight size={15}/></Link></li>)}</ul> : <p className="muted small">{summaryReady ? 'No hay alertas activas.' : 'Sin información de alertas por ahora.'}</p>}
         </section>
         <section><h3><MessageSquareText size={15}/> Preguntar al agente</h3>
-          <div className="today-ask">{QUICK.map(q => <Link key={q} viewTransition to={`/chat?${chatCourse ? `curso=${chatCourse}&` : ''}q=${encodeURIComponent(q)}`}>{q}<ArrowRight size={14}/></Link>)}</div>
+          <div className="today-ask">{QUICK.map(q => <Link key={q} viewTransition to={chatCourse ? `/cursos/${chatCourse}?q=${encodeURIComponent(q)}#agente` : '/cursos'}>{q}<ArrowRight size={14}/></Link>)}</div>
         </section>
         <section className="today-sync"><h3><RefreshCw size={15}/> Última sincronización</h3><p>{dateLabel(lastSync)}</p></section>
       </aside>
