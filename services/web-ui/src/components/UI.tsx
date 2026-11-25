@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ButtonHTMLAttributes, CSSProperties, PropsWithChildren, ReactNode } from 'react'
-import { AlertTriangle, CheckCircle2, Clock3, DatabaseZap, LoaderCircle, RefreshCw, WifiOff } from 'lucide-react'
+import { AlertTriangle, BellOff, BookOpen, CheckCircle2, ClipboardList, Clock3, DatabaseZap, LoaderCircle, RefreshCw, SearchX, UsersRound, WifiOff } from 'lucide-react'
 import type { Metric } from '../types/api'
 import { numberLabel } from '../utils/display'
 
@@ -19,8 +19,16 @@ export function Notice({ tone = 'info', children }: PropsWithChildren<{ tone?: '
 }
 export function StateView({ kind, title, detail, onRetry }: { kind: 'loading' | 'empty' | 'error'; title?: string; detail?: string; onRetry?: () => void }) {
   if (kind === 'loading') return <div className="skeleton" role="status" aria-live="polite"><div className="skeleton-row"><i/><i/><i/></div><i className="wide"/><p className="skeleton-note">{detail || title || 'Consultando el servidor…'}</p></div>
-  const Icon = kind === 'error' ? WifiOff : DatabaseZap
-  return <div className="state"><span className="state-icon"><Icon size={28}/></span><h3>{title || (kind === 'error' ? 'No se pudo cargar' : 'Sin resultados')}</h3><p>{detail || (kind === 'empty' ? 'No hay información para mostrar.' : 'Comprueba la conexión y vuelve a intentarlo.')}</p>{kind === 'error' && onRetry && <Button variant="secondary" onClick={onRetry} icon={<RefreshCw size={16}/>}>Reintentar</Button>}</div>
+  const topic = `${title || ''} ${detail || ''}`.toLowerCase()
+  const EmptyIcon = /alerta/.test(topic) ? BellOff : /estudiante/.test(topic) ? UsersRound : /curso/.test(topic) ? BookOpen : /nota|entrega|calific|informe|indicador|hallazgo/.test(topic) ? ClipboardList : SearchX
+  return <div className={`state state-${kind}`} role={kind === 'error' ? 'alert' : undefined}>
+    {kind === 'empty'
+      ? <div className="empty-illustration" data-testid="empty-illustration" aria-hidden="true"><span className="empty-illustration-paper"/><span className="empty-illustration-icon"><EmptyIcon size={34} strokeWidth={1.8}/></span></div>
+      : <span className="state-icon"><WifiOff size={28}/></span>}
+    <h3>{title || (kind === 'error' ? 'No se pudo cargar' : 'Sin resultados')}</h3>
+    <p>{detail || (kind === 'empty' ? 'Prueba con otra búsqueda o comprueba si hay información sincronizada.' : 'Comprueba la conexión y vuelve a intentarlo.')}</p>
+    {kind === 'error' && onRetry && <Button variant="secondary" onClick={onRetry} icon={<RefreshCw size={16}/>}>Reintentar</Button>}
+  </div>
 }
 export function Meter({ value }: { value: number }) {
   return <div className="meter" role="presentation"><i style={{ width: `${Math.max(0, Math.min(100, value))}%` }}/></div>

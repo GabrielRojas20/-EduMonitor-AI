@@ -33,7 +33,15 @@ export function DashboardPage() {
   const [error, setError] = useState('')
   const [warnings, setWarnings] = useState<string[]>([])
   const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  // La paginación pertenece a cada curso: al cambiar de curso se vuelve a la primera página.
+  const [pagination, setPagination] = useState({ courseId, page: 1 })
+  const page = pagination.courseId === courseId ? pagination.page : 1
+  const setPage = (next: number | ((previous: number) => number)) => {
+    setPagination(previous => {
+      const current = previous.courseId === courseId ? previous.page : 1
+      return { courseId, page: typeof next === 'function' ? next(current) : next }
+    })
+  }
   const [syncing, setSyncing] = useState(false)
   const [success, setSuccess] = useState('')
   const load = useCallback(async () => {
