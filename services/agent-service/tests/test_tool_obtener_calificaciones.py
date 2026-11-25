@@ -55,7 +55,7 @@ def run(args, handler=None):
 
 def test_by_course_name_adds_student_names_and_never_the_email():
     out = run({"course_name": "prueba01"})
-    assert out["ok"] and out["data"]["courseName"] == "PRUEBA01" and out["data"]["total"] == 4
+    assert out["ok"] and out["data"]["courseName"] == "Curso de Prueba EduMonitor" and out["data"]["total"] == 4
     assert out["data"]["items"][0]["studentName"] == "Estudiante Uno"
     assert "example.com" not in json.dumps(out)
     assert out["source"]["endpoint"] == "GET /api/v1/courses/2/grades"
@@ -120,7 +120,7 @@ def test_pagination_collects_every_page_and_flags_truncation():
 
 def test_facts_are_written_by_code():
     f = facts(run({"course_id": 2})["data"])
-    assert f[0] == "PRUEBA01: 4 registros de calificación (2 calificados, 1 pendiente de calificar, 1 borrador sin enviar, 0 sin entrega)."
+    assert f[0] == "Curso de Prueba EduMonitor: 4 registros de calificación (2 calificados, 1 pendiente de calificar, 1 borrador sin enviar, 0 sin entrega)."
     assert "Estudiante Uno, Tarea 1: 8 sobre 10." in f
     assert "Estudiante Dos, Tarea 1: 0 sobre 10 (nota cero)." in f
     assert "Estudiante Uno, Tarea 2: entregada, pendiente de calificar." in f
@@ -176,19 +176,19 @@ def test_status_filter_keeps_only_those_records_and_the_summary_says_so():
     out = run({"course_id": 2, "status": "pending_grading"})
     assert [(i["studentName"], i["activityName"]) for i in out["data"]["items"]] == [("Estudiante Uno", "Tarea 2")]
     f = facts(out["data"])
-    assert f == ["PRUEBA01: 1 registro pendiente de calificar (de 4 registros del curso).",
+    assert f == ["Curso de Prueba EduMonitor: 1 registro pendiente de calificar (de 4 registros del curso).",
                  "Estudiante Uno, Tarea 2: entregada, pendiente de calificar."]
 
 
 def test_not_submitted_includes_drafts_and_each_row_says_which():
     f = facts(run({"course_id": 2, "status": "not_submitted"})["data"])
-    assert f[0] == "PRUEBA01: 1 registro sin entrega (de 4 registros del curso)." and "Estudiante Dos, Tarea 2: borrador sin enviar." in f
+    assert f[0] == "Curso de Prueba EduMonitor: 1 registro sin entrega (de 4 registros del curso)." and "Estudiante Dos, Tarea 2: borrador sin enviar." in f
 
 
 def test_status_filter_with_no_matches_is_a_clear_answer_not_a_failure():
     only_graded = [g for g in GRADES if g["status"] == "graded"]
     out = run({"course_id": 2, "status": "pending_grading"}, gateway(only_graded))
-    assert out["ok"] and facts(out["data"]) == ["No hay registros pendientes de calificar en PRUEBA01 (de 2 registros del curso)."]
+    assert out["ok"] and facts(out["data"]) == ["No hay registros pendientes de calificar en Curso de Prueba EduMonitor (de 2 registros del curso)."]
 
 
 def test_an_unknown_status_is_ignored_instead_of_failing():

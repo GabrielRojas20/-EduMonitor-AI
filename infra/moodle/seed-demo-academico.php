@@ -174,15 +174,13 @@ function create_submission(int $assignmentid, int $userid, string $status, int $
 
 function update_grade(int $courseid, int $assignmentid, int $userid, ?float $grade, int $now): void {
     global $DB;
-    $grades = [];
-    if ($grade !== null) {
-        $grades[$userid] = [
-            'rawgrade' => $grade,
-            'dategraded' => $now,
-            'datesubmitted' => $now,
-        ];
-        grade_update('mod/assign', $courseid, 'mod', 'assign', $assignmentid, 0, $grades);
-    }
+    $grades = [$userid => [
+        'userid' => $userid,
+        'rawgrade' => $grade,
+        'dategraded' => $grade === null ? null : $now,
+        'datesubmitted' => $now,
+    ]];
+    grade_update('mod/assign', $courseid, 'mod', 'assign', $assignmentid, 0, $grades);
 }
 
 function mark_completion(int $cmid, int $userid, int $state, int $now): void {
@@ -216,22 +214,33 @@ foreach ($courses as $course) {
     $createdAssignments += (int)$created1 + (int)$created2;
 
     $students = enrolled_students((int)$course->id);
+    // Cada curso tiene su propio perfil: del 0 (muy bueno) al 4 (con muchos problemas) y sus estudiantes afectados cambian.
+    preg_match('/DEMO-(\d+)-(\d+)/', $course->shortname, $mm);
+    $k = ((int)($mm[1] ?? 1) - 1) * 5 + ((int)($mm[2] ?? 1) - 1);
+    $level = $k % 5;
+    $shift = ($k * 7) % 25;
+    $bonus = ($level === 0 ? 2 : ($level === 1 ? 1 : ($level === 4 ? -2 : 0))) + (($level >= 1 && $level <= 3 && $k % 3 === 0) ? 1 : 0);
     foreach ($students as $index => $student) {
-        $n = $index + 1;
-        $status1 = $n % 4 === 0 ? 'submitted' : 'submitted';
-        $status2 = $n % 4 === 0 ? 'draft' : 'submitted';
-        create_submission($assignment1, (int)$student->id, $status1, $now);
+        $m = (($index + $shift) % 25) + 1;
+        $zero1 = $level >= 2 && $m % (5 + ($k % 3)) === 0;
+        $draft2 = $level >= 1 && $m % ($level === 1 ? 8 : (3 + ($k % 3))) === 0;
+        $pending2 = $level >= 2 && !$draft2 && $m % (9 + ($k % 4)) === 0;
+        $grade1 = $zero1 ? 0.0 : (float)max(3, min(10, 6 + ($m % 5) + $bonus));
+        $grade2 = ($draft2 || $pending2) ? null : (float)max(3, min(10, 5 + ($m % 6) + $bonus));
+        $status2 = $draft2 ? 'draft' : 'submitted';
+        create_submission($assignment1, (int)$student->id, 'submitted', $now);
         create_submission($assignment2, (int)$student->id, $status2, $now);
+        $DB->set_field('assign_submission', 'status', $status2, ['assignment' => $assignment2, 'userid' => (int)$student->id, 'attemptnumber' => 0]);
         $createdSubmissions += 2;
 
-        $grade1 = $n % 5 === 0 ? 0.0 : (float)(6 + ($n % 5));
-        $grade2 = $n % 4 === 0 ? null : (float)(5 + ($n % 6));
         update_grade((int)$course->id, $assignment1, (int)$student->id, $grade1, $now);
         update_grade((int)$course->id, $assignment2, (int)$student->id, $grade2, $now);
         $updatedGrades += $grade2 === null ? 1 : 2;
 
-        mark_completion($cm1, (int)$student->id, $n % 6 === 0 ? COMPLETION_INCOMPLETE : COMPLETION_COMPLETE, $now);
-        mark_completion($cm2, (int)$student->id, $n % 4 === 0 ? COMPLETION_INCOMPLETE : COMPLETION_COMPLETE, $now);
+        $incomplete1 = $level >= 2 && $m % ($level === 2 ? 6 + ($k % 3) : ($level === 3 ? 4 + ($k % 2) : 3)) === 0;
+        $incomplete2 = $level >= 1 && $m % (4 + ($k % 3)) === 0;
+        mark_completion($cm1, (int)$student->id, $incomplete1 ? COMPLETION_INCOMPLETE : COMPLETION_COMPLETE, $now);
+        mark_completion($cm2, (int)$student->id, $incomplete2 ? COMPLETION_INCOMPLETE : COMPLETION_COMPLETE, $now);
         $updatedCompletion += 2;
     }
     rebuild_course_cache($course->id);

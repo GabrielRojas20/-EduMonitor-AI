@@ -86,7 +86,7 @@ def test_errors(args, code):
 
 def test_facts_quote_the_evidence_with_readable_rule_names():
     f = facts(run({"course_id": 2})["data"])
-    assert f[0] == "PRUEBA01: 3 alertas activas (1 crítica, 1 de atención, 1 informativa)."
+    assert f[0] == "Curso de Prueba EduMonitor: 3 alertas activas (1 crítica, 1 de atención, 1 informativa)."
     assert f[1] == "Curso, Entrega baja (crítica): Se entregó el 30 % de lo esperado; el umbral es 80 %."
     assert f[2] == "Estudiante Dos, Promedio bajo (de atención): El promedio es 4,50 sobre 10 con 2 calificaciones; el umbral es 6,00."
     assert f[3].startswith("Estudiante Uno, Calificaciones pendientes (informativa):")
@@ -94,19 +94,19 @@ def test_facts_quote_the_evidence_with_readable_rule_names():
 
 def test_summary_names_the_filters_so_a_partial_list_is_not_read_as_the_whole_course():
     f = facts(run({"course_id": 2, "severity": "info"}, gateway([ALERTS[0]]))["data"])
-    assert f[0].startswith("PRUEBA01: 1 alerta activa de severidad informativa (")
+    assert f[0].startswith("Curso de Prueba EduMonitor: 1 alerta activa de severidad informativa (")
     f = facts(run({"course_id": 2, "student_name": "Estudiante Dos"}, gateway([ALERTS[1]]))["data"])
-    assert f[0].startswith("PRUEBA01: 1 alerta activa de Estudiante Dos (")
+    assert f[0].startswith("Curso de Prueba EduMonitor: 1 alerta activa de Estudiante Dos (")
 
 
 def test_no_alerts_is_a_valid_answer_not_a_failure():
     out = run({"course_id": 2}, gateway([]))
-    assert out["ok"] and facts(out["data"]) == ["No hay alertas activas en PRUEBA01."]
+    assert out["ok"] and facts(out["data"]) == ["No hay alertas activas en Curso de Prueba EduMonitor."]
 
 
 def test_empty_result_names_the_filters_so_it_is_not_read_as_all_clear():
     out = run({"course_id": 2, "student_name": "Estudiante Uno", "severity": "critical"}, gateway([]))
-    assert facts(out["data"]) == ["No hay alertas activas de severidad crítica de Estudiante Uno en PRUEBA01."]
+    assert facts(out["data"]) == ["No hay alertas activas de severidad crítica de Estudiante Uno en Curso de Prueba EduMonitor."]
 
 
 @pytest.mark.parametrize("sent,expected", [("crítica", "critical"), ("Atención", "warning"), ("informativa", "info"),

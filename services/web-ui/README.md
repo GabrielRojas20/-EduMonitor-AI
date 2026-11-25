@@ -10,10 +10,11 @@ Aplicación **React + TypeScript + Vite** que consume los contratos de `docs/con
 | --- | --- |
 | `/login` | Correo/contraseña, POST login, JWT, validación y 401. |
 | `/cursos` | Cursos autorizados, filtros, estado/fecha y sincronización manual. |
-| `/cursos/:id` | Métricas, Recharts, actividades, búsqueda, paginación y ficha. |
+| `/cursos/:id` | Métricas, Recharts, actividades, búsqueda, paginación y ficha. Incluye el panel de chat con **Edu**, el asistente de IA, ya fijado en el curso. |
+| `/cursos/:id/informe` | Informe académico del curso con hallazgos y evidencia. |
 | `/cursos/:id/estudiantes/:sid` | Métricas individuales, notas, entrega, finalización y evidencia. |
 | `/alertas` | Alertas por curso, severidad y estado, detalle y fuentes. |
-| `/chat` | POST al agente, hechos, inferencias, recomendaciones y fuentes. |
+| `/chat` | Ya no es una página: redirige a `/cursos/:id` (conserva `?curso=` y `?q=`). El chat vive dentro de cada curso. |
 
 Se implementaron estados **cargando / vacío / error / reintentar / parcial**, control de acceso por sesión y diferencias entre `graded` con nota 0, `pending_grading`, `not_submitted` y borradores. Los indicadores y alertas **no se recalculan** en el navegador: provienen de `analytics-service`. Las visualizaciones de distribución sí agrupan registros de calificación devueltos por la API sin alterar los indicadores oficiales.
 
@@ -63,9 +64,17 @@ Gateway real: `docente1@edumonitor.test` / valor de `AUTH_SEED_PASSWORD` en `.en
 
 **Importante:** no ejecutes simultáneamente el mock y gateway real en el puerto 5000. Cambia `VITE_API_URL` si se usa otra dirección.
 
-## Chat
+## Chat (Edu, dentro de cada curso)
 
-El agente de Juan se ejecuta por separado, en `http://localhost:5004` (`VITE_AGENT_URL`). No es parte del mock de gateway. Para arrancarlo y tener respuestas del modelo también es necesario que Ollama esté listo (ver `services/agent-service/README.md`). Si el agente está apagado, la interfaz muestra un error claro y no fabrica respuestas.
+El chat no es una página global con selector de curso: está en la página de cada curso (`/cursos/:id`), con el curso ya fijado. El agente se presenta como **Edu**. Se ejecuta por separado, en `http://localhost:5004` (`VITE_AGENT_URL`), y no es parte del mock de gateway. Para tener respuestas del modelo también es necesario que Ollama esté listo (ver `services/agent-service/README.md`).
+
+- **Consultas establecidas:** botones como «¿Cuántos estudiantes tengo?», «¿Qué alertas hay?» o «Genera el informe del curso»; también se puede escribir una pregunta libre.
+- **Contexto de la ficha individual:** el botón «Consultar al agente» de la ficha abre `/cursos/:id?estudiante=:sid#agente`; el panel muestra la etiqueta «Ficha individual» y las preguntas del estudiante.
+- **Enlaces con pregunta:** `/cursos/:id?q=…` envía la pregunta una vez y la quita de la dirección.
+- **Historial:** las consultas con respuesta se guardan en este navegador (`localStorage`), por docente y por curso, hasta 30, con el botón «Borrar historial». No es memoria del agente: cada pregunta se procesa de forma independiente.
+- **Respuesta:** se muestran los bloques de hechos, inferencias y recomendaciones (cuando la respuesta no trae ninguno, solo el mensaje), con fuentes, fecha de sincronización y avisos de datos no disponibles o parciales.
+
+Los estudiantes se numeran de 1 al total **dentro de su curso** (`N.º 4 · Nombre`), por orden alfabético; el id de Moodle no se muestra como número de estudiante.
 
 ## Alertas resueltas
 
@@ -80,7 +89,7 @@ El mock de Juan devuelve solo alertas activas; si filtras por `resolved`, la pan
 5. Dashboard muestra las métricas recibidas y tres gráficos: distribución de notas, entregas y severidad.
 6. Ficha refleja `0`, `null` pendiente, sin entrega y borrador correctamente.
 7. Alertas muestran regla, severidad, fecha, valores observados, umbral, explicaciones y fuente.
-8. Chat muestra los tres bloques, su evidencia, respuesta parcial, rechazada y fallos.
+8. El panel de Edu en `/cursos/:id` muestra los tres bloques, su evidencia, respuesta parcial, rechazada y fallos; el historial se conserva al recargar y se borra con su botón; `/chat?curso=:id` redirige al curso.
 9. Probar cortes de red, errores 503 y cambio de curso sin arrastrar datos del anterior.
 
 ## Restricciones conocidas

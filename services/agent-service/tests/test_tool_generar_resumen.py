@@ -58,7 +58,7 @@ def run(args, handler=None):
 
 def test_report_by_course_name_keeps_the_analytics_body():
     out = run({"course_name": "prueba01"})
-    assert out["ok"] and out["data"]["report"] == REPORT and out["data"]["courseName"] == "PRUEBA01"
+    assert out["ok"] and out["data"]["report"] == REPORT and out["data"]["courseName"] == "Curso de Prueba EduMonitor"
     assert out["source"]["endpoint"] == "GET /api/v1/courses/2/analytics/report"
 
 
@@ -78,7 +78,7 @@ def test_errors(args, code):
 
 def test_facts_use_the_analytics_wording_and_add_only_the_metrics_without_a_finding():
     f = facts(run({"course_id": 2})["data"])
-    assert f[0] == "Informe de PRUEBA01: datos calculados el 22/10/2026; calidad de los datos parcial; observaciones sincronizadas del 21/10/2026 al 21/10/2027."
+    assert f[0] == "Informe de Curso de Prueba EduMonitor: datos calculados el 22/10/2026; calidad de los datos parcial; observaciones sincronizadas del 21/10/2026 al 21/10/2027."
     assert f[1:4] == ["El promedio del curso es 5,50 sobre 10 (4 calificaciones).", "Se recibieron 5 de 10 entregas esperadas (50,00 %).",
                       "Hay 1 actividad(es) pendiente(s) de calificar (10,00 %)."]
     # gradingRate y completionRate no tienen hallazgo propio: salen de las métricas

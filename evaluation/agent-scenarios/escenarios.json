@@ -479,7 +479,7 @@
         "http": 200,
         "estado": "ok",
         "hechos_contienen": [
-          "Informe de PRUEBA01",
+          "Informe de Curso de Prueba EduMonitor",
           "calidad de los datos parcial",
           "5,50 sobre 10",
           "Tasa de calificación",
@@ -520,7 +520,7 @@
       "esperado": {
         "http": 200,
         "hechos_contienen": [
-          "Informe de PRUEBA01",
+          "Informe de Curso de Prueba EduMonitor",
           "12 alertas activas",
           "5,50 sobre 10"
         ],

@@ -4,8 +4,8 @@ import { ArrowRight, Check, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, Sparkle
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { friendlyError } from '../services/api'
-import { Button, CountUp, Notice } from '../components/UI'
-import { DotField, PreviewCards, Rotator } from '../components/LoginArt'
+import { Button, Notice } from '../components/UI'
+import { DotField, Rotator } from '../components/LoginArt'
 import { greeting } from '../utils/display'
 
 const delay = (i: number): CSSProperties => ({ ['--i' as string]: i })
@@ -61,24 +61,18 @@ export function LoginPage() {
     <main className="lg-center">
       <section className="lg-pitch" aria-label="Presentación de EduMonitor AI">
         <p className="pitch-title reveal" style={delay(1)}>El seguimiento académico, con <em>evidencia</em>.</p>
-        <p className="pitch-sub reveal" style={delay(2)}>Indicadores verificables, alertas que explican su causa y un asistente que interpreta los datos de tus cursos de Moodle sin inventar nada.</p>
-        <dl className="pitch-stats reveal" style={delay(3)}>
-          <div><dd><CountUp value={5}/></dd><dt>herramientas del agente</dt></div>
-          <div><dd><CountUp value={20}/></dd><dt>escenarios de evaluación aprobados</dt></div>
-          <div><dd><CountUp value={309}/><small>/ 309</small></dd><dt>cifras con respaldo en los datos</dt></div>
-        </dl>
-        <div className="pitch-cards" aria-hidden="true"><PreviewCards/></div>
+        <p className="pitch-sub reveal" style={delay(2)}>Indicadores verificables, alertas que explican su causa y Edu, un asistente que interpreta los datos de tus cursos de Moodle sin inventar nada.</p>
       </section>
       <section className={`lg-card${shake ? ' shake' : ''}`} aria-labelledby="login-title" onPointerMove={onCardMove}>
         <div className="lg-badge reveal" style={delay(2)}><Sparkles size={14}/> Plataforma para docentes</div>
         <h1 id="login-title" className="reveal" style={delay(3)}>{hello[0]} <em>{hello[1]}</em></h1>
-        <p className="reveal" style={delay(4)}>Inicia sesión para consultar tus cursos, alertas y al asistente académico.</p>
+        <p className="reveal" style={delay(4)}>Inicia sesión para consultar tus cursos, tus alertas y conversar con Edu.</p>
         {expired && <div><Notice tone="warning">Tu sesión terminó. Vuelve a iniciar sesión.</Notice><button className="text-button" onClick={clearExpired}>Entendido</button></div>}
         {error && <Notice tone="danger">{error}</Notice>}
         <form onSubmit={submit} noValidate>
           <div className="field reveal" style={delay(5)}>
             <label htmlFor="email">Correo electrónico</label>
-            <div className="input-wrap"><Mail size={18}/><input id="email" type="email" autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@institucion.edu" disabled={busy} required /></div>
+            <div className="input-wrap"><Mail size={18}/><input id="email" type="email" autoFocus autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} value={email} onChange={e => setEmail(e.target.value)} placeholder="correo@institucion.edu" disabled={busy} required /></div>
           </div>
           <div className="field reveal" style={delay(6)}>
             <label htmlFor="password">Contraseña</label>
@@ -87,9 +81,8 @@ export function LoginPage() {
           </div>
           <Button className={`login-submit reveal${done ? ' is-done' : ''}`} style={delay(7)} type="submit" loading={busy && !done} disabled={busy}>{done ? <><Check size={18}/> Listo, entrando…</> : busy ? 'Validando credenciales…' : <>Iniciar sesión <ArrowRight size={18}/></>}</Button>
         </form>
-        <div className="lg-help reveal" style={delay(8)}><ShieldCheck size={16}/> Tu sesión usa el token de acceso del gateway.</div>
       </section>
     </main>
-    <footer className="lg-foot reveal" style={delay(9)}><span><ShieldCheck size={15}/> Solo lectura</span><span><LockKeyhole size={15}/> Acceso por curso</span><span><Sparkles size={15}/> IA local</span><span className="lg-foot-note">Vista previa ilustrativa</span></footer>
+    <footer className="lg-foot reveal" style={delay(9)}><span><ShieldCheck size={15}/> Solo lectura</span><span><LockKeyhole size={15}/> Acceso por curso</span><span><Sparkles size={15}/> IA local</span></footer>
   </div>
 }

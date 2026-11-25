@@ -3,9 +3,10 @@ import { ArrowLeft, CalendarDays, ClipboardList, FileText, RefreshCw, ShieldChec
 import { Link, useParams } from 'react-router-dom'
 import { Badge, Button, Card, MetricCard, Notice, PageHeader, SectionTitle, StateView } from '../components/UI'
 import { friendlyError } from '../services/api'
-import { getCourse, getCourseReport } from '../services/edumonitor'
+import { fetchAll, getCourse, getCourseReport, getStudents } from '../services/edumonitor'
 import type { Course, CourseReportData, Metric } from '../types/api'
-import { dateLabel, numberLabel, ruleLabels } from '../utils/display'
+import { dateLabel, numberLabel, numberStudents, ruleLabels, studentLabel } from '../utils/display'
+import type { StudentNumbering } from '../utils/display'
 
 const METRICS: Record<string, string> = {
   averageScore10: 'Promedio académico',
@@ -28,6 +29,7 @@ export function ReportPage() {
   const courseId = Number(id)
   const [course, setCourse] = useState<Course | null>(null)
   const [report, setReport] = useState<CourseReportData | null>(null)
+  const [numbering, setNumbering] = useState<StudentNumbering>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -40,9 +42,14 @@ export function ReportPage() {
       return
     }
     try {
-      const [nextCourse, nextReport] = await Promise.all([getCourse(courseId), getCourseReport(courseId)])
+      const [nextCourse, nextReport, students] = await Promise.all([
+        getCourse(courseId), getCourseReport(courseId),
+        fetchAll((page, size) => getStudents(courseId, page, size)).catch(() => null), // sin la lista se muestran los ids
+      ])
       setCourse(nextCourse)
       setReport(nextReport)
+      // Cada estudiante se numera dentro de su curso (1 a N); el id de Moodle no sirve para eso.
+      setNumbering(students ? numberStudents(students.items) : new Map())
     } catch (e) {
       setCourse(null)
       setReport(null)
@@ -93,7 +100,7 @@ export function ReportPage() {
         {findings.length ? <ol className="report-findings-list">{findings.map((finding, index) => <li key={`${finding.alertId || finding.metric || 'hallazgo'}-${index}`}>
           <div className="report-finding-icon"><FileText size={19} /></div>
           <div className="report-finding-content">
-            <div className="report-finding-title"><strong>{finding.ruleCode ? ruleLabels[finding.ruleCode] || finding.ruleCode : finding.metric ? metricTitle(finding.metric) : `Hallazgo ${index + 1}`}</strong>{finding.studentId != null && <Badge tone="info">Estudiante #{finding.studentId}</Badge>}</div>
+            <div className="report-finding-title"><strong>{finding.ruleCode ? ruleLabels[finding.ruleCode] || finding.ruleCode : finding.metric ? metricTitle(finding.metric) : `Hallazgo ${index + 1}`}</strong>{finding.studentId != null && <Badge tone="info">{studentLabel(numbering, finding.studentId)}</Badge>}</div>
             <p>{finding.text}</p>
             {(finding.observedValue != null || finding.threshold != null) && <div className="report-evidence"><span>Valor observado: <strong>{observed(finding.observedValue)}</strong></span><span>Umbral: <strong>{observed(finding.threshold)}</strong></span></div>}
             {finding.sourceIds?.length ? <div className="report-sources">Fuentes: {finding.sourceIds.join(' · ')}</div> : <div className="report-sources">Identificadores de fuente no disponibles</div>}
