@@ -1,0 +1,38 @@
+name: AuthCourses and Gateway
+
+# Pruebas de auth-courses-service y api-gateway (C#). Se ejecutan en toda pull request,
+# para que el check aparezca siempre y se pueda confirmar antes de aprobar.
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop, main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore AuthCourses
+        run: dotnet restore services/auth-courses-service/tests/AuthCourses.Tests/AuthCourses.Tests.csproj
+
+      - name: Build AuthCourses
+        run: dotnet build services/auth-courses-service/tests/AuthCourses.Tests/AuthCourses.Tests.csproj --configuration Release --no-restore
+
+      - name: Test AuthCourses
+        run: dotnet test services/auth-courses-service/tests/AuthCourses.Tests/AuthCourses.Tests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Restore Gateway
+        run: dotnet restore services/api-gateway/tests/ApiGateway.Tests/ApiGateway.Tests.csproj
+
+      - name: Build Gateway
+        run: dotnet build services/api-gateway/tests/ApiGateway.Tests/ApiGateway.Tests.csproj --configuration Release --no-restore
+
+      - name: Test Gateway
+        run: dotnet test services/api-gateway/tests/ApiGateway.Tests/ApiGateway.Tests.csproj --configuration Release --no-build --verbosity normal
