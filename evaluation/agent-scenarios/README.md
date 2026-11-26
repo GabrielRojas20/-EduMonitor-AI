@@ -62,7 +62,16 @@ El resultado de cada ejecución se guarda en `resultados/ultima-ejecucion.json` 
 `reportes/` guarda los resultados de la evaluación final (`final-gateway-real.json` y `final-servidor-de-pruebas.json`) y el reporte de métricas
 `REPORTE-EVALUACION-FINAL.md`. Se genera con `python reporte.py reportes/final-gateway-real.json reportes/final-servidor-de-pruebas.json`.
 
-### Contra el gateway real, con el curso PRUEBA01
+### Contra el gateway real, con el dataset masivo de demostración
+
+`escenarios-masivo.json` tiene 22 escenarios para el gateway real con los 5 docentes y los 25 cursos de demostración (`docente1` a `docente5`; cursos `DEMO-01-01` a `DEMO-05-05`). Los escenarios con `curso_id` envían el curso elegido en la interfaz (`courseId`), como lo hace la página del curso. Los datos esperados salen de DEMO-01-01 (Física, sin alertas) y de DEMO-01-05 (Lógica Matemática, 29 alertas), tal como los carga `infra/moodle/seed-demo-academico.php` y se sincronizan con Moodle. `S03` sigue en `escenarios.json` porque necesita el servidor de pruebas con datos hostiles.
+
+```powershell
+$env:EVAL_PASSWORD = "<AUTH_SEED_PASSWORD del .env>"
+python ejecutar.py --escenarios escenarios-masivo.json --dominio-correos edumonitor.test --agente-gateway-caido http://localhost:5014
+```
+
+### Contra el gateway real, con el curso PRUEBA01 (conjunto anterior)
 
 Además del servidor de pruebas, la evaluación se puede ejecutar contra el gateway real con los datos de Moodle. Los 20 escenarios que
 dependen de los datos están adaptados en `escenarios-reales.json`; `S03` (instrucciones escondidas en los datos) se sigue ejecutando con

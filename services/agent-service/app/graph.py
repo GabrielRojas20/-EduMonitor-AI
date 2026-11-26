@@ -40,6 +40,9 @@ INTERPRETATION = (r"\b(que hago|que debo|que puedo hacer|como puedo|recomiend\w*
                   r"interpret\w*|por que|riesgo|preocup\w*|mejor\w*|explic\w*|evalu\w*|conviene|progreso|como (?:va|van))\b")
 
 
+INTERPRET_MAX_FACTS = 10  # hechos que lee el modelo al interpretar (ver _answer_with_code_facts)
+
+
 def needs_interpretation(message: str) -> bool:
     return bool(re.search(INTERPRETATION, normalize(message)))
 
@@ -89,6 +92,9 @@ def hint_arguments(tool: str, message: str) -> dict:
         for pattern, status in STATUS_HINTS:
             if re.search(pattern, text):
                 return {"status": status}
+    if tool == "identificar_alertas" and re.search(r"informativ", normalize(message)):
+        # Las alertas se listan de más a menos grave y se cortan en 15: las informativas quedan al final y no aparecían
+        return {"severity": "info"}
     return {}
 
 
@@ -592,7 +598,9 @@ class Agent:
         answer = Answer(facts=facts, unavailable=notes)
         steps = list(state["steps"])
         if needs_interpretation(state["message"]):
-            listing = "\n".join(f"[{i}] {f.text}" for i, f in enumerate(facts))
+            # El modelo solo lee los primeros hechos (resumen, indicadores y las primeras alertas): con decenas de alertas el texto era
+            # tan largo que la respuesta tardaba más de 60 s. Los índices no cambian, así que `basedOn` y `relatedFinding` siguen valiendo.
+            listing = "\n".join(f"[{i}] {f.text}" for i, f in enumerate(facts[:INTERPRET_MAX_FACTS]))
             messages = [{"role": "system", "content": prompts.INTERPRETER_SYSTEM},
                         {"role": "user", "content": f"Pregunta del docente: {state['message']}\n\nHechos:\n{listing}"}]
             try:

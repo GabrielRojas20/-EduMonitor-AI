@@ -36,7 +36,7 @@ def main() -> int:
     out = ["# Reporte de la evaluación final del agente", "",
            f"- **Fecha:** {real['fecha'][:10]}",
            f"- **Modelo:** {modelo}, ejecutado en local con Ollama.",
-           f"- **Escenarios ejecutados:** {len(ejecutados)} ({len([r for r in real['resultados'] if r['resultado'] != 'OMITIDO'])} contra el gateway real con el curso PRUEBA01"
+           f"- **Escenarios ejecutados:** {len(ejecutados)} ({len([r for r in real['resultados'] if r['resultado'] != 'OMITIDO'])} contra el gateway real con el dataset masivo de demostración (cursos DEMO-01-01 a DEMO-05-05)"
            + (" y S03 contra el servidor de pruebas con datos hostiles)." if prueba else ")."),
            f"- **Resultado:** {tasa(ejecutados)} escenarios aprobados.", "",
            "## Metas del diseño (sección 8)", "",
