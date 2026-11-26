@@ -1,8 +1,8 @@
 # Guía de instalación local de EduMonitor AI
 
 **Responsable:** Gabriel
-**Fecha:** 11 de noviembre de 2026
-**Objetivo:** levantar el entorno local y validar el recorrido del Sprint 2.
+**Fecha:** 26 de noviembre de 2026
+**Objetivo:** levantar el entorno local y validar el recorrido completo de Sprint 3: Auth → Gateway → Moodle Sync → Moodle, Analytics, frontend y Agent Service.
 
 ## 1. Requisitos
 
@@ -86,11 +86,11 @@ Analytics debe responder HTTP 200 y conservar los indicadores en escala `score_0
 
 Los usuarios ficticios creados por Auth son:
 
-- `docente1@edumonitor.test`: docente con acceso al curso `2` (`PRUEBA01`).
-- `docente2@edumonitor.test`: docente con acceso al curso `3` (`PRUEBA02`).
+- `docente1@edumonitor.test`: docente de demostración.
+- `docente2@edumonitor.test`: docente de demostración.
 - `admin@edumonitor.test`: administrador técnico sin cursos asignados.
 
-Todos usan el valor local de `AUTH_SEED_PASSWORD`.
+Todos usan el valor local de `AUTH_SEED_PASSWORD`. Esa variable debe configurarse en `.env`; la contraseña real no se publica en GitHub y debe entregarse al ingeniero por un canal privado.
 
 Para obtener un JWT desde PowerShell:
 
@@ -106,7 +106,7 @@ $login = Invoke-RestMethod -Method Post `
 $token = $login.accessToken
 ```
 
-Con ese token se puede iniciar una sincronización del curso autorizado. El token de Moodle debe estar configurado en `MOODLE_WS_TOKEN` antes de levantar Docker:
+Con ese token se puede iniciar una sincronización del curso autorizado. El token de Moodle debe estar configurado en `MOODLE_WS_TOKEN` antes de levantar Docker. El usuario técnico de Moodle es `edumonitor_sync`; su token nunca debe aparecer en el README, capturas o commits:
 
 ```powershell
 Invoke-RestMethod -Method Post `
@@ -158,7 +158,7 @@ $env:AGENT_MODEL = 'qwen3:1.7b'
 
 El Agent lee `OLLAMA_URL` y `AGENT_MODEL`; no usa `OLLAMA_BASE_URL` ni `OLLAMA_MODEL`. El host `127.0.0.1` evita exponerlo innecesariamente a la red local.
 
-Sus seis herramientas son `listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas`, `generar_resumen` y `listar_estudiantes`.
+Sus cinco herramientas son `listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas` y `generar_resumen`.
 
 Puedes comprobarlo con:
 

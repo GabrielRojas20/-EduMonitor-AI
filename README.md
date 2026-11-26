@@ -52,8 +52,17 @@ Tecnologías: React + TypeScript + Vite · ASP.NET Core (.NET 8), YARP, EF Core 
 
 ```bash
 cp .env.example .env   # completar valores; nunca subir .env
-docker compose up      # disponible desde el Sprint 2
+docker compose up -d --build
+docker compose ps
 ```
+
+Para la guía completa de instalación, Moodle, el seed académico y el agente, consulta [`docs/installation-local.md`](docs/installation-local.md). El entorno de Sprint 3 publica el Gateway en `5000`, Auth Courses en `5001`, Moodle Sync en `5002`, Analytics en `5003`, Agent Service en `5004`, Moodle en `8080`, Ollama en `11434` y el frontend Vite en `5173`.
+
+## Acceso de demostración y entrega al ingeniero
+
+Los usuarios ficticios de Auth son `docente1@edumonitor.test`, `docente2@edumonitor.test` y `admin@edumonitor.test`. Los dos primeros son docentes; la contraseña de todos se toma de la variable local `AUTH_SEED_PASSWORD` y no está escrita en el repositorio. Para entregar el proyecto, comparte esa contraseña y el token local de Moodle por un canal privado o configura valores nuevos en el `.env` del equipo receptor. Nunca subas `.env`, `MOODLE_WS_TOKEN`, `JWT_SECRET`, contraseñas ni JWT a GitHub.
+
+El usuario técnico de Moodle es `edumonitor_sync`. El token de Moodle se configura únicamente en `MOODLE_WS_TOKEN` del `.env` local. La versión utilizada por Docker Compose es Moodle `4.5` y la instalación verificada reporta `4.5.4`. El dataset de demostración validado contiene 25 cursos, 25 estudiantes por curso, 50 actividades, 1.250 entregas, 1.100 calificaciones y 1.250 estados de finalización.
 
 ## Alcance
 
