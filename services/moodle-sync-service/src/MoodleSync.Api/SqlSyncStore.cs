@@ -49,14 +49,20 @@ public sealed class SqlSyncStore : ISyncStore
             SELECT DISTINCT s.student_id, s.full_name, s.email
             FROM sync.student s
             WHERE s.student_id IN (
-                SELECT student_id FROM sync.grade WHERE course_id = @courseId
+                SELECT student_id
+                FROM sync.grade
+                WHERE course_id = @courseId AND sync_id = @latestGradeSyncId
                 UNION
-                SELECT student_id FROM sync.completion WHERE course_id = @courseId
+                SELECT student_id
+                FROM sync.completion
+                WHERE course_id = @courseId AND sync_id = @latestCompletionSyncId
             )
             ORDER BY s.student_id
             """, connection))
         {
             command.Parameters.AddWithValue("@courseId", courseId);
+            command.Parameters.AddWithValue("@latestGradeSyncId", (object?)latestGradeSyncId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@latestCompletionSyncId", (object?)latestCompletionSyncId ?? DBNull.Value);
             await using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
