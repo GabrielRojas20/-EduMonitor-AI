@@ -186,7 +186,9 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
 # El docente pide la lista o los nombres de sus estudiantes. Lo decide el código (no el modelo): «una lista de los estudiantes» no
 # tiene otra herramienta que la responda, y así no cambia cómo el modelo elige las demás.
 STUDENT_LIST = (r"\b(lista|listado|listame|listar|nomina)\b.*\b(estudiantes|alumnos)\b|\bquienes son (mis|los) (estudiantes|alumnos)\b|"
-                r"\bque (estudiantes|alumnos) tengo\b|\bnombres de (los |mis |todos los )?(estudiantes|alumnos)\b|"
+                r"\bque (estudiantes|alumnos) (tengo|tiene|hay|estan|pertenecen|forman|cursan)\b|"
+                r"\bquienes (estan|hay|forman|componen|cursan)\b.*\b(curso|clase)\b|"
+                r"\bnombres de (los |mis |todos los )?(estudiantes|alumnos)\b|"
                 r"\b(dame|muestrame|muestra|dime) (a )?(los|mis|todos los) (estudiantes|alumnos)\b")
 OTHER_TOPIC = r"\b(alertas?|pendientes?|riesgo|notas?|calificacion\w*|entregas?|promedio|progreso|finalizacion|cuantos|cuantas)\b"
 

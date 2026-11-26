@@ -52,7 +52,7 @@ def test_facts_open_with_a_sentence_and_list_one_student_per_line():
 
 def test_one_student_and_no_students_have_their_own_wording():
     one = facts(run({"course_id": 2}, students_gw(STUDENTS[:1]))["data"])
-    assert one[0] == "Este es el 1 estudiante de Curso de Prueba EduMonitor, por orden alfabético:"
+    assert one[0] == "Este es el único estudiante de Curso de Prueba EduMonitor:"
     assert facts({"courseName": "Física", "total": 0, "items": []}) == ["No hay estudiantes sincronizados en Física."]
 
 
@@ -91,6 +91,10 @@ def test_the_model_is_not_offered_the_tool_but_the_registry_has_it():
     "lista de estudiantes",
     "¿Qué estudiantes tengo?",
     "listado de alumnos del curso PRUEBA01",
+    "¿Qué estudiantes tiene el curso?",
+    "¿Qué estudiantes hay en este curso?",
+    "¿Quiénes están en el curso?",
+    "¿Qué alumnos cursan esta clase?",
 ])
 def test_questions_that_ask_for_the_student_list(message):
     assert wants_student_list(message)
@@ -105,6 +109,10 @@ def test_questions_that_ask_for_the_student_list(message):
     "Lista mis cursos",
     "¿Qué notas tiene Bruno?",
     "¿Cómo va el curso?",
+    "¿Qué estudiantes tiene alertas?",
+    "¿Qué estudiantes tiene promedio bajo?",
+    "¿Cuántos estudiantes hay en el curso?",
+    "¿Quiénes tienen alertas en el curso?",
 ])
 def test_questions_that_are_not_a_student_list(message):
     assert not wants_student_list(message)
@@ -126,3 +134,31 @@ def test_a_course_code_written_in_the_question_is_used(settings, ollama, traces)
                 tool_transport=httpx.MockTransport(students_gw())).run(
         "lista de los estudiantes de PRUEBA01", None, TOKEN, "3", "req-1")
     assert res.meta.status == "ok" and res.answer.facts[1].text == "N.º 1 · Ana Sofía Acosta"
+
+
+def test_a_course_with_more_students_than_the_gateway_pages_reports_the_real_total_and_the_truncation():
+    """Con más de 500 estudiantes la lista leída es menor que el total: el total es el real y se avisa que quedó truncada."""
+    def gw(request):
+        path = request.url.path
+        if path == "/api/v1/courses/2":
+            return httpx.Response(200, json=COURSE)
+        if path == "/api/v1/courses/2/students":
+            page = int(request.url.params["page"])
+            size = int(request.url.params["pageSize"])
+            first = (page - 1) * size
+            batch = [{"id": 1000 + i, "fullName": f"Estudiante {i:04d}"} for i in range(first, min(first + size, 700))]
+            return httpx.Response(200, json={"items": batch, "total": 700, "page": page, "pageSize": size})
+        return httpx.Response(404, json={"status": 404})
+    out = run({"course_id": 2}, gw)
+    data = out["data"]
+    assert out["ok"] and data["total"] == 700 and data["truncated"] is True and len(data["items"]) == 500
+    f = facts(data)
+    assert f[0] == "Estos son los 700 estudiantes de Curso de Prueba EduMonitor, por orden alfabético:"
+    assert "Solo se leyeron los primeros 500 de 700 estudiantes, así que la numeración es parcial." in f
+    assert f"Se muestran los primeros {MAX_LISTED} de 500 estudiantes leídos." in f
+
+
+def test_a_complete_list_is_not_marked_as_truncated():
+    data = run({"course_id": 2}, students_gw())["data"]
+    assert data["total"] == 3 and data["truncated"] is False
+    assert not any("Solo se leyeron" in line for line in facts(data))

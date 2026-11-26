@@ -74,12 +74,20 @@ def resolve_course(ctx: ToolContext, course_id: int | None, course_name: str | N
     return {"id": c["id"], "shortName": c.get("shortName"), "fullName": c.get("fullName")}, None
 
 
+def course_students_page(ctx: ToolContext, course_id: int) -> tuple[list | None, int, bool, dict | None]:
+    """Estudiantes del curso como [{id, fullName}], con el total real y si la lista quedó truncada (más de 500 estudiantes).
+
+    Nunca incluye el correo (diseño, sección 3.8: privacidad). Devuelve (estudiantes, total, truncado, error)."""
+    items, total, truncated, error = fetch_all(ctx, f"/api/v1/courses/{course_id}/students")
+    if error:
+        return None, 0, False, error
+    return [{"id": s["id"], "fullName": s.get("fullName")} for s in items], total, truncated, None
+
+
 def course_students(ctx: ToolContext, course_id: int) -> tuple[list | None, dict | None]:
     """Estudiantes del curso como [{id, fullName}]. Nunca incluye el correo (diseño, sección 3.8: privacidad)."""
-    items, _total, _truncated, error = fetch_all(ctx, f"/api/v1/courses/{course_id}/students")
-    if error:
-        return None, error
-    return [{"id": s["id"], "fullName": s.get("fullName")} for s in items], None
+    students, _total, _truncated, error = course_students_page(ctx, course_id)
+    return students, error
 
 
 def resolve_student(ctx: ToolContext, course_id: int, students: list, student_id: int | None,

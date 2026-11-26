@@ -10,7 +10,7 @@ No se le ofrece al modelo (`offered_to_model=False`): el código la elige cuando
 from pydantic import BaseModel, Field
 
 from ..tools import Tool, ToolContext, ok_output
-from ._resolve import course_label, course_students, norm, resolve_course
+from ._resolve import course_label, course_students_page, norm, resolve_course
 
 MAX_LISTED = 50  # por encima, los hechos listan los primeros y avisan cuántos hay
 
@@ -25,12 +25,13 @@ def run(ctx: ToolContext, args: Args) -> dict:
     if error:
         return error
     cid = course["id"]
-    students, error = course_students(ctx, cid)
+    students, total, truncated, error = course_students_page(ctx, cid)
     if error:
         return error
     ordered = sorted(students, key=lambda s: (norm(s["fullName"]), s["id"]))
     items = [{"n": i, "studentId": s["id"], "fullName": s["fullName"]} for i, s in enumerate(ordered, 1)]
-    data = {"courseId": cid, "courseName": course_label(course), "total": len(items), "items": items}
+    # `total` es el que informa el gateway: con más de 500 estudiantes la lista leída es menor y se avisa
+    data = {"courseId": cid, "courseName": course_label(course), "total": total, "truncated": truncated, "items": items}
     return ok_output(data, f"GET /api/v1/courses/{cid}/students", ctx.request_id)
 
 
@@ -40,11 +41,13 @@ def facts(data: dict) -> list[str]:
     if total == 0:
         return [f"No hay estudiantes sincronizados en {course}."]
     shown = data["items"][:MAX_LISTED]
-    opening = "Este es el 1 estudiante" if total == 1 else f"Estos son los {total} estudiantes"
-    out = [f"{opening} de {course}, por orden alfabético:"]
+    opening = f"Este es el único estudiante de {course}:" if total == 1 else f"Estos son los {total} estudiantes de {course}, por orden alfabético:"
+    out = [opening]
     out += [f"N.º {s['n']} · {s['fullName']}" for s in shown]
-    if total > len(shown):
-        out.append(f"Se muestran los primeros {len(shown)} de {total} estudiantes.")
+    if data.get("truncated"):
+        out.append(f"Solo se leyeron los primeros {len(data['items'])} de {total} estudiantes, así que la numeración es parcial.")
+    if len(data["items"]) > len(shown):
+        out.append(f"Se muestran los primeros {len(shown)} de {len(data['items'])} estudiantes" + (" leídos." if data.get("truncated") else "."))
     return out
 
 

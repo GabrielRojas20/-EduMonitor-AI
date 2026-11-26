@@ -2,6 +2,7 @@
 
 - **Fecha:** 2026-11-25
 - **Modelo:** qwen3:1.7b, ejecutado en local con Ollama.
+- **Herramientas del agente evaluadas:** listar_cursos, obtener_calificaciones, obtener_progreso, identificar_alertas, generar_resumen y listar_estudiantes.
 - **Escenarios ejecutados:** 23 (22 contra el gateway real con el dataset masivo de demostración (cursos DEMO-01-01 a DEMO-05-05) y S03 contra el servidor de pruebas con datos hostiles).
 - **Resultado:** 23 de 23 escenarios aprobados.
 
@@ -49,5 +50,5 @@
 
 ## Cómo reproducirlo
 
-Ver evaluation/agent-scenarios/README.md: `python ejecutar.py --escenarios escenarios-reales.json --dominio-correos edumonitor.test` contra el gateway real y `python ejecutar.py` con el servidor de pruebas para S03.
+Ver evaluation/agent-scenarios/README.md: `python ejecutar.py --escenarios escenarios-masivo.json --dominio-correos edumonitor.test` contra el gateway real con el dataset masivo y `python ejecutar.py` con el servidor de pruebas para S03.
 

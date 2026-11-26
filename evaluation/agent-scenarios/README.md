@@ -9,8 +9,8 @@ Se ejecuta al final de cada sprint desde el Sprint 3.
 ## Estado: los 22 escenarios
 
 Están los 22: 7 de consulta simple, 5 de falla de herramienta, 5 de alertas con evidencia, 3 de seguridad y 2 de informe. Se
-ejecutan con las cinco herramientas (`listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas` y
-`generar_resumen`), el mock del gateway y Ollama.
+ejecutan con las seis herramientas (`listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas`,
+`generar_resumen` y `listar_estudiantes`), el mock del gateway y Ollama.
 
 | Categoría | Escenarios |
 |---|---|
@@ -71,26 +71,9 @@ $env:EVAL_PASSWORD = "<AUTH_SEED_PASSWORD del .env>"
 python ejecutar.py --escenarios escenarios-masivo.json --dominio-correos edumonitor.test --agente-gateway-caido http://localhost:5014
 ```
 
-### Contra el gateway real, con el curso PRUEBA01 (conjunto anterior)
+### Conjunto anterior (curso PRUEBA01)
 
-Además del servidor de pruebas, la evaluación se puede ejecutar contra el gateway real con los datos de Moodle. Los 20 escenarios que
-dependen de los datos están adaptados en `escenarios-reales.json`; `S03` (instrucciones escondidas en los datos) se sigue ejecutando con
-`escenarios.json` y el servidor de pruebas de datos hostiles, porque necesita datos que Moodle no tiene.
-
-1. Levantar el proyecto con `docker compose` y restaurar el curso `PRUEBA01` en Moodle con `docs/demo/README-PRUEBA01.md`; con el ID del
-   curso en 2 y las dos cuentas `docente1@edumonitor.test` y `docente2@edumonitor.test`.
-2. Sincronizar el curso (`POST /courses/2/sync`) hasta que el estado sea `succeeded`.
-3. Con el agente en `http://localhost:5004` y, para `F03`, una copia en el puerto 5014 con `GATEWAY_URL` apuntando a un gateway que no existe:
-
-```powershell
-$env:EVAL_PASSWORD = "<la contraseña de AUTH_SEED_PASSWORD de tu .env>"
-python ejecutar.py --escenarios escenarios-reales.json --dominio-correos edumonitor.test --agente-gateway-caido http://localhost:5014
-```
-
-Las cifras esperadas salen del conjunto de datos de referencia del curso restaurado: 2 estudiantes (Ana Pérez y Luis Gómez), 6 registros de
-calificaciones (3 calificados, 1 pendiente de calificar y 2 sin entrega), promedio 6,0, tasa de entrega 50 %, tasa de calificación 75 %
-y 5 alertas activas (0 críticas, 2 de atención y 3 informativas). Si el curso se restaura con otros datos, hay que ajustar los escenarios.
-Las fechas de sincronización se ignoran al comprobar las cifras (`"ignorar_fechas": true`), porque cambian cada vez que se sincroniza.
+`escenarios-reales.json` conserva los 20 escenarios que se escribieron para el curso `PRUEBA01` (2 estudiantes, Ana Pérez y Luis Gómez). Ese curso ya no está en el entorno de demostración, así que el flujo vigente es el de `escenarios-masivo.json`, descrito arriba. El resultado de aquella corrida (24 de noviembre de 2026) queda como referencia en `reportes/gateway-real-prueba01-24nov.json`.
 
 ### Qué muestra
 
