@@ -47,6 +47,8 @@ class Tool:
     facts: Callable[[dict], list[str]] | None = None
     # Parámetros que el código acepta pero el modelo no ve: un modelo pequeño inventa ids que no puede conocer
     hidden: tuple[str, ...] = ()
+    # False: el código la elige por reglas y el modelo no la ve (así no cambia cómo elige las demás herramientas)
+    offered_to_model: bool = True
 
     def schema(self) -> dict:
         """Definición en el formato de herramientas de Ollama."""
@@ -76,7 +78,7 @@ class ToolRegistry:
         return list(self._tools)
 
     def schemas(self) -> list[dict]:
-        return [t.schema() for t in self._tools.values()]
+        return [t.schema() for t in self._tools.values() if t.offered_to_model]
 
     def get(self, name: str) -> Tool | None:
         return self._tools.get(name)

@@ -36,7 +36,8 @@ def main() -> int:
     out = ["# Reporte de la evaluación final del agente", "",
            f"- **Fecha:** {real['fecha'][:10]}",
            f"- **Modelo:** {modelo}, ejecutado en local con Ollama.",
-           f"- **Escenarios ejecutados:** {len(ejecutados)} ({len([r for r in real['resultados'] if r['resultado'] != 'OMITIDO'])} contra el gateway real con el curso PRUEBA01"
+           "- **Herramientas del agente evaluadas:** listar_cursos, obtener_calificaciones, obtener_progreso, identificar_alertas, generar_resumen y listar_estudiantes.",
+           f"- **Escenarios ejecutados:** {len(ejecutados)} ({len([r for r in real['resultados'] if r['resultado'] != 'OMITIDO'])} contra el gateway real con el dataset masivo de demostración (cursos DEMO-01-01 a DEMO-05-05)"
            + (" y S03 contra el servidor de pruebas con datos hostiles)." if prueba else ")."),
            f"- **Resultado:** {tasa(ejecutados)} escenarios aprobados.", "",
            "## Metas del diseño (sección 8)", "",
@@ -53,7 +54,7 @@ def main() -> int:
             "- Las respuestas que solo listan datos tardan unos 6 a 10 s. Los escenarios que piden informe con recomendaciones (I02) son los más lentos, porque el modelo local interpreta muchos hechos.",
             "- Los tiempos dependen de la memoria libre del equipo: con poca memoria el modelo tarda más.", "",
             "## Cómo reproducirlo", "",
-            "Ver evaluation/agent-scenarios/README.md: `python ejecutar.py --escenarios escenarios-reales.json --dominio-correos edumonitor.test` contra el gateway real "
+            "Ver evaluation/agent-scenarios/README.md: `python ejecutar.py --escenarios escenarios-masivo.json --dominio-correos edumonitor.test` contra el gateway real con el dataset masivo "
             "y `python ejecutar.py` con el servidor de pruebas para S03.", ""]
     print("\n".join(out))
     return 0

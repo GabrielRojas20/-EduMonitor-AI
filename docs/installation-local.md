@@ -158,7 +158,7 @@ $env:AGENT_MODEL = 'qwen3:1.7b'
 
 El Agent lee `OLLAMA_URL` y `AGENT_MODEL`; no usa `OLLAMA_BASE_URL` ni `OLLAMA_MODEL`. El host `127.0.0.1` evita exponerlo innecesariamente a la red local.
 
-Sus cinco herramientas son `listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas` y `generar_resumen`.
+Sus seis herramientas son `listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas`, `generar_resumen` y `listar_estudiantes`.
 
 Puedes comprobarlo con:
 

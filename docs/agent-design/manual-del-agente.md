@@ -18,7 +18,7 @@ El agente **solo lee datos**. Consulta al gateway con el mismo token del docente
 
 Para no inventar datos, el código (no el modelo) redacta los **hechos** de cada respuesta a partir de lo que devuelven las herramientas, y una validación final descarta toda cifra que no exista en esos datos. El modelo solo redacta las **inferencias** y las **recomendaciones**, y únicamente cuando el docente pide interpretación.
 
-## 2. Las cinco herramientas
+## 2. Las seis herramientas
 
 | Herramienta | Qué responde | Pregunta de ejemplo |
 |---|---|---|
@@ -27,6 +27,7 @@ Para no inventar datos, el código (no el modelo) redacta los **hechos** de cada
 | `obtener_progreso` | Indicadores del curso o de un estudiante: promedio, entrega, calificación, finalización y pendientes | «¿Cuál es el progreso de mis estudiantes?» |
 | `identificar_alertas` | Alertas activas con su regla, valor observado, umbral y explicación | «¿Qué alertas tiene el curso?» |
 | `generar_resumen` | Informe del curso: indicadores, hallazgos y alertas con su evidencia | «Genera un informe del curso PRUEBA01» |
+| `listar_estudiantes` | Lista de los estudiantes del curso, numerados dentro del curso y por orden alfabético, sin correos | «¿Puedes darme una lista de los estudiantes del curso?» |
 
 ## 3. Cómo leer una respuesta
 
@@ -103,6 +104,6 @@ Se vuelve a preguntar después de unos segundos.
 
 ## 8. Evidencia de calidad
 
-- **Evaluación final:** los 21 escenarios se aprobaron, con 2 de 2 accesos no autorizados rechazados, 5 de 5 fallas sin datos inventados y el 100 % de las cifras citadas con respaldo en los datos. Ver `evaluation/agent-scenarios/reportes/REPORTE-EVALUACION-FINAL.md`.
-- **Pruebas automáticas:** 272 pruebas del agente, con una cobertura del 96 % (`pytest --cov=app` desde `services/agent-service`); el requisito RNF-08 pide al menos el 70 %.
+- **Evaluación final (25 de noviembre de 2026):** los 23 escenarios se aprobaron (22 contra el gateway real con el dataset masivo de demostración y S03 contra el servidor de pruebas con datos hostiles), con 4 de 4 accesos no autorizados rechazados, 5 de 5 fallas sin datos inventados y 254 de 254 cifras citadas con respaldo en los datos. Ver `evaluation/agent-scenarios/reportes/REPORTE-EVALUACION-FINAL.md`.
+- **Pruebas automáticas:** 314 pruebas del agente, con una cobertura del 97 % (`pytest --cov=app` desde `services/agent-service`); el requisito RNF-08 pide al menos el 70 %.
 - **Diseño:** `docs/agent-design/diseno-agente.md` describe los contratos de las herramientas, el flujo del agente y el formato de las trazas.

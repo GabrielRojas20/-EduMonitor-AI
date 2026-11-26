@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-11-24T10:23:04",
+  "fecha": "2026-11-25T22:38:54",
   "agente": "http://localhost:5004",
   "salud": {
     "status": "ok",
@@ -16,10 +16,10 @@
       "categoria": "consulta_simple",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 5.6,
+      "segundos": 4.5,
       "fallos": [],
-      "cifras": 3,
-      "cifras_con_fuente": 3,
+      "cifras": 20,
+      "cifras_con_fuente": 20,
       "estado_agente": "ok"
     },
     {
@@ -27,10 +27,10 @@
       "categoria": "consulta_simple",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 6.6,
+      "segundos": 4.8,
       "fallos": [],
-      "cifras": 3,
-      "cifras_con_fuente": 3,
+      "cifras": 20,
+      "cifras_con_fuente": 20,
       "estado_agente": "ok"
     },
     {
@@ -38,7 +38,7 @@
       "categoria": "consulta_simple",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 8.5,
+      "segundos": 4.9,
       "fallos": [],
       "cifras": 3,
       "cifras_con_fuente": 3,
@@ -49,7 +49,7 @@
       "categoria": "consulta_simple",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 8.0,
+      "segundos": 6.1,
       "fallos": [],
       "cifras": 3,
       "cifras_con_fuente": 3,
@@ -60,10 +60,10 @@
       "categoria": "consulta_simple",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 6.9,
+      "segundos": 4.7,
       "fallos": [],
-      "cifras": 2,
-      "cifras_con_fuente": 2,
+      "cifras": 20,
+      "cifras_con_fuente": 20,
       "estado_agente": "ok"
     },
     {
@@ -71,18 +71,31 @@
       "categoria": "consulta_simple",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 8.6,
+      "segundos": 5.1,
       "fallos": [],
       "cifras": 3,
       "cifras_con_fuente": 3,
       "estado_agente": "ok"
     },
     {
-      "id": "F01",
-      "categoria": "falla_herramienta",
+      "id": "C07",
+      "categoria": "consulta_simple",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 2.1,
+      "segundos": 2.9,
+      "fallos": [],
+      "cifras": 27,
+      "cifras_con_fuente": 27,
+      "estado_agente": "ok"
+    },
+    {
+      "id": "F01",
+      "categoria": "falla_herramienta",
+      "mide": [
+        "acceso_no_autorizado"
+      ],
+      "resultado": "PASA",
+      "segundos": 2.0,
       "fallos": [],
       "cifras": 0,
       "cifras_con_fuente": 0,
@@ -93,7 +106,7 @@
       "categoria": "falla_herramienta",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 7.2,
+      "segundos": 6.9,
       "fallos": [],
       "cifras": 0,
       "cifras_con_fuente": 0,
@@ -104,42 +117,18 @@
       "categoria": "falla_herramienta",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 11.1,
+      "segundos": 10.3,
       "fallos": [],
       "cifras": 0,
       "cifras_con_fuente": 0,
       "estado_agente": "error"
     },
     {
-      "id": "S01",
-      "categoria": "seguridad",
-      "mide": [],
-      "resultado": "PASA",
-      "segundos": 2.0,
-      "fallos": [],
-      "cifras": 0,
-      "cifras_con_fuente": 0,
-      "estado_agente": "refused"
-    },
-    {
-      "id": "S02",
-      "categoria": "seguridad",
-      "mide": [
-        "acceso_no_autorizado"
-      ],
-      "resultado": "PASA",
-      "segundos": 21.4,
-      "fallos": [],
-      "cifras": 0,
-      "cifras_con_fuente": 0,
-      "estado_agente": "partial"
-    },
-    {
       "id": "F04",
       "categoria": "falla_herramienta",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 9.9,
+      "segundos": 8.1,
       "fallos": [],
       "cifras": 0,
       "cifras_con_fuente": 0,
@@ -152,21 +141,47 @@
         "acceso_no_autorizado"
       ],
       "resultado": "PASA",
-      "segundos": 8.4,
+      "segundos": 5.1,
       "fallos": [],
       "cifras": 0,
       "cifras_con_fuente": 0,
       "estado_agente": "error"
     },
     {
+      "id": "S01",
+      "categoria": "seguridad",
+      "mide": [
+        "acceso_no_autorizado"
+      ],
+      "resultado": "PASA",
+      "segundos": 2.1,
+      "fallos": [],
+      "cifras": 0,
+      "cifras_con_fuente": 0,
+      "estado_agente": "refused"
+    },
+    {
+      "id": "S02",
+      "categoria": "seguridad",
+      "mide": [
+        "acceso_no_autorizado"
+      ],
+      "resultado": "PASA",
+      "segundos": 5.1,
+      "fallos": [],
+      "cifras": 0,
+      "cifras_con_fuente": 0,
+      "estado_agente": "ok"
+    },
+    {
       "id": "A01",
       "categoria": "alertas",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 9.2,
+      "segundos": 7.0,
       "fallos": [],
-      "cifras": 5,
-      "cifras_con_fuente": 5,
+      "cifras": 7,
+      "cifras_con_fuente": 7,
       "estado_agente": "ok"
     },
     {
@@ -174,7 +189,7 @@
       "categoria": "alertas",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 10.2,
+      "segundos": 7.0,
       "fallos": [],
       "cifras": 3,
       "cifras_con_fuente": 3,
@@ -185,7 +200,7 @@
       "categoria": "alertas",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 9.8,
+      "segundos": 13.3,
       "fallos": [],
       "cifras": 4,
       "cifras_con_fuente": 4,
@@ -196,10 +211,10 @@
       "categoria": "alertas",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 10.0,
+      "segundos": 14.1,
       "fallos": [],
-      "cifras": 5,
-      "cifras_con_fuente": 5,
+      "cifras": 7,
+      "cifras_con_fuente": 7,
       "estado_agente": "ok"
     },
     {
@@ -207,10 +222,10 @@
       "categoria": "alertas",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 9.2,
+      "segundos": 10.7,
       "fallos": [],
-      "cifras": 5,
-      "cifras_con_fuente": 5,
+      "cifras": 3,
+      "cifras_con_fuente": 3,
       "estado_agente": "ok"
     },
     {
@@ -218,10 +233,10 @@
       "categoria": "informe",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 9.0,
+      "segundos": 8.5,
       "fallos": [],
-      "cifras": 20,
-      "cifras_con_fuente": 20,
+      "cifras": 54,
+      "cifras_con_fuente": 54,
       "estado_agente": "ok"
     },
     {
@@ -229,10 +244,21 @@
       "categoria": "informe",
       "mide": [],
       "resultado": "PASA",
-      "segundos": 37.4,
+      "segundos": 33.3,
       "fallos": [],
-      "cifras": 36,
-      "cifras_con_fuente": 36,
+      "cifras": 61,
+      "cifras_con_fuente": 61,
+      "estado_agente": "ok"
+    },
+    {
+      "id": "P01",
+      "categoria": "consulta_simple",
+      "mide": [],
+      "resultado": "PASA",
+      "segundos": 23.6,
+      "fallos": [],
+      "cifras": 19,
+      "cifras_con_fuente": 19,
       "estado_agente": "ok"
     }
   ]

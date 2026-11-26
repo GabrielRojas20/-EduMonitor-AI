@@ -146,5 +146,14 @@ class Escenarios(unittest.TestCase):
         self.assertTrue(all(e["esperado"].get("http", 200) in (200, 401) for e in datos))
 
 
+    def test_escenarios_masivos_son_validos_y_algunos_envian_el_curso_elegido(self):
+        datos = json.loads((Path(__file__).parent / "escenarios-masivo.json").read_text(encoding="utf-8"))["escenarios"]
+        ids = [e["id"] for e in datos]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual(len(ids), 22)
+        validas = {"consulta_simple", "falla_herramienta", "alertas", "seguridad", "informe"}
+        self.assertTrue(all(e["categoria"] in validas for e in datos))
+        self.assertTrue(any(e.get("curso_id") for e in datos))
+
 if __name__ == "__main__":
     unittest.main()

@@ -40,6 +40,9 @@ INTERPRETATION = (r"\b(que hago|que debo|que puedo hacer|como puedo|recomiend\w*
                   r"interpret\w*|por que|riesgo|preocup\w*|mejor\w*|explic\w*|evalu\w*|conviene|progreso|como (?:va|van))\b")
 
 
+INTERPRET_MAX_FACTS = 10  # hechos que lee el modelo al interpretar (ver _answer_with_code_facts)
+
+
 def needs_interpretation(message: str) -> bool:
     return bool(re.search(INTERPRETATION, normalize(message)))
 
@@ -89,10 +92,13 @@ def hint_arguments(tool: str, message: str) -> dict:
         for pattern, status in STATUS_HINTS:
             if re.search(pattern, text):
                 return {"status": status}
+    if tool == "identificar_alertas" and re.search(r"informativ", normalize(message)):
+        # Las alertas se listan de más a menos grave y se cortan en 15: las informativas quedan al final y no aparecían
+        return {"severity": "info"}
     return {}
 
 
-COURSE_TOOLS = {"obtener_calificaciones", "obtener_progreso", "identificar_alertas", "generar_resumen"}
+COURSE_TOOLS = {"obtener_calificaciones", "obtener_progreso", "identificar_alertas", "generar_resumen", "listar_estudiantes"}
 NAME_ARGS = ("activity_name", "student_name")
 
 
@@ -175,6 +181,21 @@ def fix_arguments(tool: str, arguments: dict, message: str) -> dict:
             args["student_name"] = name
     args.update(hint_arguments(tool, message))
     return args
+
+
+# El docente pide la lista o los nombres de sus estudiantes. Lo decide el código (no el modelo): «una lista de los estudiantes» no
+# tiene otra herramienta que la responda, y así no cambia cómo el modelo elige las demás.
+STUDENT_LIST = (r"\b(lista|listado|listame|listar|nomina)\b.*\b(estudiantes|alumnos)\b|\bquienes son (mis|los) (estudiantes|alumnos)\b|"
+                r"\bque (estudiantes|alumnos) (tengo|tiene|hay|estan|pertenecen|forman|cursan)\b|"
+                r"\bquienes (estan|hay|forman|componen|cursan)\b.*\b(curso|clase)\b|"
+                r"\bnombres de (los |mis |todos los )?(estudiantes|alumnos)\b|"
+                r"\b(dame|muestrame|muestra|dime) (a )?(los|mis|todos los) (estudiantes|alumnos)\b")
+OTHER_TOPIC = r"\b(alertas?|pendientes?|riesgo|notas?|calificacion\w*|entregas?|promedio|progreso|finalizacion|cuantos|cuantas)\b"
+
+
+def wants_student_list(message: str) -> bool:
+    text = normalize(message)
+    return bool(re.search(STUDENT_LIST, text)) and not re.search(OTHER_TOPIC, text)
 
 
 def asks_for_all_courses(tool: str, message: str) -> bool:
@@ -417,6 +438,15 @@ class Agent:
         """El modelo elige qué herramientas llamar y con qué argumentos (temperatura 0)."""
         if not len(self.tools):
             return {"plan": []}
+        if "listar_estudiantes" in self.tools.names() and wants_student_list(state["message"]):
+            tool = self.tools.get("listar_estudiantes")
+            args = fallback_arguments(state["message"])  # el código de curso escrito en la pregunta, si lo hay
+            if state.get("course_id") and "course_id" in tool.input_model.model_fields:
+                args = with_reference_course(args, state["course_id"], state["message"])
+            steps = state["steps"] + [{"n": len(state["steps"]) + 1, "node": "planificar_herramientas", "tool": None, "ok": True,
+                                       "errorCode": None, "durationMs": 0,
+                                       "resultSummary": {"plannedCalls": 1, "ruleTool": "listar_estudiantes"}}]
+            return {"plan": [{"name": "listar_estudiantes", "arguments": args}], "steps": steps}
         # El curso elegido en la interfaz lo aplica el código (with_reference_course). El modelo no lo ve: un modelo pequeño
         # copiaba ese número en otros campos (puso «2» como nombre de actividad y filtró la Tarea 2 sin que nadie lo pidiera).
         messages = [{"role": "system", "content": prompts.PLANNER_SYSTEM},
@@ -570,7 +600,9 @@ class Agent:
         answer = Answer(facts=facts, unavailable=notes)
         steps = list(state["steps"])
         if needs_interpretation(state["message"]):
-            listing = "\n".join(f"[{i}] {f.text}" for i, f in enumerate(facts))
+            # El modelo solo lee los primeros hechos (resumen, indicadores y las primeras alertas): con decenas de alertas el texto era
+            # tan largo que la respuesta tardaba más de 60 s. Los índices no cambian, así que `basedOn` y `relatedFinding` siguen valiendo.
+            listing = "\n".join(f"[{i}] {f.text}" for i, f in enumerate(facts[:INTERPRET_MAX_FACTS]))
             messages = [{"role": "system", "content": prompts.INTERPRETER_SYSTEM},
                         {"role": "user", "content": f"Pregunta del docente: {state['message']}\n\nHechos:\n{listing}"}]
             try:

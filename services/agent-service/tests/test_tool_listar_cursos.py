@@ -588,3 +588,23 @@ def test_asking_for_all_courses_ignores_the_current_course():
 def test_student_count_questions_fall_back_to_the_course_list(message):
     from app.graph import fallback_tool
     assert fallback_tool(message, ["listar_cursos", "obtener_progreso"]) == "listar_cursos"
+
+
+def test_the_alerts_question_about_informative_ones_filters_by_that_severity():
+    from app.graph import hint_arguments
+    assert hint_arguments("identificar_alertas", "¿Qué alertas informativas hay?") == {"severity": "info"}
+    assert hint_arguments("identificar_alertas", "¿Qué alertas hay?") == {}
+    assert hint_arguments("listar_cursos", "informativas") == {}
+
+
+def test_the_model_only_reads_the_first_facts_when_it_interprets(settings, ollama, traces):
+    """Con decenas de hechos la interpretación tardaba más de 60 s; el modelo lee solo los primeros y los índices no cambian."""
+    from app.graph import INTERPRET_MAX_FACTS
+    many = [{"id": i, "shortName": f"C{i}", "fullName": f"Curso {i}", "studentCount": 5, "lastSyncAt": "2026-10-22T15:04:05Z"} for i in range(1, 21)]
+    ollama.reply(tool_calls=CALL)
+    ollama.reply(json.dumps({"facts": [], "inferences": [{"text": "Hay muchos cursos.", "basedOn": [0]}], "recommendations": [], "unavailable": []}))
+    res = agent(settings, ollama, traces, lambda r: httpx.Response(200, json=many)).run(
+        "¿Qué cursos tengo y qué me recomiendas?", None, TOKEN, "3", "req-42")
+    prompt = ollama.calls[1]["messages"][-1]["content"]
+    assert f"[{INTERPRET_MAX_FACTS - 1}]" in prompt and f"[{INTERPRET_MAX_FACTS}]" not in prompt
+    assert len(res.answer.facts) == 21                                   # el docente sigue viendo todos los hechos

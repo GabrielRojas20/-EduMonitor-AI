@@ -196,7 +196,10 @@ def main() -> int:
             destino = url
 
         t0 = time.monotonic()
-        estado_http, cuerpo = post_json(f"{destino}/chat", {"message": e["mensaje"]}, token)
+        pregunta = {"message": e["mensaje"]}
+        if e.get("curso_id"):  # el curso elegido en la interfaz (courseId), como lo envía la página del curso
+            pregunta["courseId"] = e["curso_id"]
+        estado_http, cuerpo = post_json(f"{destino}/chat", pregunta, token)
         segundos = time.monotonic() - t0
         fallos, cifras, permitidas = comprobar(e["esperado"], estado_http, cuerpo, segundos)
         resultados.append({"id": e["id"], "categoria": e["categoria"], "mide": e.get("mide", []),
