@@ -69,11 +69,11 @@ curl -sS -X POST "$MOODLE_BASE_URL/webservice/rest/server.php" \
   --data-urlencode "moodlewsrestformat=json"'
 ```
 
-Resultado válido: HTTP 200 y una respuesta que incluya `username=edumonitor_sync`, `userid=8` y el release de Moodle. En capturas, oculta el token y cualquier secreto.
+Resultado válido: HTTP 200 y una respuesta que incluya `username=edumonitor_sync` y el release de Moodle. El `userid` es un identificador interno que puede cambiar al recrear los volúmenes; no lo uses como criterio fijo. En capturas, oculta el token y cualquier secreto.
 
 ## 4. Dataset académico de demostración
 
-La demostración validada contiene 25 cursos, 25 estudiantes por curso, 50 actividades, 1.250 entregas, 1.100 calificaciones y 1.250 estados de finalización. El usuario técnico debe tener 25 matrículas activas, desde `DEMO-01-01` hasta `DEMO-05-05`.
+Con `DEMO_DATASET=massive`, la demostración validada contiene 25 cursos, 25 estudiantes por curso, 50 actividades, 1.250 entregas, 1.100 calificaciones y 1.250 estados de finalización. El usuario técnico debe tener 25 matrículas activas, desde `DEMO-01-01` hasta `DEMO-05-05`. Con `DEMO_DATASET=minimal` se utiliza la demo pequeña.
 
 El curso canónico utilizado por EduMonitor es `201 → DEMO-01-01`; Moodle puede tener otro ID interno y Moodle Sync lo resuelve mediante `shortname`.
 
@@ -93,7 +93,7 @@ Una segunda ejecución puede informar `Actividades creadas: 0` porque el seed es
 
 ## 5. Acceso de docentes
 
-Auth crea los usuarios ficticios `docente1@edumonitor.test`, `docente2@edumonitor.test` y `admin@edumonitor.test`. La contraseña de demostración es el valor local de `AUTH_SEED_PASSWORD`, no una contraseña escrita en este README. El ingeniero debe recibirla por un canal privado o definir una nueva en su `.env`.
+Con `AUTH_SEED_DATASET=minimal`, Auth crea `docente1@edumonitor.test`, `docente2@edumonitor.test` y `admin@edumonitor.test`. Con `AUTH_SEED_DATASET=massive`, Auth crea además `docente3@edumonitor.test`, `docente4@edumonitor.test` y `docente5@edumonitor.test`. La contraseña de demostración es el valor local de `AUTH_SEED_PASSWORD`, no una contraseña escrita en este README. El ingeniero debe recibirla por un canal privado o definir una nueva en su `.env`.
 
 Para iniciar sesión contra el gateway:
 

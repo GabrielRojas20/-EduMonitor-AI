@@ -10,9 +10,9 @@ Diseño completo: [`docs/agent-design/diseno-agente.md`](../../docs/agent-design
 
 ## Estado
 
-Sprint 2. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas (en el registro y, si se
+Sprint 3. Ya están el servicio, el flujo de LangGraph, el cliente de Ollama, las trazas (en el registro y, si se
 configura, en SQL Server), las pruebas y las herramientas `listar_cursos`, `obtener_calificaciones`, `obtener_progreso`,
-`identificar_alertas` y `generar_resumen`. Todas consultan el gateway con el JWT del docente y redactan hechos verificables
+`identificar_alertas`, `generar_resumen` y `listar_estudiantes`. Todas consultan el gateway con el JWT del docente y redactan hechos verificables
 desde código. Si una consulta necesita una herramienta que aún no existe, el agente lo dice en lugar de inventar.
 
 ## Cómo ejecutarlo
@@ -102,6 +102,7 @@ recibir_mensaje -> validar_contexto -> clasificar_intencion -> planificar_herram
 | `obtener_progreso` | Disponible | `GET /api/v1/courses/{courseId}/analytics` (y la del estudiante) |
 | `identificar_alertas` | Disponible | `GET /api/v1/courses/{courseId}/analytics/alerts` |
 | `generar_resumen` | Disponible | `GET /api/v1/courses/{courseId}/analytics/report` |
+| `listar_estudiantes` | Disponible | `GET /api/v1/courses/{courseId}/students` |
 
 ### Cómo añadir una herramienta
 
