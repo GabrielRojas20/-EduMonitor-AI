@@ -18,7 +18,7 @@ El agente **solo lee datos**. Consulta al gateway con el mismo token del docente
 
 Para no inventar datos, el código (no el modelo) redacta los **hechos** de cada respuesta a partir de lo que devuelven las herramientas, y una validación final descarta toda cifra que no exista en esos datos. El modelo solo redacta las **inferencias** y las **recomendaciones**, y únicamente cuando el docente pide interpretación.
 
-## 2. Las cinco herramientas
+## 2. Las seis herramientas
 
 | Herramienta | Qué responde | Pregunta de ejemplo |
 |---|---|---|
@@ -27,6 +27,7 @@ Para no inventar datos, el código (no el modelo) redacta los **hechos** de cada
 | `obtener_progreso` | Indicadores del curso o de un estudiante: promedio, entrega, calificación, finalización y pendientes | «¿Cuál es el progreso de mis estudiantes?» |
 | `identificar_alertas` | Alertas activas con su regla, valor observado, umbral y explicación | «¿Qué alertas tiene el curso?» |
 | `generar_resumen` | Informe del curso: indicadores, hallazgos y alertas con su evidencia | «Genera un informe del curso PRUEBA01» |
+| `listar_estudiantes` | Lista de los estudiantes del curso, numerados dentro del curso y por orden alfabético, sin correos | «¿Puedes darme una lista de los estudiantes del curso?» |
 
 ## 3. Cómo leer una respuesta
 

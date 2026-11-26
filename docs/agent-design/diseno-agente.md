@@ -270,6 +270,7 @@ Obtiene los datos calculados para el informe del curso. No calcula nada: `analyt
 | `obtener_progreso` | S3 | `GET /api/v1/courses/{courseId}/analytics`; con estudiante, también `.../analytics/students/{studentId}` y `GET /api/v1/courses/{courseId}/students/{studentId}` | `analytics.v1` (PR #6) y `api-gateway.v1` 1.0.0 (PR #7) |
 | `identificar_alertas` | S4 | `GET /api/v1/courses/{courseId}/analytics/alerts` | `analytics.v1` (PR #6) |
 | `generar_resumen` | S5 | `GET /api/v1/courses/{courseId}/analytics/report` | `analytics.v1` (PR #6) |
+| `listar_estudiantes` | S3 | `GET /api/v1/courses/{courseId}/students` | `api-gateway.v1` 1.1.0 |
 
 Las rutas de analytics están definidas en el contrato de `analytics-service`. El contrato del gateway (1.0.0) solo menciona que salen por él y no las lista; hay que confirmar con Mikel que las expone con esas mismas rutas.
 
@@ -281,6 +282,17 @@ Las notas, los indicadores y las alertas del gateway traen solo el `studentId`; 
 - **Salida:** cada fila que trae un `studentId` incluye `studentName`. Si no se pudo obtener, `studentName` es `null` y el agente escribe «estudiante» seguido del id.
 - **Origen:** la lista de estudiantes se pide por el gateway, con el JWT del docente y los mismos límites de paginación de la sección 3.6.
 - **Privacidad:** al modelo solo llega el nombre, nunca el correo (`email`). Las trazas guardan solo identificadores, sin nombres, hasta que el Product Owner responda la pregunta 9.
+
+### 3.9 `listar_estudiantes`
+
+Lista los estudiantes de un curso, numerados dentro del curso. No se le ofrece al modelo: el código la elige cuando la pregunta pide la lista o los nombres de los estudiantes («una lista de los estudiantes», «quiénes son mis estudiantes»), salvo que la pregunta hable de otro tema (alertas, pendientes, notas, promedio, cantidades). Así no cambia la forma en que el modelo elige las demás herramientas.
+
+- **Gateway:** `GET /api/v1/courses/{courseId}/students` (paginado).
+- **Entrada:** `course_id` (lo pone el código con el curso elegido en la interfaz) o `course_name` (el código de curso escrito por el docente).
+- **Salida (`data`):** `courseId`, `courseName`, `total` e `items` con `n` (número dentro del curso), `studentId` y `fullName`. Nunca incluye el correo.
+- **Numeración:** por orden alfabético del nombre, la misma que muestra la tabla del curso en la interfaz. El id de Moodle es global y no se usa para contar.
+- **Hechos:** el código redacta una frase de apertura («Estos son los 25 estudiantes de …, por orden alfabético:») y una línea por estudiante («N.º 1 · Nombre»). Se listan como máximo 50 y se avisa cuántos hay en total.
+- **Sin modelo:** la respuesta no pasa por el modelo; no hay inferencias ni recomendaciones.
 
 ## 4. Flujo de LangGraph
 
@@ -417,7 +429,7 @@ Reglas del formato:
 ## 8. Pruebas previstas
 
 - **Unitarias (pytest):** cada herramienta con respuestas simuladas del gateway, validación de esquemas, manejo de cada código de error y `validar_salida`.
-- **Evaluación:** los 21 escenarios del plan (6 consulta simple, 5 falla de herramienta, 5 alertas con evidencia, 3 seguridad, 2 informe), que se ejecutan con `evaluation/agent-scenarios/ejecutar.py` contra el servidor mock del gateway al final de cada sprint. Metas: 100 % de accesos no autorizados rechazados, ningún dato inventado en fallas y al menos 90 % de cifras que coinciden con la fuente.
+- **Evaluación:** los 22 escenarios del plan (7 consulta simple, 5 falla de herramienta, 5 alertas con evidencia, 3 seguridad, 2 informe), que se ejecutan con `evaluation/agent-scenarios/ejecutar.py` contra el servidor mock del gateway al final de cada sprint. Metas: 100 % de accesos no autorizados rechazados, ningún dato inventado en fallas y al menos 90 % de cifras que coinciden con la fuente.
 - **Seguridad:** escenarios con instrucciones escondidas en nombres de actividades y comentarios.
 
 ## 9. Dependencias y puntos por acordar

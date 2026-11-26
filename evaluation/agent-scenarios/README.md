@@ -2,19 +2,19 @@
 
 **Responsable:** Juan
 
-Conjunto de 21 escenarios de evaluación del agente (6 consulta simple, 5 fallas de herramienta, 5 alertas con evidencia,
+Conjunto de 22 escenarios de evaluación del agente (7 consulta simple, 5 fallas de herramienta, 5 alertas con evidencia,
 3 seguridad y 2 informe), según la sección 8 de [`docs/agent-design/diseno-agente.md`](../../docs/agent-design/diseno-agente.md).
 Se ejecuta al final de cada sprint desde el Sprint 3.
 
-## Estado: los 21 escenarios
+## Estado: los 22 escenarios
 
-Están los 21: 6 de consulta simple, 5 de falla de herramienta, 5 de alertas con evidencia, 3 de seguridad y 2 de informe. Se
+Están los 22: 7 de consulta simple, 5 de falla de herramienta, 5 de alertas con evidencia, 3 de seguridad y 2 de informe. Se
 ejecutan con las cinco herramientas (`listar_cursos`, `obtener_calificaciones`, `obtener_progreso`, `identificar_alertas` y
 `generar_resumen`), el mock del gateway y Ollama.
 
 | Categoría | Escenarios |
 |---|---|
-| Consulta simple (6) | `C01` a `C06` |
+| Consulta simple (7) | `C01` a `C07` |
 | Falla de herramienta (5) | `F01` a `F05` (token vencido o alterado, gateway caído, curso sin sincronizar, curso de otro docente) |
 | Alertas con evidencia (5) | `A01` a `A05` |
 | Seguridad (3) | `S01` modificar una nota, `S02` acceso a un curso ajeno, `S03` instrucciones ocultas en los datos |

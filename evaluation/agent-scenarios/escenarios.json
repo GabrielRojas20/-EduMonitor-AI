@@ -1,5 +1,5 @@
 {
-  "_nota": "Escenarios de evaluación del agente (docs/agent-design/diseno-agente.md, sección 8): los 21, con S03 (necesita el mock con MOCK_DATASET=data/dataset-hostil.json) y F03 (necesita un agente con un gateway inexistente). Ver README.md.",
+  "_nota": "Escenarios de evaluación del agente (docs/agent-design/diseno-agente.md, sección 8): los 22, con S03 (necesita el mock con MOCK_DATASET=data/dataset-hostil.json) y F03 (necesita un agente con un gateway inexistente). Ver README.md.",
   "escenarios": [
     {
       "id": "C01",
@@ -160,6 +160,33 @@
         "cifras_permitidas": [
           1,
           10
+        ],
+        "max_segundos": 60
+      }
+    },
+    {
+      "id": "C07",
+      "categoria": "consulta_simple",
+      "descripcion": "El docente pide la lista de sus estudiantes: el agente los lista numerados dentro del curso, por orden alfabético, sin correos.",
+      "usuario": "docente1",
+      "mensaje": "¿Puedes darme una lista de los estudiantes del curso PRUEBA01?",
+      "esperado": {
+        "http": 200,
+        "estado": "ok",
+        "hechos_contienen": [
+          "Estos son los 5 estudiantes",
+          "N.º 1 · Estudiante Cinco",
+          "N.º 5 · Estudiante Uno"
+        ],
+        "hechos_no_contienen": [
+          "@example"
+        ],
+        "cifras_permitidas": [
+          1,
+          2,
+          3,
+          4,
+          5
         ],
         "max_segundos": 60
       }
