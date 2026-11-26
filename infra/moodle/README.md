@@ -1,111 +1,115 @@
-# Moodle local para pruebas (S1-05)
+# Moodle local para EduMonitor AI — Sprint 3
 
 **Responsable:** Mikel
 
-Instancia de Moodle en Docker para probar la sincronización de EduMonitor AI. Es solo para desarrollo y usa **datos ficticios**: no se cargan datos reales de estudiantes ni se suben secretos al repositorio. La evidencia de que funciona está en `docs/moodle-access/` (S1-06).
+Esta instancia de Moodle se ejecuta en Docker y se utiliza únicamente para desarrollo y demostración con datos ficticios o anonimizados. La imagen definida por `docker-compose.yml` es `bitnamilegacy/moodle:4.5`; la instalación validada reportó Moodle **4.5.4**.
 
 | Dato | Valor |
 |---|---|
-| Moodle | imagen `oksigenia/moodle:5.2` (la evidencia se tomó con 5.2.4) |
+| Moodle | `bitnamilegacy/moodle:4.5` / instalación verificada `4.5.4` |
 | Base de datos | MariaDB 11.4 |
-| URL | http://localhost:8080 |
-| Administrador | usuario `admin`, contraseña `MOODLE_ADMIN_PASSWORD` del `.env` |
+| URL | `http://localhost:8080` |
+| Administrador local | `admin` / valor de `MOODLE_ADMIN_PASSWORD` en `.env` |
+| Usuario técnico de Web Service | `edumonitor_sync` |
+| Servicio externo | `EduMonitor` |
 
-## 1. Requisitos
+## 1. Configuración segura
 
-Docker Desktop instalado y abierto (debe decir "Engine running").
-
-## 2. Configurar las contraseñas
-
-Desde esta carpeta (`infra/moodle`):
+Desde la raíz del repositorio, copia el archivo de entorno y completa valores locales:
 
 ```bash
 cp .env.example .env
 ```
 
-Abre `.env` y cambia las tres contraseñas por otras tuyas. Moodle puede pedir una contraseña fuerte (mayúscula, minúscula, número y símbolo) y puede pedir cambiar la del administrador en el primer inicio. El archivo `.env` está en `.gitignore`: **no lo subas**.
+Configura como mínimo `MOODLE_DB_PASSWORD`, `MOODLE_DB_ROOT_PASSWORD`, `MOODLE_ADMIN_PASSWORD`, `MOODLE_ADMIN_EMAIL`, `JWT_SECRET`, `AUTH_SEED_PASSWORD` y `MOODLE_WS_TOKEN`. El archivo `.env` está ignorado por Git y **no debe subirse**.
 
-## 3. Levantar Moodle
+No pongas en GitHub la contraseña del administrador, el token de Moodle, `JWT_SECRET`, JWT de docentes ni contraseñas de usuarios. Para entregar el proyecto al ingeniero, comparte las credenciales demo por un canal privado o genera valores nuevos en su `.env`.
+
+## 2. Levantar Moodle y el resto del entorno
+
+Desde la raíz del repositorio:
 
 ```bash
+docker compose up -d --build
+docker compose ps
+```
+
+Puertos principales:
+
+- Moodle: `8080`
+- API Gateway: `5000`
+- Auth Courses: `5001`
+- Moodle Sync: `5002`
+- Analytics: `5003`
+- Agent Service local: `5004`
+- Ollama: `11434`
+- Frontend Vite: `5173`
+
+El Agent Service se ejecuta fuera de Docker en el Compose actual. Para iniciarlo, consulta `services/agent-service/README.md` y utiliza `5004`.
+
+## 3. Configurar el Web Service REST
+
+En Moodle, como administrador:
+
+1. Activa **Site administration → Advanced features → Enable web services**.
+2. En **Server → Web services → Manage protocols**, habilita **REST**.
+3. Crea un rol mínimo, por ejemplo `edumonitor_ws`, con la capacidad `webservice/rest:use` en contexto de sistema.
+4. Crea o utiliza el usuario técnico `edumonitor_sync` y asígnale el rol.
+5. En **External services**, crea o habilita el servicio `EduMonitor` y marca **Authorised users only**.
+6. Añade las funciones de solo lectura: `core_webservice_get_site_info`, `core_enrol_get_users_courses`, `core_enrol_get_enrolled_users`, `gradereport_user_get_grade_items`, `core_course_get_contents`, `core_completion_get_activities_completion_status`, `mod_assign_get_assignments` y `mod_assign_get_submissions`.
+7. Autoriza a `edumonitor_sync` en el servicio y genera un token. Guarda el token únicamente en `MOODLE_WS_TOKEN` del `.env`.
+
+Comprobación sin mostrar el token:
+
+```bash
+docker compose exec -T moodle-sync sh -c '\
+curl -sS -X POST "$MOODLE_BASE_URL/webservice/rest/server.php" \
+  --data-urlencode "wstoken=$MOODLE_WS_TOKEN" \
+  --data-urlencode "wsfunction=core_webservice_get_site_info" \
+  --data-urlencode "moodlewsrestformat=json"'
+```
+
+Resultado válido: HTTP 200 y una respuesta que incluya `username=edumonitor_sync` y el release de Moodle. El `userid` es un identificador interno que puede cambiar al recrear los volúmenes; no lo uses como criterio fijo. En capturas, oculta el token y cualquier secreto.
+
+## 4. Dataset académico de demostración
+
+Con `DEMO_DATASET=massive`, la demostración validada contiene 25 cursos, 25 estudiantes por curso, 50 actividades, 1.250 entregas, 1.100 calificaciones y 1.250 estados de finalización. El usuario técnico debe tener 25 matrículas activas, desde `DEMO-01-01` hasta `DEMO-05-05`. Con `DEMO_DATASET=minimal` se utiliza la demo pequeña.
+
+El curso canónico utilizado por EduMonitor es `201 → DEMO-01-01`; Moodle puede tener otro ID interno y Moodle Sync lo resuelve mediante `shortname`.
+
+La rama que se entregue al ingeniero debe incluir los scripts y CSV del seed académico masivo. Si esos archivos no están en la rama, el README no puede reproducir por sí solo las 25 matrículas ni las calificaciones: primero hay que incorporar y revisar esos archivos en Git, sin incluir tokens, contraseñas ni datos reales.
+
+Después del seed, la salida esperada es:
+
+```text
+Cursos procesados: 25
+Actividades creadas: 50
+Entregas nuevas detectadas: 1250
+Calificaciones procesadas: 1100
+Estados de finalización procesados: 1250
+```
+
+Una segunda ejecución puede informar `Actividades creadas: 0` porque el seed es idempotente.
+
+## 5. Acceso de docentes
+
+Con `AUTH_SEED_DATASET=minimal`, Auth crea `docente1@edumonitor.test`, `docente2@edumonitor.test` y `admin@edumonitor.test`. Con `AUTH_SEED_DATASET=massive`, Auth crea además `docente3@edumonitor.test`, `docente4@edumonitor.test` y `docente5@edumonitor.test`. La contraseña de demostración es el valor local de `AUTH_SEED_PASSWORD`, no una contraseña escrita en este README. El ingeniero debe recibirla por un canal privado o definir una nueva en su `.env`.
+
+Para iniciar sesión contra el gateway:
+
+```bash
+curl -sS -X POST http://localhost:5000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"docente1@edumonitor.test","password":"VALOR_LOCAL_DE_AUTH_SEED_PASSWORD"}'
+```
+
+No guardes la respuesta completa si contiene el JWT. Usa el token solo en la sesión local de demostración.
+
+## 6. Apagar y reanudar
+
+```bash
+docker compose stop
 docker compose up -d
-docker compose logs -f moodle
 ```
 
-El primer arranque instala Moodle y tarda unos minutos. Cuando los registros dejen de avanzar, sal con `Ctrl+C` y abre http://localhost:8080.
-
-## 4. Datos de prueba (ficticios)
-
-Todo se hace desde la web de Moodle, entrando como `admin`.
-
-Para cargar el dataset opcional de la demostración masiva, consulta [`docs/demo/README-DEMO-MASIVO.md`](../../docs/demo/README-DEMO-MASIVO.md).
-
-### 4.1 Curso y usuarios
-
-1. Crea el curso: nombre `Curso de Prueba EduMonitor`, nombre corto **`PRUEBA01`** (el CSV usa ese nombre corto).
-2. Copia `usuarios.csv.example` como `usuarios.csv` y reemplaza `CAMBIAR-CLAVE` por una contraseña que cumpla la política de Moodle. `usuarios.csv` no se sube al repositorio.
-3. En **Site administration → Users → Accounts → Upload users**, sube `usuarios.csv`. En los ajustes elige *Add new only, skip existing users*, *New user password: Field required in file* y *Force password change: No*.
-4. En el curso, abre **Participants** y confirma 1 docente y 5 estudiantes. Quita al usuario `admin` de los participantes para que no aparezca como docente en los datos sincronizados (sigue siendo administrador del sitio).
-
-### 4.2 Actividades
-
-Crea dos tareas con **Add an activity → Assignment**, con *Online text* como único tipo de entrega y *Activity completion* configurado en **Completion conditions** con los requisitos *Make a submission* y *Receive a grade*.
-
-| Tarea | Ajustes especiales |
-|---|---|
-| Tarea 1 | Nota máxima 10 |
-| Tarea 2 | Nota máxima 100 y *Require students to click the submit button: Yes* (así existe el estado de borrador) |
-
-Deja a los estudiantes en estas situaciones (en **View all submissions** el docente puede entregar y calificar por ellos):
-
-| Estudiante | Tarea 1 | Tarea 2 |
-|---|---|---|
-| 1 | Calificado: 8 | Borrador (no enviado) |
-| 2 | Calificado: 0 | Enviado y calificado: 90 |
-| 3 | Enviado, sin calificar | Sin entrega |
-| 4 | Sin entrega | Sin entrega |
-| 5 | Calificado: 5 | Sin entrega |
-
-## 5. Servicio web y token
-
-1. **Site administration → General → Advanced features**: activa *Enable web services*.
-2. **Server → Web services → Manage protocols**: habilita **REST**.
-3. Permisos: para esta instancia de pruebas, permite `webservice/rest:use` al rol *Authenticated user* (**Users → Permissions → Define roles**). En un sistema real conviene un rol propio solo para servicios web.
-4. **Server → Web services → External services → Add**: nombre `EduMonitor`, marca *Enabled* y *Authorised users only*.
-5. Agrega estas funciones al servicio (**Functions → Add functions**):
-   - `core_webservice_get_site_info`
-   - `core_enrol_get_users_courses`
-   - `core_enrol_get_enrolled_users`
-   - `gradereport_user_get_grade_items`
-   - `core_course_get_contents`
-   - `core_completion_get_activities_completion_status`
-   - `mod_assign_get_assignments`
-   - `mod_assign_get_submissions`
-6. En **Authorised users** del servicio agrega a `edumonitor_sync`, no a `docente1`, para que una sola sincronización pueda leer los 25 cursos.
-7. **Manage tokens → Create token**: usuario `edumonitor_sync`, servicio `EduMonitor`. Copia el token en el momento: Moodle no lo vuelve a mostrar.
-
-**El token es un secreto.** Guárdalo en un archivo fuera del repositorio o en tu `.env` local; nunca en el código, en capturas ni en la evidencia. Todos los servicios son de solo lectura: ninguna función de la lista modifica datos de Moodle.
-
-## 6. Comprobar que funciona
-
-Con el token en una variable de entorno de tu terminal (Git Bash):
-
-```bash
-export MOODLE_TOKEN="pega-aqui-tu-token"
-curl -s -X POST http://localhost:8080/webservice/rest/server.php \
-  -d wstoken=$MOODLE_TOKEN \
-  -d wsfunction=core_webservice_get_site_info \
-  -d moodlewsrestformat=json
-```
-
-La respuesta debe incluir `"username":"edumonitor_sync"` y la versión de Moodle (`release`). Si responde `accessexception`, revisa el permiso del paso 5.3 y que `edumonitor_sync` esté autorizado en el servicio.
-
-## 7. Apagar, reanudar y borrar
-
-```bash
-docker compose stop        # apagar sin perder datos
-docker compose up -d       # volver a encender
-docker compose down -v     # PELIGRO: borra el curso, los usuarios y el token
-```
-
-Los datos viven en volúmenes de Docker: apagar el PC no los pierde. Solo `down -v` los elimina.
+No utilices `docker compose down -v` salvo que quieras borrar los volúmenes, cursos, usuarios, calificaciones y tokens locales de Moodle.

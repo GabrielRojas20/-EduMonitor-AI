@@ -1,8 +1,8 @@
 # Guía de instalación local de EduMonitor AI
 
 **Responsable:** Gabriel
-**Fecha:** 11 de noviembre de 2026
-**Objetivo:** levantar el entorno local y validar el recorrido del Sprint 2.
+**Fecha:** 26 de noviembre de 2026
+**Objetivo:** levantar el entorno local y validar el recorrido completo de Sprint 3: Auth → Gateway → Moodle Sync → Moodle, Analytics, frontend y Agent Service.
 
 ## 1. Requisitos
 
@@ -31,6 +31,8 @@ Edita `.env` y completa o verifica estos valores:
 - `JWT_SECRET`: secreto de al menos 32 caracteres.
 - `JWT_ISSUER`, `JWT_AUDIENCE` y `JWT_EXPIRES_MINUTES`.
 - `AUTH_SEED_PASSWORD`: contraseña local de los usuarios ficticios de Auth.
+- `AUTH_SEED_DATASET`: usa `minimal` para la demo pequeña o `massive` para los cinco docentes y los datos masivos de Sprint 3.
+- `DEMO_DATASET`: usa `minimal` o `massive`; para reproducir la demostración documentada configura `massive`.
 - `ConnectionStrings__Auth`: debe usar la misma contraseña de `MSSQL_SA_PASSWORD`.
 - `MOODLE_WS_TOKEN`: token del servicio web de Moodle. Es necesario para sincronizar; no lo subas al repositorio.
 - `MOODLE_WS_SERVICE`: nombre del servicio web habilitado en Moodle, si corresponde.
@@ -38,6 +40,15 @@ Edita `.env` y completa o verifica estos valores:
 - `MOODLE_ADMIN_EMAIL`, `MOODLE_DB_PASSWORD` y `MOODLE_DB_ROOT_PASSWORD`, si necesitas cambiar los valores de desarrollo.
 
 El archivo `.env` es local y nunca debe subirse a GitHub.
+
+Para reproducir la demo masiva del Sprint 3, deja estas variables en `.env`:
+
+```dotenv
+AUTH_SEED_DATASET=massive
+DEMO_DATASET=massive
+```
+
+La demo masiva crea cinco docentes (`docente1` a `docente5`), 25 cursos y 625 estudiantes ficticios. La demo mínima conserva únicamente el conjunto pequeño documentado en los README de los servicios.
 
 ## 3. Levantar Docker
 
@@ -84,17 +95,24 @@ Analytics debe responder HTTP 200 y conservar los indicadores en escala `score_0
 
 ## 5. Iniciar sesión y sincronizar Moodle
 
-Los usuarios ficticios creados por Auth son:
+Con `AUTH_SEED_DATASET=massive`, los usuarios ficticios creados por Auth son:
 
-- `docente1@edumonitor.test`: docente con acceso al curso `2` (`PRUEBA01`).
-- `docente2@edumonitor.test`: docente con acceso al curso `3` (`PRUEBA02`).
+- `docente1@edumonitor.test`: docente de demostración.
+- `docente2@edumonitor.test`: docente de demostración.
+- `docente3@edumonitor.test`: docente de demostración.
+- `docente4@edumonitor.test`: docente de demostración.
+- `docente5@edumonitor.test`: docente de demostración.
 - `admin@edumonitor.test`: administrador técnico sin cursos asignados.
 
-Todos usan el valor local de `AUTH_SEED_PASSWORD`.
+Todos usan el valor local de `AUTH_SEED_PASSWORD`. Esa variable debe configurarse en `.env`; la contraseña real no se publica en GitHub y debe entregarse al ingeniero por un canal privado.
 
 Para obtener un JWT desde PowerShell:
 
 ```powershell
+# PowerShell no carga automáticamente las variables de .env.
+# Reemplaza el valor por la contraseña que configuraste en .env.
+$env:AUTH_SEED_PASSWORD = 'VALOR_LOCAL_DE_AUTH_SEED_PASSWORD'
+
 $login = Invoke-RestMethod -Method Post `
   -Uri http://localhost:5000/api/v1/auth/login `
   -ContentType 'application/json' `
@@ -106,7 +124,7 @@ $login = Invoke-RestMethod -Method Post `
 $token = $login.accessToken
 ```
 
-Con ese token se puede iniciar una sincronización del curso autorizado. El token de Moodle debe estar configurado en `MOODLE_WS_TOKEN` antes de levantar Docker:
+Con ese token se puede iniciar una sincronización del curso autorizado. El token de Moodle debe estar configurado en `MOODLE_WS_TOKEN` antes de levantar Docker. El usuario técnico de Moodle es `edumonitor_sync`; su token nunca debe aparecer en el README, capturas o commits:
 
 ```powershell
 Invoke-RestMethod -Method Post `
