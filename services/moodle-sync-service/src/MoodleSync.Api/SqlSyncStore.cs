@@ -41,8 +41,7 @@ public sealed class SqlSyncStore : ISyncStore
             syncedAt = reader.GetDateTime(2);
         }
 
-        var latestGradeSyncId = await LatestSyncIdAsync(connection, "sync.grade", "synced_at", courseId);
-        var latestCompletionSyncId = await LatestSyncIdAsync(connection, "sync.completion", "observed_at", courseId);
+        var latestSyncId = await LatestSyncIdAsync(connection, courseId);
 
         var students = new List<StudentDto>();
         await using (var command = new SqlCommand("""
@@ -51,18 +50,17 @@ public sealed class SqlSyncStore : ISyncStore
             WHERE s.student_id IN (
                 SELECT student_id
                 FROM sync.grade
-                WHERE course_id = @courseId AND sync_id = @latestGradeSyncId
+                WHERE course_id = @courseId AND sync_id = @syncId
                 UNION
                 SELECT student_id
                 FROM sync.completion
-                WHERE course_id = @courseId AND sync_id = @latestCompletionSyncId
+                WHERE course_id = @courseId AND sync_id = @syncId
             )
             ORDER BY s.student_id
             """, connection))
         {
             command.Parameters.AddWithValue("@courseId", courseId);
-            command.Parameters.AddWithValue("@latestGradeSyncId", (object?)latestGradeSyncId ?? DBNull.Value);
-            command.Parameters.AddWithValue("@latestCompletionSyncId", (object?)latestCompletionSyncId ?? DBNull.Value);
+            command.Parameters.AddWithValue("@syncId", (object?)latestSyncId ?? DBNull.Value);
             await using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -74,7 +72,7 @@ public sealed class SqlSyncStore : ISyncStore
         }
 
         var grades = new List<GradeEntryDto>();
-        if (latestGradeSyncId is not null)
+        if (latestSyncId is not null)
         {
             await using var command = new SqlCommand("""
                 SELECT student_id, activity_id, activity_name, status,
@@ -84,7 +82,7 @@ public sealed class SqlSyncStore : ISyncStore
                 ORDER BY student_id, activity_id
                 """, connection);
             command.Parameters.AddWithValue("@courseId", courseId);
-            command.Parameters.AddWithValue("@syncId", latestGradeSyncId);
+            command.Parameters.AddWithValue("@syncId", latestSyncId);
             await using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -104,7 +102,7 @@ public sealed class SqlSyncStore : ISyncStore
         }
 
         var progress = new Dictionary<int, List<ActivityProgressDto>>();
-        if (latestCompletionSyncId is not null)
+        if (latestSyncId is not null)
         {
             await using var command = new SqlCommand("""
                 SELECT student_id, activity_id, state
@@ -113,7 +111,7 @@ public sealed class SqlSyncStore : ISyncStore
                 ORDER BY student_id, activity_id
                 """, connection);
             command.Parameters.AddWithValue("@courseId", courseId);
-            command.Parameters.AddWithValue("@syncId", latestCompletionSyncId);
+            command.Parameters.AddWithValue("@syncId", latestSyncId);
             await using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -304,12 +302,27 @@ public sealed class SqlSyncStore : ISyncStore
     }
 
     private static async Task<string?> LatestSyncIdAsync(
-        SqlConnection connection, string table, string timestampColumn, int courseId)
+        SqlConnection connection, int courseId)
     {
-        await using var command = new SqlCommand($"""
-            SELECT TOP 1 sync_id FROM {table}
-            WHERE course_id = @courseId
-            ORDER BY {timestampColumn} DESC
+        await using var command = new SqlCommand("""
+            WITH snapshot_candidates AS (
+                SELECT sync_id, MAX(synced_at) AS snapshot_at
+                FROM sync.grade
+                WHERE course_id = @courseId
+                GROUP BY sync_id
+                UNION ALL
+                SELECT sync_id, MAX(observed_at) AS snapshot_at
+                FROM sync.completion
+                WHERE course_id = @courseId
+                GROUP BY sync_id
+            ), snapshots AS (
+                SELECT sync_id, MAX(snapshot_at) AS snapshot_at
+                FROM snapshot_candidates
+                GROUP BY sync_id
+            )
+            SELECT TOP 1 sync_id
+            FROM snapshots
+            ORDER BY snapshot_at DESC, sync_id DESC
             """, connection);
         command.Parameters.AddWithValue("@courseId", courseId);
         var value = await command.ExecuteScalarAsync();

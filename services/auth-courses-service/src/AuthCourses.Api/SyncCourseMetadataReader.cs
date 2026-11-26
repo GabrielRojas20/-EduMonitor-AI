@@ -26,41 +26,43 @@ public sealed class SqlSyncCourseMetadataReader(IConfiguration configuration) : 
 
         await using var command = connection.CreateCommand();
         command.CommandText = """
-            WITH grade_syncs AS (
-                SELECT course_id, sync_id, MAX(synced_at) AS synced_at
+            WITH snapshot_candidates AS (
+                SELECT course_id, sync_id, MAX(synced_at) AS snapshot_at
                 FROM sync.grade
                 WHERE course_id IN (SELECT value FROM STRING_SPLIT(@courseIds, ','))
                 GROUP BY course_id, sync_id
-            ),
-            latest_grade_sync AS (
-                SELECT course_id, sync_id,
-                       ROW_NUMBER() OVER (PARTITION BY course_id ORDER BY synced_at DESC) AS row_number
-                FROM grade_syncs
-            ),
-            completion_syncs AS (
-                SELECT course_id, sync_id, MAX(observed_at) AS observed_at
+                UNION ALL
+                SELECT course_id, sync_id, MAX(observed_at) AS snapshot_at
                 FROM sync.completion
                 WHERE course_id IN (SELECT value FROM STRING_SPLIT(@courseIds, ','))
                 GROUP BY course_id, sync_id
             ),
-            latest_completion_sync AS (
+            snapshot_groups AS (
+                SELECT course_id, sync_id, MAX(snapshot_at) AS snapshot_at
+                FROM snapshot_candidates
+                GROUP BY course_id, sync_id
+            ),
+            latest_sync AS (
                 SELECT course_id, sync_id,
-                       ROW_NUMBER() OVER (PARTITION BY course_id ORDER BY observed_at DESC) AS row_number
-                FROM completion_syncs
+                       ROW_NUMBER() OVER (
+                           PARTITION BY course_id
+                           ORDER BY snapshot_at DESC, sync_id DESC
+                       ) AS row_number
+                FROM snapshot_groups
             ),
             linked_students AS (
                 SELECT g.course_id, g.student_id
                 FROM sync.grade g
-                INNER JOIN latest_grade_sync latest
+                INNER JOIN latest_sync latest
                     ON latest.course_id = g.course_id
                    AND latest.sync_id = g.sync_id
                    AND latest.row_number = 1
                 UNION
                 SELECT c.course_id, c.student_id
                 FROM sync.completion c
-                INNER JOIN latest_completion_sync latest
+                INNER JOIN latest_sync latest
                     ON latest.course_id = c.course_id
-                   AND latest.sync_id = c.sync_id
+                    AND latest.sync_id = c.sync_id
                    AND latest.row_number = 1
             )
             SELECT c.course_id,
